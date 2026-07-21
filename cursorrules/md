@@ -1,0 +1,10 @@
+# Prosera Compass — design system (apply to all UI work)
+
+Font: Inter. Type scale: 20 / 18 / 16 / 14 / 13 / 12 / 11.
+Radius: cards 14–16, buttons 9–10, pills 8. Generous padding, lots of surface.
+Theme via CSS variables + `data-theme="dark"` on <html>. NEVER hardcode hex — use the tokens below.
+
+Guardrails (hard rules):
+- Only touch presentation: className/styles, wrappers, layout, tokens.
+- Do NOT change data fetching, state, hooks, props, API calls, routes, or the values/columns/number-formatting shown to users.
+- Work one component/file at a time. Explain the change before editing. Keep diffs small.
