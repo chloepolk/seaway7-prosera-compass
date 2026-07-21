@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------ */
-/*  Bid returns for ITT-MER-SCM-2101 (66kV Subsea Array Cable)         */
+/*  Bid returns across Meridian OWF ITTs                                */
 /*                                                                     */
 /*  Curated supplier inputs for the demo scoring engine. Scores are     */
 /*  never stored here — always derived via evaluateBids().              */
@@ -31,26 +31,27 @@ export interface BidInput {
   warrantyMonths: number
   /** Whether supplier accepts standard Seaway7 warranty wording (when duration is adequate). */
   acceptsStandardWarranty: boolean
-  pdfPath: string
+  /** Response PDF when available in /public/seaway7; null for lighter demo packages. */
+  pdfPath: string | null
   /** Short insight used on the baseball card (augmented by the scorer). */
   insight: string
 }
 
-export const ITT_REF = "ITT-MER-SCM-2101"
 export const EVAL_PACKAGE_ID = "PKG-2101"
+export const ITT_REF = "ITT-MER-SCM-2101"
 
 /**
- * Demo spread:
+ * PKG-2101 — 66kV array cable (full PDF set):
  * - Prysmatic → hard gate fail (refuses DDP Rotterdam)
- * - Viking → passes gates but warranty 12 mo → Legal −15 + high commercial risk
- * - J-Tech / NexCore → competitive passers; NexCore lowest price, J-Tech stronger tech/QA
+ * - Viking → warranty 12 mo → Legal −15 + high commercial risk
+ * - J-Tech / NexCore → competitive passers
  */
 export const BIDS_ITT_MER_SCM_2101: BidInput[] = [
   {
     id: "bid-jtech",
     supplier: "J-Tech",
-    packageId: EVAL_PACKAGE_ID,
-    ittRef: ITT_REF,
+    packageId: "PKG-2101",
+    ittRef: "ITT-MER-SCM-2101",
     totalPrice: 2_280_000,
     hasValidIso9001: true,
     acceptsKfk: true,
@@ -67,8 +68,8 @@ export const BIDS_ITT_MER_SCM_2101: BidInput[] = [
   {
     id: "bid-nexcore",
     supplier: "NexCore",
-    packageId: EVAL_PACKAGE_ID,
-    ittRef: ITT_REF,
+    packageId: "PKG-2101",
+    ittRef: "ITT-MER-SCM-2101",
     totalPrice: 2_150_000,
     hasValidIso9001: true,
     acceptsKfk: true,
@@ -85,8 +86,8 @@ export const BIDS_ITT_MER_SCM_2101: BidInput[] = [
   {
     id: "bid-prysmatic",
     supplier: "Prysmatic",
-    packageId: EVAL_PACKAGE_ID,
-    ittRef: ITT_REF,
+    packageId: "PKG-2101",
+    ittRef: "ITT-MER-SCM-2101",
     totalPrice: 2_050_000,
     hasValidIso9001: true,
     acceptsKfk: true,
@@ -103,8 +104,8 @@ export const BIDS_ITT_MER_SCM_2101: BidInput[] = [
   {
     id: "bid-viking",
     supplier: "Viking",
-    packageId: EVAL_PACKAGE_ID,
-    ittRef: ITT_REF,
+    packageId: "PKG-2101",
+    ittRef: "ITT-MER-SCM-2101",
     totalPrice: 2_220_000,
     hasValidIso9001: true,
     acceptsKfk: true,
@@ -120,6 +121,138 @@ export const BIDS_ITT_MER_SCM_2101: BidInput[] = [
   },
 ]
 
+/**
+ * PKG-2104 — sacrificial anode bracelets (issued; lighter demo set, no PDFs).
+ * Galvano fails ISO gate; NordAnode leads on composite.
+ */
+export const BIDS_ITT_MER_SCM_2104: BidInput[] = [
+  {
+    id: "bid-2104-nordanode",
+    supplier: "NordAnode",
+    packageId: "PKG-2104",
+    ittRef: "ITT-MER-SCM-2104",
+    totalPrice: 1_245_000,
+    hasValidIso9001: true,
+    acceptsKfk: true,
+    acceptsDdpRotterdam: true,
+    techCompliancePts: 25,
+    isoTraceabilityPts: 10,
+    fatNoticeDays: 30,
+    warrantyMonths: 24,
+    acceptsStandardWarranty: true,
+    pdfPath: null,
+    insight:
+      "Full electrochemical capacity certificates (≥2,500 Ah/kg) and clean DDP landing. Strong award candidate on anodes.",
+  },
+  {
+    id: "bid-2104-marinecast",
+    supplier: "MarineCast",
+    packageId: "PKG-2104",
+    ittRef: "ITT-MER-SCM-2104",
+    totalPrice: 1_198_000,
+    hasValidIso9001: true,
+    acceptsKfk: true,
+    acceptsDdpRotterdam: true,
+    techCompliancePts: 18,
+    isoTraceabilityPts: 9,
+    fatNoticeDays: 45,
+    warrantyMonths: 24,
+    acceptsStandardWarranty: true,
+    pdfPath: null,
+    insight:
+      "Lowest price but partial alloy conformity and stretched FAT notice — competitive commercially, thinner on tech/QA.",
+  },
+  {
+    id: "bid-2104-galvano",
+    supplier: "Galvano",
+    packageId: "PKG-2104",
+    ittRef: "ITT-MER-SCM-2104",
+    totalPrice: 1_160_000,
+    hasValidIso9001: false,
+    acceptsKfk: true,
+    acceptsDdpRotterdam: true,
+    techCompliancePts: 20,
+    isoTraceabilityPts: 7,
+    fatNoticeDays: 30,
+    warrantyMonths: 24,
+    acceptsStandardWarranty: true,
+    pdfPath: null,
+    insight:
+      "ISO 9001 certificate expired at tender close — hard gate fail. Headline price is not evaluable.",
+  },
+  {
+    id: "bid-2104-alloybay",
+    supplier: "AlloyBay",
+    packageId: "PKG-2104",
+    ittRef: "ITT-MER-SCM-2104",
+    totalPrice: 1_275_000,
+    hasValidIso9001: true,
+    acceptsKfk: true,
+    acceptsDdpRotterdam: true,
+    techCompliancePts: 22,
+    isoTraceabilityPts: 10,
+    fatNoticeDays: 30,
+    warrantyMonths: 16,
+    acceptsStandardWarranty: false,
+    pdfPath: null,
+    insight:
+      "Solid tech package but warranty offered at 16 months — Legal shortfall and high commercial-risk flag if pushed toward award.",
+  },
+]
+
+/**
+ * PKG-2103 — crane hook block (weak competition: 2 returns).
+ */
+export const BIDS_ITT_MER_SCM_2103: BidInput[] = [
+  {
+    id: "bid-2103-forgenord",
+    supplier: "ForgeNord",
+    packageId: "PKG-2103",
+    ittRef: "ITT-MER-SCM-2103",
+    totalPrice: 6_420_000,
+    hasValidIso9001: true,
+    acceptsKfk: true,
+    acceptsDdpRotterdam: true,
+    techCompliancePts: 25,
+    isoTraceabilityPts: 10,
+    fatNoticeDays: 30,
+    warrantyMonths: 24,
+    acceptsStandardWarranty: true,
+    pdfPath: null,
+    insight:
+      "Only fully conforming Type 3.2 / DNV package of the two returns. Limited competition still favours ForgeNord on quality.",
+  },
+  {
+    id: "bid-2103-heavyhook",
+    supplier: "HeavyHook",
+    packageId: "PKG-2103",
+    ittRef: "ITT-MER-SCM-2103",
+    totalPrice: 6_150_000,
+    hasValidIso9001: true,
+    acceptsKfk: false,
+    acceptsDdpRotterdam: true,
+    techCompliancePts: 18,
+    isoTraceabilityPts: 8,
+    fatNoticeDays: 60,
+    warrantyMonths: 24,
+    acceptsStandardWarranty: true,
+    pdfPath: null,
+    insight:
+      "Lower price but refuses mutual knock-for-knock flow-down required for vessel-side hook exchange — hard gate fail.",
+  },
+]
+
+/** All curated returns across Meridian ITTs. */
+export const ALL_BIDS: BidInput[] = [
+  ...BIDS_ITT_MER_SCM_2101,
+  ...BIDS_ITT_MER_SCM_2104,
+  ...BIDS_ITT_MER_SCM_2103,
+]
+
 export function bidsForPackage(packageId: string): BidInput[] {
-  return BIDS_ITT_MER_SCM_2101.filter((b) => b.packageId === packageId)
+  return ALL_BIDS.filter((b) => b.packageId === packageId)
+}
+
+export function packagesWithBids(): string[] {
+  return [...new Set(ALL_BIDS.map((b) => b.packageId))]
 }

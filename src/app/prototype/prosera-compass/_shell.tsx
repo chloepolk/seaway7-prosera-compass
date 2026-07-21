@@ -955,10 +955,10 @@ function useDynamicPrompts(): string[] {
     }
     if (activePage === "bid-evaluation") {
       return [
-        "Who ranks first on the composite score?",
+        "Which ITTs are ready to score right now?",
+        "Who ranks first on the array cable package?",
         "Which bidder failed a hard gate and why?",
-        "How does the price score normalise against the low bid?",
-        "Which return carries a high commercial risk flag?",
+        "Which returns carry a high commercial risk flag?",
       ]
     }
     return [

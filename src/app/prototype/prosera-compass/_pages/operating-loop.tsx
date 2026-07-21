@@ -271,8 +271,8 @@ export function OperatingLoopPage() {
     const assignedToYou = isMissionOwnedByActiveUser({ ...mission, owner: fields.ownerRole })
     // Packages ahead of the approval gate can be drafted in Tender Studio.
     const canDraft = fields.stage === "mission_created" || fields.stage === "understand"
-    // Issued packages with returns (PKG-2101 demo) open Bid Evaluation.
-    const canEvaluate = fields.stage === "execute" && mission.id === "PKG-2101"
+    // Issued packages open Bid Evaluation for that ITT.
+    const canEvaluate = fields.stage === "execute"
     const primaryActionLabel = canEvaluate ? "Evaluate bids" : canDraft ? "Draft ITT" : undefined
     const onPrimaryAction = canEvaluate
       ? () => openBidEvaluation(mission.id)

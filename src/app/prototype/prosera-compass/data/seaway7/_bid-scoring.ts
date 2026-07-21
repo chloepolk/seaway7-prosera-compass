@@ -39,7 +39,7 @@ export type GatingStatus = "Pass" | "Fail"
 export interface BidEvaluationResult {
   bidId: string
   supplier: string
-  pdfPath: string
+  pdfPath: string | null
   totalPrice: number
   gatingStatus: GatingStatus
   gateFailures: GateId[]
