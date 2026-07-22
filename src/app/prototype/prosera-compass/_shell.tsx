@@ -955,17 +955,17 @@ function useDynamicPrompts(): string[] {
     }
     if (activePage === "bid-evaluation") {
       return [
+        "Show the bid score calculation for J-Tech",
         "Which ITTs are ready to score right now?",
         "Who ranks first on the array cable package?",
-        "Which bidder failed a hard gate and why?",
         "Which returns carry a high commercial risk flag?",
       ]
     }
     return [
+      "Show the bid score calculation for J-Tech",
       "Which package is on the critical path this week?",
       "How much of the savings target is still unrealised?",
       "Which packages carry knock-for-knock exposure?",
-      "What happens if the cable ITT slips a week?",
     ]
   }, [activePage])
 }

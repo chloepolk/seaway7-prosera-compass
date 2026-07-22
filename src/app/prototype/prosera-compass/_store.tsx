@@ -27,6 +27,7 @@ import {
   buildOrchestratorContext,
   buildVerifierContext,
   buildChatBriefing,
+  buildBidEvaluationContext,
 } from "./agents/_context"
 
 /* ------------------------------------------------------------------ */
@@ -292,7 +293,8 @@ function getPageContext(page: Page): string {
   switch (page) {
     case "operating-loop": return "Action Board — the live tender pipeline for the Meridian offshore wind programme, where procurement packages move through 5 gates (Scoped → Specified → Approved → Issued → Awarded), each with an accountable owner, submission deadline and savings target, plus an accumulated savings ledger of awarded packages"
     case "tender-studio": return "Tender Studio — the ITT drafting workspace: a controlled document repository (engineering specifications, QA manual, procurement terms, charter party), a drafting prompt, and the multi-agent pipeline that assembles, audits and renders a complete Invitation to Tender"
-    default: return "Supply chain management workspace for the Meridian offshore wind programme"
+    case "bid-evaluation": return "Bid Evaluation — multi-ITT portfolio of tabulated supplier returns with hard gates (ISO 9001, knock-for-knock, DDP Rotterdam) and 100-point composite scoring (Price 35 / Tech 25 / QA 20 / Legal 20), including matrix, baseball cards and award recommendations"
+    default: return "Supply chain management workspace for the Meridian offshore wind programme covering Action Board, Tender Studio and Bid Evaluation"
   }
 }
 
@@ -904,6 +906,7 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
       pricing: buildPricingContext(data, drill),
       market: buildMarketContext(data, drill),
       orchestratorData: buildOrchestratorContext([], drill, getPageContext(state.activePage), data),
+      bidEvaluation: buildBidEvaluationContext(),
     }
 
     const controller = new AbortController()
