@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server"
 const ALLOWED = new Set<string>([
   "/prototype",
   "/prototype/prosera-compass",
+  "/prototype/future-energy",
 ])
 
 export function proxy(req: NextRequest) {

@@ -1,9 +1,9 @@
 /* ------------------------------------------------------------------ */
-/*  Tender register → Action Board adapter                             */
+/*  Tender register → Action Centre adapter                             */
 /*                                                                     */
 /*  Promotes Meridian OWF procurement packages into generic 5-gate     */
 /*  missions (Scoped → Specified → Approved → Issued → Awarded) so     */
-/*  the Action Board carries the live tender pipeline with owners,     */
+/*  the Action Centre carries the live tender pipeline with owners,     */
 /*  deadlines and savings targets.                                     */
 /* ------------------------------------------------------------------ */
 
@@ -422,7 +422,7 @@ export interface DiamondData {
 }
 
 /**
- * Build the Action Board from the tender register.
+ * Build the Action Centre from the tender register.
  * `stageOverrides` carries session progress (e.g. an ITT drafted in
  * Tender Studio advances its package to the approval gate).
  */

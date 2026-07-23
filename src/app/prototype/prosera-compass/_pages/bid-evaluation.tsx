@@ -24,6 +24,7 @@ import {
   PROJECT,
   type TenderPackage,
 } from "../data/seaway7/_tenders"
+import { BidderNotifyModal } from "../_components/hub/bidder-notify-modal"
 
 type EvalStatus = "ready" | "awaiting_returns" | "not_issued" | "awarded"
 
@@ -45,7 +46,7 @@ const STATUS_CLS: Record<EvalStatus, string> = {
   ready: "bg-[var(--color-tint-positive)] text-[var(--color-accent-positive-text)]",
   awaiting_returns: "bg-[var(--color-tint-warning)] text-[var(--color-accent-warning-text)]",
   not_issued: "bg-[var(--color-tint-neutral)] text-[var(--color-text-muted)]",
-  awarded: "bg-[var(--color-tint-brand)] text-[var(--color-brand-strong)]",
+  awarded: "bg-[var(--color-tint-neutral)] text-[var(--color-text-secondary)]",
 }
 
 function formatPriceFull(n: number): string {
@@ -109,7 +110,7 @@ function RankBadge({ rank, failed }: { rank: number | null; failed: boolean }) {
     )
   }
   return (
-    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-tint-brand)] text-[15px] font-semibold tabular-nums text-[var(--color-brand-strong)]">
+    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-bg-inverse)] text-[15px] font-semibold tabular-nums text-[var(--color-text-inverse)]">
       #{rank}
     </span>
   )
@@ -139,8 +140,8 @@ function BidBaseballCard({
         motion.className,
         "w-full cursor-pointer rounded-[16px] border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] text-left",
         selected
-          ? "ring-2 ring-[var(--color-brand-primary)]"
-          : "hover:border-[var(--color-brand-strong)]/40",
+          ? "ring-2 ring-[var(--color-text-secondary)]/40"
+          : "hover:border-[var(--color-text-secondary)]/40",
       )}
       style={motion.style}
     >
@@ -167,7 +168,7 @@ function BidBaseballCard({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border-default)] px-2 py-1 text-[11px] font-medium text-[var(--color-brand-strong)] hover:bg-[var(--color-tint-brand)]"
+                className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border-default)] px-2 py-1 text-[11px] font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-subtle)]"
               >
                 <SafeIcon name="FileText" className="size-3" />
                 Response PDF
@@ -320,6 +321,7 @@ export function BidEvaluationPage() {
     [bids],
   )
 
+  const [notifyOpen, setNotifyOpen] = React.useState(false)
   const [selectedBidId, setSelectedBidId] = React.useState<string | null>(null)
   React.useEffect(() => {
     const top = results.find((r) => r.finalRank === 1) ?? results[0]
@@ -400,7 +402,7 @@ export function BidEvaluationPage() {
                     className={cn(
                       "w-full rounded-[12px] px-3 py-2.5 text-left transition-colors",
                       active
-                        ? "bg-[var(--color-tint-brand)]"
+                        ? "bg-[var(--color-tint-neutral)]"
                         : "hover:bg-[var(--color-bg-subtle)]",
                     )}
                   >
@@ -483,13 +485,25 @@ export function BidEvaluationPage() {
           ) : (
             <>
               <section className={cn(pcmCard, "overflow-hidden rounded-[16px] border border-[var(--color-border-default)] bg-[var(--color-bg-surface)]")}>
-                <div className="border-b border-[var(--color-border-default)] px-4 py-3">
-                  <h3 className="text-[13px] font-semibold text-[var(--color-text-primary)]">
-                    Evaluation matrix
-                  </h3>
-                  <p className="text-[11px] text-[var(--color-text-muted)]">
-                    Composite = Price + Tech + QA + Legal among gate-passing suppliers only.
-                  </p>
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--color-border-default)] px-4 py-3">
+                  <div>
+                    <h3 className="text-[13px] font-semibold text-[var(--color-text-primary)]">
+                      Evaluation matrix
+                    </h3>
+                    <p className="text-[11px] text-[var(--color-text-muted)]">
+                      Composite = Price + Tech + QA + Legal among gate-passing suppliers only.
+                    </p>
+                  </div>
+                  {results.some((r) => r.finalRank === 1) && (
+                    <button
+                      type="button"
+                      onClick={() => setNotifyOpen(true)}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-[8px] bg-[var(--color-bg-inverse)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-text-inverse)] hover:opacity-90"
+                    >
+                      <SafeIcon name="Mail" className="size-3.5" />
+                      Notify bidders
+                    </button>
+                  )}
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[880px] border-collapse text-left">
@@ -517,7 +531,7 @@ export function BidEvaluationPage() {
                             className={cn(
                               "cursor-pointer border-b border-[var(--color-border-default)] last:border-b-0 transition-colors",
                               selected
-                                ? "bg-[var(--color-tint-brand)]"
+                                ? "bg-[var(--color-tint-neutral)]"
                                 : "hover:bg-[var(--color-bg-subtle)]",
                             )}
                           >
@@ -588,6 +602,15 @@ export function BidEvaluationPage() {
           )}
         </div>
       </div>
+
+      {notifyOpen && (
+        <BidderNotifyModal
+          ittRef={ittRef}
+          packageTitle={pkg?.title ?? ""}
+          results={results}
+          onClose={() => setNotifyOpen(false)}
+        />
+      )}
     </div>
   )
 }

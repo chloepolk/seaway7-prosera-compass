@@ -38,6 +38,8 @@ export interface FlightPathProps
   size?: "default" | "compact"
   /** When true, every step renders as completed (solid done styling). */
   completed?: boolean
+  /** Horizontal variant: reserve space for and render the plane marker above the current node. */
+  showPlane?: boolean
 }
 
 function resolveState(index: number, currentIndex: number, allComplete = false): FlightPathStepState {
@@ -75,6 +77,7 @@ function FlightPathNode({
   marker = "dot",
   pinWhiteFillWhenIncomplete = false,
   pulse = false,
+  showPlane = true,
 }: {
   state: FlightPathStepState
   index: number
@@ -84,11 +87,12 @@ function FlightPathNode({
   marker?: "dot" | "pin"
   pinWhiteFillWhenIncomplete?: boolean
   pulse?: boolean
+  showPlane?: boolean
 }) {
   return (
     <div className="flex flex-col items-center gap-1.5">
       <div className="relative">
-        {state === "current" && (
+        {state === "current" && showPlane && (
           <SafeIcon
             name="Plane"
             className="absolute bottom-full left-1/2 mb-0.5 size-3.5 -translate-x-1/2 rotate-45 text-flight-plane"
@@ -174,14 +178,14 @@ const FlightPathHorizontal = React.forwardRef<
     completed?: boolean
   }
 >(function FlightPathHorizontal(
-  { steps, currentIndex, showLabels = true, suffix, timelineClassName, className, pulseCurrent = false, completed = false, ...props },
+  { steps, currentIndex, showLabels = true, suffix, timelineClassName, className, pulseCurrent = false, completed = false, showPlane = true, ...props },
   ref,
 ) {
   const hasCurrent = !completed && currentIndex >= 0 && currentIndex < steps.length
 
   return (
     <div ref={ref} className={cn("w-full", className)} {...props}>
-      {hasCurrent && <div className="h-5 shrink-0" aria-hidden />}
+      {showPlane && hasCurrent && <div className="h-5 shrink-0" aria-hidden />}
       <div className="flex items-center gap-2">
         <div
           role="list"
@@ -202,6 +206,7 @@ const FlightPathHorizontal = React.forwardRef<
                     description={step.description}
                     showLabel={showLabels}
                     pulse={pulseCurrent && state === "current"}
+                    showPlane={showPlane}
                   />
                 </div>
               </React.Fragment>
@@ -310,7 +315,7 @@ function FlightPathCurved({
 }
 
 const FlightPath = React.forwardRef<HTMLDivElement, FlightPathProps>(
-  ({ steps, currentStepId, variant = "horizontal", showLabels = true, suffix, timelineClassName, size = "default", completed = false, className, ...props }, ref) => {
+  ({ steps, currentStepId, variant = "horizontal", showLabels = true, suffix, timelineClassName, size = "default", completed = false, showPlane = true, className, ...props }, ref) => {
     const currentIndex = Math.max(0, steps.findIndex(s => s.id === currentStepId))
     const [pulseCurrent, setPulseCurrent] = React.useState(false)
     const prevIndexRef = React.useRef(currentIndex)
@@ -352,6 +357,7 @@ const FlightPath = React.forwardRef<HTMLDivElement, FlightPathProps>(
         timelineClassName={timelineClassName}
         pulseCurrent={pulseCurrent}
         completed={completed}
+        showPlane={showPlane}
         className={cn(flightPathVariants({ variant }), className)}
         {...props}
       />

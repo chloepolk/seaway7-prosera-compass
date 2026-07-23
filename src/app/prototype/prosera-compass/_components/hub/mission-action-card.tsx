@@ -4,22 +4,31 @@ import * as React from "react"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { Button } from "@/components/ui/prosera/button"
 import { FlightPath, type FlightPathStep } from "@/components/ui/prosera/flight-path"
-import { Avatar, AvatarFallback } from "@/components/ui/prosera/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/prosera/avatar"
 import { cn } from "@/lib/utils"
 import { formatCurrency, getInitials } from "@/app/prototype/prosera-compass/_diamond/stages"
 import { expandPanelMotion, EXPAND_DURATION_MS } from "../motion"
 import type { AuditEntry, ActionTimelineEntry } from "./hub-types"
-import { employeeById, employeeByRole, type Employee } from "@/app/prototype/prosera-compass/data/_people"
+import { employeeById, employeeByRole, EMPLOYEES, type Employee } from "@/app/prototype/prosera-compass/data/_people"
 import { AssigneePicker } from "./assignee-picker"
 import { ActionCompletionTimeline } from "./action-completion-timeline"
 import { BluePilotMark } from "../bluepilot-mark"
 import { ReasoningExpand, BluePilotReasoningButton, ReasoningTooltip, type ReasoningContent } from "../reasoning-disclosure"
 import { isReasoningEmpty } from "../reasoning-helpers"
 import type { MissionObjective } from "@/app/prototype/prosera-compass/_diamond/types"
-import { VALUE_AMOUNT_BOX, VALUE_AMOUNT_TEXT } from "../value-tones"
+import { VALUE_BADGE_CLS, VALUE_BADGE_LABEL, valueBadgeAmount } from "../value-tones"
 import { ACTIVE_USER, displayName, NOTIFY_DELEGATE } from "./active-user"
+import { avatarColor, avatarSrcFor } from "./avatar-color"
 import { employeeForCurrentTimelineStep } from "./mission-timeline-helpers"
 import { EmailIcon, SlackIcon, TeamsIcon } from "./brand-icons"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/prosera/dropdown-menu"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/prosera/sheet"
 
 export interface MissionActionCardProps extends React.HTMLAttributes<HTMLElement> {
   rank: number
@@ -40,12 +49,10 @@ export interface MissionActionCardProps extends React.HTMLAttributes<HTMLElement
   reasoning?: ReasoningContent
   expanded?: boolean
   onToggleExpand?: () => void
-  showAssignPanel?: boolean
-  /** Prominent workflow action (e.g. "Draft ITT") rendered ahead of the standard actions. */
+  /** Prominent workflow action (e.g. "Draft ITT") rendered ahead of the overflow menu. */
   primaryActionLabel?: string
   onPrimaryAction?: () => void
   onEditClick?: () => void
-  onAssignClick?: () => void
   onEmailClick?: () => void
   onCompleteClick?: () => void
   isAssignedToYou?: boolean
@@ -57,13 +64,15 @@ export interface MissionActionCardProps extends React.HTMLAttributes<HTMLElement
   reconcilePhase?: string
 }
 
+// White fill with a semantic-coloured outline + text (renders white on light,
+// adapts on dark via the surface token — keeps the label legible either way).
 const STATUS_CLS = {
-  on_track: "bg-[var(--color-tint-brand)] text-[var(--color-brand-strong)]",
-  at_risk: "bg-[var(--color-tint-warning)] text-[var(--color-accent-warning-text)]",
-  overdue: "bg-[var(--color-tint-critical)] text-[var(--color-accent-critical-text)]",
+  on_track: "border border-[var(--color-brand-strong)] bg-[var(--color-bg-surface)] text-[var(--color-brand-strong)]",
+  at_risk: "border border-[var(--color-accent-warning-text)] bg-[var(--color-bg-surface)] text-[var(--color-accent-warning-text)]",
+  overdue: "border border-[var(--color-accent-critical-text)] bg-[var(--color-bg-surface)] text-[var(--color-accent-critical-text)]",
 }
 
-const COMPLETED_STATUS_CLS = "bg-[var(--color-tint-positive)] text-[var(--color-accent-positive-text)]"
+const COMPLETED_STATUS_CLS = "border border-[var(--color-accent-positive-text)] bg-[var(--color-bg-surface)] text-[var(--color-accent-positive-text)]"
 
 export function MissionActionCard({
   rank,
@@ -83,11 +92,9 @@ export function MissionActionCard({
   reasoning,
   expanded = false,
   onToggleExpand,
-  showAssignPanel = false,
   primaryActionLabel,
   onPrimaryAction,
   onEditClick,
-  onAssignClick,
   onEmailClick,
   onCompleteClick,
   isAssignedToYou = false,
@@ -101,14 +108,17 @@ export function MissionActionCard({
   ...props
 }: MissionActionCardProps) {
   const displayOwner = displayName(owner)
+  const ownerAvatarSrc = avatarSrcFor(owner, EMPLOYEES, ACTIVE_USER.name)
   const initials = isAssignedToYou ? "Y" : getInitials(owner)
   const panelMotion = expandPanelMotion()
   const [contentMounted, setContentMounted] = React.useState(expanded)
   const [closing, setClosing] = React.useState(false)
-  const assignPanelRef = React.useRef<HTMLDivElement>(null)
-  const [wantsAssignScroll, setWantsAssignScroll] = React.useState(false)
+  const [assignDrawerOpen, setAssignDrawerOpen] = React.useState(false)
   const [reasoningOpen, setReasoningOpen] = React.useState(false)
+  const [narrativeOpen, setNarrativeOpen] = React.useState(false)
   const hasReasoning = !isReasoningEmpty(reasoning)
+  // Long summaries collapse to a single line with a "Show details" toggle.
+  const narrativeIsLong = narrative.trim().length > 90
 
   const assignOwnerRole = React.useMemo(() => {
     const current = timelineEntries.find((e) => e.status === "current")
@@ -149,16 +159,6 @@ export function MissionActionCard({
     return () => window.clearTimeout(id)
   }, [expanded, contentMounted])
 
-  React.useEffect(() => {
-    if (expanded && wantsAssignScroll) {
-      const id = window.setTimeout(() => {
-        assignPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })
-        setWantsAssignScroll(false)
-      }, EXPAND_DURATION_MS)
-      return () => window.clearTimeout(id)
-    }
-  }, [expanded, wantsAssignScroll])
-
   const showDetailRow = confidence != null || risk
   const actionButtonClass =
     "h-[29px] rounded-[8px] border border-[var(--color-border-default)] bg-[var(--color-bg-canvas)] px-[11px] text-[12px] font-semibold text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-subtle)]"
@@ -188,7 +188,8 @@ export function MissionActionCard({
           <h2 className="text-[14px] font-semibold leading-snug text-[var(--color-text-primary)]">{title}</h2>
           <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-[6px] bg-[var(--color-bg-subtle)] px-2 py-1 text-[11px] text-[var(--color-text-secondary)]">
             <Avatar className="size-4 shrink-0">
-              <AvatarFallback className="bg-[var(--color-bg-inverse)] text-[8px] font-semibold text-[var(--color-text-inverse)]">
+              {ownerAvatarSrc ? <AvatarImage src={ownerAvatarSrc} alt="" /> : null}
+              <AvatarFallback className={cn(avatarColor(owner), "text-[8px] font-semibold text-white")}>
                 {initials}
               </AvatarFallback>
             </Avatar>
@@ -214,8 +215,18 @@ export function MissionActionCard({
           >
             {isCompleted ? "LANDED" : statusLabel}
           </span>
-          <span className={cn(VALUE_AMOUNT_BOX, "text-[15px]", VALUE_AMOUNT_TEXT[valueType])}>
-            {valueChip}
+          <span
+            className={cn(
+              "inline-flex items-baseline gap-1.5 rounded-[8px] px-2.5 py-1.5",
+              VALUE_BADGE_CLS[valueType],
+            )}
+          >
+            <span className="text-[15px] font-bold tabular-nums">
+              {valueBadgeAmount(valueChip, valueType)}
+            </span>
+            <span className="text-[10px] font-semibold uppercase tracking-wide opacity-80">
+              {VALUE_BADGE_LABEL[valueType]}
+            </span>
           </span>
           <SafeIcon
             name={expanded ? "ChevronUp" : "ChevronDown"}
@@ -224,9 +235,26 @@ export function MissionActionCard({
         </div>
       </button>
 
-      <p className={cn("mt-3 pl-9 text-[13px] leading-relaxed text-[var(--color-text-muted)]", isReconciling && "opacity-60")}>
-        {narrative}
-      </p>
+      <div className={cn("mt-3 pl-9", isReconciling && "opacity-60")}>
+        <p
+          className={cn(
+            "text-[13px] leading-relaxed text-[var(--color-text-muted)]",
+            narrativeIsLong && !narrativeOpen && "line-clamp-1",
+          )}
+        >
+          {narrative}
+        </p>
+        {narrativeIsLong && (
+          <button
+            type="button"
+            onClick={() => setNarrativeOpen((v) => !v)}
+            className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+          >
+            <SafeIcon name={narrativeOpen ? "ChevronUp" : "ChevronDown"} className="size-3" />
+            {narrativeOpen ? "Hide details" : "Show details"}
+          </button>
+        )}
+      </div>
 
       {isReconciling && (
         <div className="mt-3 ml-9 flex items-center gap-2 rounded-[10px] border border-[var(--color-brand-strong)]/20 bg-[var(--color-tint-brand)] px-3 py-2">
@@ -245,6 +273,7 @@ export function MissionActionCard({
             currentStepId={currentFlightStepId}
             variant="horizontal"
             showLabels={false}
+            showPlane={false}
             completed={isCompleted}
             timelineClassName="max-w-[260px]"
             suffix={
@@ -262,46 +291,69 @@ export function MissionActionCard({
               {primaryActionLabel && onPrimaryAction && (
                 <Button
                   type="button"
+                  variant="ghost"
                   size="sm"
                   onClick={onPrimaryAction}
-                  className="h-[29px] rounded-[8px] bg-[var(--color-brand-primary)] px-[13px] text-[12px] font-semibold text-[var(--color-brand-onPrimary)] hover:opacity-90"
+                  className="h-[29px] rounded-[8px] bg-[var(--color-bg-inverse)] px-[13px] text-[12px] font-semibold text-[var(--color-text-inverse)] hover:opacity-90"
                 >
                   <SafeIcon name="FileSignature" className="h-3.5 w-3.5" />
                   {primaryActionLabel}
                 </Button>
               )}
-              {isAssignedToYou && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={onCompleteClick}
-                  className={cn(actionButtonClass, "text-[var(--color-accent-positive-text)]")}
-                >
-                  Mark as Complete
-                </Button>
-              )}
-              <Button type="button" variant="ghost" size="sm" onClick={onEditClick} className={actionButtonClass}>
-                Edit
-              </Button>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => {
-                  onAssignClick?.()
-                  setWantsAssignScroll(true)
-                }}
-                className={actionButtonClass}
+                onClick={() => setAssignDrawerOpen(true)}
+                className={cn(actionButtonClass, "gap-1 text-[var(--color-text-primary)]")}
               >
-                Assign
+                <SafeIcon name="UserPlus" className="h-3.5 w-3.5" />
+                Reassign
               </Button>
-              <Button type="button" variant="ghost" size="sm" onClick={onEmailClick} className={actionButtonClass}>
-                Email
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    aria-label="More actions"
+                    className={cn(actionButtonClass, "px-2")}
+                  >
+                    <SafeIcon name="MoreHorizontal" className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  {isAssignedToYou && (
+                    <DropdownMenuItem
+                      onClick={onCompleteClick}
+                      className="text-[var(--color-accent-positive-text)]"
+                    >
+                      <SafeIcon name="CheckCircle2" className="h-4 w-4" />
+                      Mark as complete
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={onEditClick}>
+                    <SafeIcon name="Pencil" className="h-4 w-4" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={onEmailClick}>
+                    <SafeIcon name="Mail" className="h-4 w-4" />
+                    Notify
+                  </DropdownMenuItem>
+                  {hasReasoning && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setReasoningOpen((v) => !v)}>
+                        <SafeIcon name="Sparkles" className="h-4 w-4" />
+                        {reasoningOpen ? "Hide" : "Show"} BluePilot reasoning
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           )}
-          {hasReasoning && (
+          {isCompleted && hasReasoning && (
             <BluePilotReasoningButton
               open={reasoningOpen}
               onClick={(e) => {
@@ -349,30 +401,7 @@ export function MissionActionCard({
                   View audit ({auditEntries.length})
                 </button>
               )}
-              <div className="grid gap-4 lg:grid-cols-2 lg:gap-0">
-                <div className="border-b border-[var(--color-border-default)] pb-4 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-4">
-                  <p
-                    aria-hidden
-                    className="text-[10px] font-semibold uppercase tracking-wider text-transparent select-none"
-                  >
-                    Actions taken
-                  </p>
-                  <div className="mt-2 flex max-h-[220px] items-center">
-                    <FlightPath
-                      steps={flightPathSteps}
-                      currentStepId={currentFlightStepId}
-                      variant="curved"
-                      showLabels
-                      size="compact"
-                      completed={isCompleted}
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-                <div className="lg:pl-4">
-                  <ActionCompletionTimeline entries={timelineEntries} />
-                </div>
-              </div>
+              <ActionCompletionTimeline entries={timelineEntries} />
               {showDetailRow && (
                 <div className="grid grid-cols-3 gap-3">
                   {confidence != null && (
@@ -393,60 +422,73 @@ export function MissionActionCard({
                   )}
                 </div>
               )}
-              {showAssignPanel && !isCompleted && (
-                <div ref={assignPanelRef} className="grid gap-4 lg:grid-cols-[1fr_300px]">
-                  <div className="rounded-[12px] border border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] p-3">
-                    <p className="px-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Assign to</p>
-                    <AssigneePicker
-                      className="mt-2"
-                      ownerRole={assignOwnerRole}
-                      selectedId={selectedAssignee?.id}
-                      onSelect={(employee: Employee) => setSelectedAssigneeId(employee.id)}
-                    />
-                  </div>
-                  <div className="rounded-[12px] bg-[var(--color-bg-inverse)] p-4 text-[var(--color-text-inverse)]">
-                    <p className="text-[14px] font-semibold">Notify assignee</p>
-                    <p className="mt-3 text-[13px] leading-relaxed text-[var(--color-text-inverse)]/70">
-                      {notifyTarget ? (
-                        <>
-                          An email will be sent to {displayName(notifyTarget.name)} ({notifyTarget.email}) with the
-                          action, target, and deadline.
-                        </>
-                      ) : (
-                        <>Select an assignee to preview the notification.</>
-                      )}
-                    </p>
-                    <div className="mt-4 flex flex-col gap-2">
-                      <Button
-                        type="button"
-                        onClick={onEmailClick}
-                        className="w-full rounded-[10px] bg-[#475569] text-[13px] font-semibold text-white hover:bg-[#334155]"
-                      >
-                        <EmailIcon size={14} />
-                        Send via Email
-                      </Button>
-                      <Button
-                        type="button"
-                        className="w-full rounded-[10px] bg-[#611F69] text-[13px] font-semibold text-white hover:bg-[#4A154B]"
-                      >
-                        <SlackIcon size={14} />
-                        Send via Slack
-                      </Button>
-                      <Button
-                        type="button"
-                        className="w-full rounded-[10px] bg-[#5059C9] text-[13px] font-semibold text-white hover:bg-[#464EB8]"
-                      >
-                        <TeamsIcon size={14} />
-                        Send via Teams
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>
       </div>
+
+      {/* Reassign slide-over: opens only from the overflow menu, keeping the card itself clean. */}
+      <Sheet open={assignDrawerOpen} onOpenChange={setAssignDrawerOpen}>
+        <SheetContent side="right" className="flex w-[400px] max-w-[400px] flex-col gap-0 p-0">
+          <SheetHeader className="shrink-0 border-b border-[var(--color-border-default)] px-4 py-3">
+            <SheetTitle className="text-[15px] font-semibold">Reassign action</SheetTitle>
+            <p className="truncate text-[12px] text-[var(--color-text-muted)]">{title}</p>
+          </SheetHeader>
+          <div className="flex-1 space-y-4 overflow-y-auto p-4">
+            <div className="rounded-[12px] border border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] p-3">
+              <p className="px-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                Assign to
+              </p>
+              <AssigneePicker
+                className="mt-2"
+                ownerRole={assignOwnerRole}
+                selectedId={selectedAssignee?.id}
+                onSelect={(employee: Employee) => setSelectedAssigneeId(employee.id)}
+              />
+            </div>
+            <div className="rounded-[12px] bg-[var(--color-bg-inverse)] p-4 text-[var(--color-text-inverse)]">
+              <p className="text-[14px] font-semibold">Notify assignee</p>
+              <p className="mt-3 text-[13px] leading-relaxed text-[var(--color-text-inverse)]/70">
+                {notifyTarget ? (
+                  <>
+                    An email will be sent to {displayName(notifyTarget.name)} ({notifyTarget.email}) with the
+                    action, target, and deadline.
+                  </>
+                ) : (
+                  <>Select an assignee to preview the notification.</>
+                )}
+              </p>
+              <div className="mt-4 flex flex-col gap-2">
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setAssignDrawerOpen(false)
+                    onEmailClick?.()
+                  }}
+                  className="w-full rounded-[10px] bg-[#475569] text-[13px] font-semibold text-white hover:bg-[#334155]"
+                >
+                  <EmailIcon size={14} />
+                  Send via Email
+                </Button>
+                <Button
+                  type="button"
+                  className="w-full rounded-[10px] bg-[#611F69] text-[13px] font-semibold text-white hover:bg-[#4A154B]"
+                >
+                  <SlackIcon size={14} />
+                  Send via Slack
+                </Button>
+                <Button
+                  type="button"
+                  className="w-full rounded-[10px] bg-[#5059C9] text-[13px] font-semibold text-white hover:bg-[#464EB8]"
+                >
+                  <TeamsIcon size={14} />
+                  Send via Teams
+                </Button>
+              </div>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </article>
   )
 }

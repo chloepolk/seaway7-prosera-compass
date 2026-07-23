@@ -405,7 +405,7 @@ export function normalizeSpec(raw: unknown): AppSpec | null {
     spec.sendToLoop = { label: stl.label }
     if (typeof stl.missionId === "string") spec.sendToLoop.missionId = stl.missionId
   } else {
-    spec.sendToLoop = { label: "Send to Action Board" }
+    spec.sendToLoop = { label: "Send to Action Centre" }
   }
 
   // Bucket-2 seams: tolerate (but don't require) size/scope hints.

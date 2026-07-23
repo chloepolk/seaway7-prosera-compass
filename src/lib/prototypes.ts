@@ -12,4 +12,10 @@ export const PROTOTYPES: PrototypeDef[] = [
     description: "Prosera Compass operating cockpit for commercial field services.",
     status: "active",
   },
+  {
+    slug: "future-energy",
+    name: "Future Energy Compass",
+    description: "Future Energy Compass — supply chain command for offshore wind procurement (anonymized demo).",
+    status: "active",
+  },
 ]

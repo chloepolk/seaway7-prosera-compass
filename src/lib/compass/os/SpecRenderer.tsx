@@ -309,7 +309,7 @@ function DeclarativeStripa({ block, data }: { block: StripaBlock; data: unknown 
               ))}
             </ol>
           ) : (
-            <Narrative text="No recommended actions yet — send findings to the Action Board to assign owners." />
+            <Narrative text="No recommended actions yet — send findings to the Action Centre to assign owners." />
           )}
         </StageBlock>
       </StripaCard>

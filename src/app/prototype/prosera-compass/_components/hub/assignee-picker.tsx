@@ -3,7 +3,7 @@
 import * as React from "react"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { Input } from "@/components/ui/prosera/input"
-import { Avatar, AvatarFallback } from "@/components/ui/prosera/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/prosera/avatar"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/prosera/tooltip"
 import { cn } from "@/lib/utils"
 import { getInitials } from "@/app/prototype/prosera-compass/_diamond/stages"
@@ -14,6 +14,7 @@ import {
 } from "@/app/prototype/prosera-compass/data/_people"
 import { BluePilotMark } from "../bluepilot-mark"
 import { displayName } from "./active-user"
+import { avatarColor, avatarSrcById } from "./avatar-color"
 
 export interface AssigneePickerProps {
   ownerRole: string
@@ -91,6 +92,7 @@ export function AssigneePicker({ ownerRole, selectedId, onSelect, className }: A
             {sorted.map((employee) => {
               const selected = selectedId === employee.id
               const reasoning = reasoningById[employee.id]
+              const src = avatarSrcById(employee.id)
 
               return (
                 <div
@@ -112,7 +114,8 @@ export function AssigneePicker({ ownerRole, selectedId, onSelect, className }: A
                   )}
                 >
                   <Avatar className="size-[26px] shrink-0">
-                    <AvatarFallback className="bg-[var(--color-bg-inverse)] text-[10px] text-[var(--color-text-inverse)]">
+                    {src ? <AvatarImage src={src} alt="" /> : null}
+                    <AvatarFallback className={cn(avatarColor(employee.name), "text-[10px] text-white")}>
                       {getInitials(employee.name)}
                     </AvatarFallback>
                   </Avatar>

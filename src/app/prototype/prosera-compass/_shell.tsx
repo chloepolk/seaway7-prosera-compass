@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useTheme } from "next-themes"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
-import { Avatar, AvatarFallback } from "@/components/ui/prosera/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/prosera/avatar"
 import { Button } from "@/components/ui/prosera/button"
 import { Badge } from "@/components/ui/prosera/badge"
 import { cn } from "@/lib/utils"
@@ -35,8 +35,11 @@ import { fadeCrossMotion, findingMotion, pcmButton, pcmCard, pcmTab, drawerSlide
 import { ReasoningTooltip } from "./_components/reasoning-disclosure"
 import { reasoningFromFinding } from "./_components/reasoning-helpers"
 import { ChatMessageBody } from "./_components/chat-message-body"
+import { ACTIVE_USER } from "./_components/hub/active-user"
+import { avatarSrcById } from "./_components/hub/avatar-color"
 const PROSERA_LOGO_WHITE = "/full white logo.png"
 const PROSERA_LOGO_DARK = "/full dark logo.svg"
+const ACTIVE_USER_AVATAR = avatarSrcById(ACTIVE_USER.id)
 
 const HEADER_HEIGHT = 56
 const TOP_NAV_HEIGHT = 66
@@ -56,7 +59,7 @@ type TopNavTab = {
 }
 
 const TOP_NAV_TABS: TopNavTab[] = [
-  { id: "action-board", label: "Action Board", pages: ["operating-loop"], defaultPage: "operating-loop" },
+  { id: "action-board", label: "Action Centre", pages: ["operating-loop"], defaultPage: "operating-loop" },
   { id: "tender-studio", label: "Tender Studio", pages: ["tender-studio"], defaultPage: "tender-studio" },
   { id: "bid-evaluation", label: "Bid Evaluation", pages: ["bid-evaluation"], defaultPage: "bid-evaluation" },
 ]
@@ -267,7 +270,7 @@ function TopNavBar() {
         <img
           src={isDark ? PROSERA_LOGO_WHITE : PROSERA_LOGO_DARK}
           alt="Prosera"
-          className="h-[22px] w-auto shrink-0"
+          className="h-9 w-auto shrink-0"
           onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
         />
         <nav className="flex items-center gap-1.5 overflow-x-auto">
@@ -284,7 +287,7 @@ function TopNavBar() {
                   pcmTab,
                   "shrink-0 whitespace-nowrap rounded-[9px] px-3.5 py-2 text-[13px]",
                   isActive
-                    ? "bg-[var(--color-tint-brand)] font-semibold text-[var(--color-brand-strong)]"
+                    ? "bg-[var(--color-tint-neutral)] font-semibold text-[var(--color-text-primary)]"
                     : "font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                 )}
               >
@@ -317,6 +320,9 @@ function TopNavBar() {
         </Button>
         <ThemeToggle />
         <Avatar className="h-9 w-9 border border-[var(--color-border-default)]">
+          {ACTIVE_USER_AVATAR ? (
+            <AvatarImage src={ACTIVE_USER_AVATAR} alt={ACTIVE_USER.name} />
+          ) : null}
           <AvatarFallback className="bg-[var(--color-bg-inverse)] text-xs font-semibold text-[var(--color-text-inverse)]">JC</AvatarFallback>
         </Avatar>
       </div>

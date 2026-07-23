@@ -1,11 +1,15 @@
 "use client"
 
+import * as React from "react"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
-import { Avatar, AvatarFallback } from "@/components/ui/prosera/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/prosera/avatar"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/prosera/collapsible"
 import { cn } from "@/lib/utils"
 import { getInitials } from "@/app/prototype/prosera-compass/_diamond/stages"
+import { EMPLOYEES } from "@/app/prototype/prosera-compass/data/_people"
 import type { ActionTimelineEntry, AgentTimelineSubEntry, TimelineEntryStatus } from "./hub-types"
-import { displayName } from "./active-user"
+import { ACTIVE_USER, displayName } from "./active-user"
+import { avatarColor, avatarSrcFor } from "./avatar-color"
 
 function formatDate(iso: string): string {
   const d = new Date(iso)
@@ -13,88 +17,120 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
 }
 
-function TimelineNode({
-  status,
-  initials,
-}: {
-  status: TimelineEntryStatus
-  initials: string
-}) {
-  if (status === "done") {
-    return (
-      <div className="relative z-[1] flex size-[22px] shrink-0 items-center justify-center rounded-full bg-[var(--color-tint-positive)] text-[var(--color-accent-positive-text)]">
-        <SafeIcon name="Check" className="size-3" />
-      </div>
-    )
-  }
-
-  if (status === "current") {
-    return (
-      <div className="relative z-[1] flex size-[22px] shrink-0 items-center justify-center rounded-full border-2 border-dashed border-[var(--color-flight-current)] bg-[var(--color-bg-surface)]">
-        <Avatar className="size-4">
-          <AvatarFallback className="bg-[var(--color-bg-inverse)] text-[7px] font-semibold text-[var(--color-text-inverse)]">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-      </div>
-    )
-  }
-
+/** Illustrated (or coloured-initial fallback) avatar for every human on the timeline. */
+function PersonAvatar({ name, size = "sm" }: { name: string; size?: "sm" | "xs" }) {
+  const initials = getInitials(displayName(name) === "You" ? ACTIVE_USER.name : name)
+  const src = avatarSrcFor(name, EMPLOYEES, ACTIVE_USER.name)
   return (
-    <div className="relative z-[1] flex size-[22px] shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--color-border-default)] bg-transparent">
-      <span className="size-1.5 rounded-full bg-[var(--color-text-muted)]/40" />
-    </div>
+    <Avatar className={cn(size === "sm" ? "size-6" : "size-4", "shrink-0")}>
+      {src ? <AvatarImage src={src} alt="" /> : null}
+      <AvatarFallback className={cn(avatarColor(name), "font-semibold text-white", size === "sm" ? "text-[9px]" : "text-[7px]")}>
+        {initials}
+      </AvatarFallback>
+    </Avatar>
   )
 }
 
-function connectorClass(prev: TimelineEntryStatus, next: TimelineEntryStatus): string {
-  const base = "absolute left-[11px] top-6 bottom-0 w-px"
-  if (prev === "done" && next === "done") {
-    return cn(base, "bg-[var(--color-border-default)]")
-  }
-  return cn(base, "border-l border-dashed border-[var(--color-border-default)]")
+type PillTone = "done" | "current" | "upcoming"
+
+const PILL_CLS: Record<PillTone, string> = {
+  done: "bg-[var(--color-tint-positive)] text-[var(--color-accent-positive-text)]",
+  current: "bg-[var(--color-tint-brand)] text-[var(--color-brand-strong)]",
+  upcoming: "bg-[var(--color-bg-subtle)] text-[var(--color-text-secondary)]",
 }
 
-function AgentSubRow({ agent }: { agent: AgentTimelineSubEntry }) {
+function statusPill(status: TimelineEntryStatus, completedAt?: string, dueAt?: string): { label: string; tone: PillTone } {
+  if (status === "done") return { label: completedAt ? `Done · ${formatDate(completedAt)}` : "Done", tone: "done" }
+  if (status === "current") return { label: "In Progress", tone: "current" }
+  return { label: dueAt ? `Due ${formatDate(dueAt)}` : "Pending", tone: "upcoming" }
+}
+
+function StatusPill({ status, completedAt, dueAt }: { status: TimelineEntryStatus; completedAt?: string; dueAt?: string }) {
+  const { label, tone } = statusPill(status, completedAt, dueAt)
+  return (
+    <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap", PILL_CLS[tone])}>
+      {label}
+    </span>
+  )
+}
+
+/** A single BluePilot agent sub-activity inside the shaded AI layer. */
+function AgentRow({ agent }: { agent: AgentTimelineSubEntry }) {
   const isDone = agent.status === "done"
   const isCurrent = agent.status === "current"
-  const isUpcoming = agent.status === "upcoming"
-
   return (
-    <div className="mt-2 flex gap-2 border-l-2 border-dashed border-[var(--color-border-default)] pl-2.5">
+    <div className="flex items-start gap-2">
       <span
         className={cn(
           "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full",
-          isDone && "bg-[var(--color-tint-brand)] text-[var(--color-brand-strong)]",
-          isCurrent && "border border-dashed border-[var(--color-brand-strong)] bg-[var(--color-tint-brand)]/40",
-          isUpcoming && "bg-[var(--color-bg-subtle)] text-[var(--color-text-muted)]",
+          isDone && "bg-[var(--color-brand-strong)] text-white",
+          isCurrent && "border border-[var(--color-brand-strong)] bg-white text-[var(--color-brand-strong)]",
+          !isDone && !isCurrent && "bg-[var(--color-bg-subtle)] text-[var(--color-text-muted)]",
         )}
       >
         <SafeIcon name="Bot" className="size-2.5" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[9px] font-semibold uppercase tracking-wide text-[var(--color-brand-strong)]">
-          BluePilot
-        </p>
-        <p
-          className={cn(
-            "mt-0.5 text-[11px] leading-snug",
-            isUpcoming ? "text-[var(--color-text-muted)]" : "font-medium text-[var(--color-text-secondary)]",
-          )}
-        >
+        <p className={cn("text-[11px] leading-snug", agent.status === "upcoming" ? "text-[var(--color-text-muted)]" : "font-medium text-[var(--color-text-secondary)]")}>
           {agent.label}
         </p>
         <p className="mt-0.5 text-[10px] text-[var(--color-text-muted)]">
-          <span className="font-medium text-[var(--color-text-secondary)]">{displayName(agent.assignee)}</span>
-          {agent.assigneeRole ? ` · ${agent.assigneeRole}` : null}
-          {isDone && agent.completedAt ? ` · ${formatDate(agent.completedAt)}` : null}
-          {isCurrent ? (
-            <span className="font-medium text-[var(--color-brand-strong)]"> · In progress</span>
-          ) : null}
-          {!isDone && !isCurrent && agent.dueAt ? ` · Due ${formatDate(agent.dueAt)}` : null}
+          {isDone && agent.completedAt ? formatDate(agent.completedAt) : null}
+          {isCurrent ? <span className="font-medium text-[var(--color-brand-strong)]">In progress</span> : null}
+          {!isDone && !isCurrent && agent.dueAt ? `Due ${formatDate(agent.dueAt)}` : null}
         </p>
       </div>
     </div>
+  )
+}
+
+function TimelineRow({ entry }: { entry: ActionTimelineEntry }) {
+  const hasAgents = !!entry.agentSteps && entry.agentSteps.length > 0
+
+  const header = (
+    <div className="flex w-full items-center gap-2.5 text-left">
+      <PersonAvatar name={entry.assignee} />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[12px] font-semibold text-[var(--color-text-primary)]">{entry.label}</p>
+        <p className="truncate text-[10px] text-[var(--color-text-muted)]">
+          <span className="font-medium text-[var(--color-text-secondary)]">{displayName(entry.assignee)}</span>
+          {entry.assigneeRole ? ` · ${entry.assigneeRole}` : null}
+        </p>
+      </div>
+      <StatusPill status={entry.status} completedAt={entry.completedAt} dueAt={entry.dueAt} />
+      {hasAgents && (
+        <SafeIcon
+          name="ChevronDown"
+          className="size-3.5 shrink-0 text-[var(--color-text-muted)] transition-transform group-data-[state=open]:rotate-180"
+        />
+      )}
+    </div>
+  )
+
+  const rowClass = "rounded-[10px] border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-2.5 py-2"
+
+  if (!hasAgents) {
+    return <div className={rowClass}>{header}</div>
+  }
+
+  return (
+    <Collapsible defaultOpen={entry.status === "current"} className={rowClass}>
+      <CollapsibleTrigger className="group w-full">{header}</CollapsibleTrigger>
+      <CollapsibleContent>
+        {/* Shaded layer differentiates automated BluePilot work from human actions. */}
+        <div className="mt-2 space-y-2 rounded-[8px] border border-[var(--color-brand-strong)]/10 bg-[var(--color-tint-brand)]/50 p-2.5">
+          <div className="flex items-center gap-1.5">
+            <SafeIcon name="Sparkles" className="size-3 text-[var(--color-brand-strong)]" />
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-[var(--color-brand-strong)]">
+              BluePilot activity
+            </span>
+          </div>
+          {entry.agentSteps!.map((agent) => (
+            <AgentRow key={agent.id} agent={agent} />
+          ))}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   )
 }
 
@@ -118,83 +154,11 @@ export function ActionCompletionTimeline({
       <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
         Actions taken
       </p>
-      <ol className="mt-2 max-h-[220px] space-y-0 overflow-y-auto pr-1" aria-label="Action timeline">
-        {entries.map((entry, i) => {
-          const isLast = i === entries.length - 1
-          const initials = getInitials(displayName(entry.assignee))
-          const isDone = entry.status === "done"
-          const isCurrent = entry.status === "current"
-          const isUpcoming = entry.status === "upcoming"
-
-          return (
-            <li key={entry.id} className="relative flex gap-2.5 pb-3">
-              {!isLast && (
-                <span
-                  aria-hidden
-                  className={connectorClass(entry.status, entries[i + 1]!.status)}
-                />
-              )}
-              <TimelineNode status={entry.status} initials={initials} />
-              <div className="min-w-0 flex-1 pt-0.5">
-                <p
-                  className={cn(
-                    "text-[12px] font-medium leading-snug",
-                    isDone && "text-[var(--color-text-primary)]",
-                    isCurrent && "text-[var(--color-text-primary)]",
-                    isUpcoming && "text-[var(--color-text-muted)]",
-                  )}
-                >
-                  {entry.label}
-                </p>
-                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-[var(--color-text-muted)]">
-                  <span className="inline-flex items-center gap-1">
-                    <Avatar className={cn("size-4", isUpcoming && "opacity-60")}>
-                      <AvatarFallback className="bg-[var(--color-bg-inverse)] text-[7px] font-semibold text-[var(--color-text-inverse)]">
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className={cn(isUpcoming && "opacity-70")}>
-                      <span className="font-medium text-[var(--color-text-secondary)]">{displayName(entry.assignee)}</span>
-                      {entry.assigneeRole ? ` · ${entry.assigneeRole}` : null}
-                    </span>
-                  </span>
-                  {isDone && entry.completedAt ? (
-                    <span>{formatDate(entry.completedAt)}</span>
-                  ) : null}
-                  {isCurrent ? (
-                    <span className="font-medium text-[var(--color-brand-strong)]">In progress</span>
-                  ) : null}
-                  {isCurrent && entry.dueAt ? (
-                    <span>Due {formatDate(entry.dueAt)}</span>
-                  ) : null}
-                  {isUpcoming && entry.dueAt ? (
-                    <span>Due {formatDate(entry.dueAt)}</span>
-                  ) : null}
-                  {entry.stageLabel ? (
-                    <span
-                      className={cn(
-                        "rounded px-1 py-px text-[9px] font-medium uppercase tracking-wide",
-                        isUpcoming
-                          ? "bg-[var(--color-bg-subtle)]/60 text-[var(--color-text-muted)]"
-                          : "bg-[var(--color-bg-subtle)]",
-                      )}
-                    >
-                      {entry.stageLabel}
-                    </span>
-                  ) : null}
-                </div>
-                {entry.agentSteps && entry.agentSteps.length > 0 ? (
-                  <div className="mt-1">
-                    {entry.agentSteps.map((agent) => (
-                      <AgentSubRow key={agent.id} agent={agent} />
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            </li>
-          )
-        })}
-      </ol>
+      <div className="mt-2 max-h-[280px] space-y-1.5 overflow-y-auto pr-1">
+        {entries.map((entry) => (
+          <TimelineRow key={entry.id} entry={entry} />
+        ))}
+      </div>
     </div>
   )
 }

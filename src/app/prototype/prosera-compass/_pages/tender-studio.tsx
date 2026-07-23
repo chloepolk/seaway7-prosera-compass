@@ -449,16 +449,16 @@ function DocumentRepository({ activeDocRefs }: { activeDocRefs: Set<string> }) {
                     className={cn(
                       "flex items-center gap-2 rounded-[9px] border px-2.5 py-2 transition-colors",
                       active
-                        ? "border-[var(--color-brand-primary)] bg-[var(--color-tint-brand)]"
+                        ? "border-[var(--color-border-default)] bg-[var(--color-tint-neutral)]"
                         : "border-transparent hover:border-[var(--color-border-default)] hover:bg-[var(--color-bg-subtle)]",
                     )}
                   >
-                    <SafeIcon name="FileText" className={cn("h-3.5 w-3.5 shrink-0", active ? "text-[var(--color-brand-strong)]" : "text-[var(--color-text-muted)]")} />
+                    <SafeIcon name="FileText" className={cn("h-3.5 w-3.5 shrink-0", active ? "text-[var(--color-text-primary)]" : "text-[var(--color-text-muted)]")} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[12px] font-medium text-[var(--color-text-primary)]">{doc.docRef}</span>
                       <span className="block truncate text-[10px] text-[var(--color-text-muted)]">{doc.title} · {doc.revision}</span>
                     </span>
-                    {active && <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--color-brand-primary)] animate-pulse" />}
+                    {active && <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--color-text-secondary)] animate-pulse" />}
                   </a>
                 )
               })}
@@ -487,6 +487,10 @@ export function TenderStudioPage() {
   const [itt, setItt] = React.useState<IttDocument | null>(null)
   const [audit, setAudit] = React.useState<TenderAuditOutput | null>(null)
   const [submitted, setSubmitted] = React.useState(false)
+  // Audit detail collapses by default so the ITT itself sits right below the result line.
+  const [auditOpen, setAuditOpen] = React.useState(false)
+  // Pipeline steps stay collapsed unless the user expands them (less is more).
+  const [pipelineOpen, setPipelineOpen] = React.useState(false)
   const runningRef = React.useRef(false)
 
   // Restore a catalogued draft into the working area without re-running the pipeline.
@@ -502,6 +506,8 @@ export function TenderStudioPage() {
     setAudit(d.audit)
     setSubmitted(d.submitted)
     setSpecialists({ technical: "done", quality: "done", legal: "done" })
+    setAuditOpen(false)
+    setPipelineOpen(false)
     setPhase("complete")
   }, [])
 
@@ -564,6 +570,8 @@ export function TenderStudioPage() {
     setItt(null)
     setAudit(null)
     setSubmitted(false)
+    setAuditOpen(false)
+    setPipelineOpen(false)
     setSpecialists({ technical: "pending", quality: "pending", legal: "pending" })
     setPhase("scoping")
 
@@ -663,7 +671,7 @@ export function TenderStudioPage() {
               <Button
                 type="submit"
                 disabled={isRunning || !prompt.trim()}
-                className={cn(pcmButton, "w-full gap-1.5 rounded-[10px] bg-[var(--color-brand-primary)] text-[13px] font-semibold text-[var(--color-brand-onPrimary)] hover:opacity-90")}
+                className={cn(pcmButton, "w-full gap-1.5 rounded-[10px] bg-[var(--color-bg-inverse)] text-[13px] font-semibold text-[var(--color-text-inverse)] hover:opacity-90")}
               >
                 {isRunning ? (
                   <>
@@ -714,7 +722,7 @@ export function TenderStudioPage() {
                       className={cn(
                         "group flex items-center gap-2 rounded-[9px] border px-2.5 py-2 transition-colors",
                         active
-                          ? "border-[var(--color-brand-primary)] bg-[var(--color-tint-brand)]"
+                          ? "border-[var(--color-border-default)] bg-[var(--color-tint-neutral)]"
                           : "border-transparent hover:border-[var(--color-border-default)] hover:bg-[var(--color-bg-subtle)]",
                       )}
                     >
@@ -795,18 +803,33 @@ export function TenderStudioPage() {
 
           {(isRunning || phase === "complete") && spec && (
             <>
-              {/* Pipeline rail */}
+              {/* Pipeline rail — collapsed by default; spinner stays in the header while running */}
               <section className={cn(pcmCard, "rounded-[16px] border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] p-4 space-y-3")}>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <SafeIcon name="Workflow" className="h-4 w-4 text-[var(--color-text-muted)]" />
+                    {isRunning ? (
+                      <SafeIcon name="Loader2" className="h-4 w-4 animate-spin text-[var(--color-brand-primary)]" />
+                    ) : (
+                      <SafeIcon name="Workflow" className="h-4 w-4 text-[var(--color-text-muted)]" />
+                    )}
                     <h2 className="text-[13px] font-semibold text-[var(--color-text-primary)]">Drafting pipeline</h2>
                   </div>
-                  <span className="text-[11px] text-[var(--color-text-muted)]">
-                    {spec.name} · {quantity}{pkg ? ` · ${pkg.packageRef}` : ""}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[11px] text-[var(--color-text-muted)]">
+                      {spec.name} · {quantity}{pkg ? ` · ${pkg.packageRef}` : ""}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setPipelineOpen((v) => !v)}
+                      className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                    >
+                      <SafeIcon name={pipelineOpen ? "ChevronUp" : "ChevronDown"} className="h-3.5 w-3.5" />
+                      {pipelineOpen ? "Show less" : "Show details"}
+                    </button>
+                  </div>
                 </div>
 
+                {pipelineOpen && (
                 <div className="space-y-2.5">
                   {/* Scope */}
                   <div className="flex gap-2.5">
@@ -872,6 +895,7 @@ export function TenderStudioPage() {
                     </div>
                   )}
                 </div>
+                )}
               </section>
 
               {/* Audit register */}
@@ -884,12 +908,24 @@ export function TenderStudioPage() {
                         {audit.verified ? "Audit passed — verified against source" : "Audit complete — corrections applied"}
                       </h2>
                     </div>
-                    <span className="text-[11px] tabular-nums text-[var(--color-text-muted)]">
-                      {audit.checks.length} checks · {audit.corrections.length} corrections
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[11px] tabular-nums text-[var(--color-text-muted)]">
+                        {audit.checks.length} checks · {audit.corrections.length} corrections
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setAuditOpen((v) => !v)}
+                        className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                      >
+                        <SafeIcon name={auditOpen ? "ChevronUp" : "ChevronDown"} className="h-3.5 w-3.5" />
+                        {auditOpen ? "Show less" : "Show details"}
+                      </button>
+                    </div>
                   </div>
-                  <p className="text-[12px] leading-relaxed text-[var(--color-text-secondary)]">{audit.assessment}</p>
-                  <div className="grid gap-1.5 sm:grid-cols-2">
+                  {auditOpen && (
+                    <>
+                      <p className="text-[12px] leading-relaxed text-[var(--color-text-secondary)]">{audit.assessment}</p>
+                      <div className="grid gap-1.5 sm:grid-cols-2">
                     {audit.checks.map((c, i) => {
                       const style = AUDIT_STATUS_STYLE[c.status] ?? AUDIT_STATUS_STYLE.pass
                       const motion = listItemMotion(i)
@@ -905,18 +941,20 @@ export function TenderStudioPage() {
                       )
                     })}
                   </div>
-                  {audit.corrections.length > 0 && (
-                    <div className="space-y-1.5">
-                      <p className="text-[10px] font-semibold uppercase tracking-[1px] text-[var(--color-text-muted)]">Corrections applied</p>
-                      {audit.corrections.map((c, i) => (
-                        <div key={i} className="rounded-[10px] border border-amber-400/40 bg-[var(--color-bg-surface)] p-2.5 text-[11px]">
-                          <p className="font-medium text-[var(--color-text-primary)]">{c.section}</p>
-                          <p className="text-[var(--color-text-muted)] line-through">{c.original}</p>
-                          <p className="text-[var(--color-text-secondary)]">{c.corrected}</p>
-                          <p className="mt-0.5 text-[10px] text-[var(--color-text-muted)]">{c.reason}</p>
+                      {audit.corrections.length > 0 && (
+                        <div className="space-y-1.5">
+                          <p className="text-[10px] font-semibold uppercase tracking-[1px] text-[var(--color-text-muted)]">Corrections applied</p>
+                          {audit.corrections.map((c, i) => (
+                            <div key={i} className="rounded-[10px] border border-amber-400/40 bg-[var(--color-bg-surface)] p-2.5 text-[11px]">
+                              <p className="font-medium text-[var(--color-text-primary)]">{c.section}</p>
+                              <p className="text-[var(--color-text-muted)] line-through">{c.original}</p>
+                              <p className="text-[var(--color-text-secondary)]">{c.corrected}</p>
+                              <p className="mt-0.5 text-[10px] text-[var(--color-text-muted)]">{c.reason}</p>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      )}
+                    </>
                   )}
                 </section>
               )}
