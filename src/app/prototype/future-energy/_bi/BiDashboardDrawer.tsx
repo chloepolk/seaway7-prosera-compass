@@ -230,23 +230,23 @@ const EXEC_PROMPT = `Produce a polished EXECUTIVE BRIEFING in Markdown for the A
 Follow this EXACT structure, using Markdown headings (##), bold (**), and lists. Do not add any other sections, preamble, or sign-off.
 
 ## Bottom Line
-One or two sentences (BLUF) naming the single most material opportunity and the specific decision being asked for. Bold the headline euro figure.
+One or two sentences (BLUF) naming the single most material opportunity and the specific decision being asked for. Bold the headline dollar figure.
 
 ## What Changed
 2–3 bullets ("- ") on the most important movement since the prior period. Use portfolioTrend (recent vs. prior margin, direction, delta) and any newly surfaced risk/opportunity. If trend data is thin, say so explicitly.
 
 ## Customer Health & Whitespace
-2–3 bullets: composite Customer Score (CI-04) distribution + any high-tier/low-score accounts; and Total Addressable Market whitespace (portfolio addressable vs. captured, top expansion targets with €/yr).
+2–3 bullets: composite Customer Score (CI-04) distribution + any high-tier/low-score accounts; and Total Addressable Market whitespace (portfolio addressable vs. captured, top expansion targets with $/yr).
 
 ## Pricing & Market / Weather Pricing Power
 2–3 bullets: quoting exposure, NTE escalation friction (operational visibility only), AND weather-driven pricing-power windows (name the region, event window, and recommended surcharge/crew-staging action where pricing power is high).
-NTE FRAMING (mandatory): the NTE is a cap the customer sets before dispatch and ACME cannot change it. Jobs that exceed it get re-authorized and still bill, so the euro "overage" is NOT lost revenue, NOT unauthorized, and NOT a profit threat — never frame it that way and never make it the Bottom Line as recoverable/at-risk margin. Treat NTE as an operational-friction and cycle-time problem (re-auth loop: tech → dispatch → approver → customer; return trips, idle time, dispatch labor, customer-trust risk). Quantify friction cost for visibility and recommend internal workflow mitigations only — do NOT recommend NTE threshold changes, raises, or customer renegotiation.
+NTE FRAMING (mandatory): the NTE is a cap the customer sets before dispatch and ACME cannot change it. Jobs that exceed it get re-authorized and still bill, so the dollar "overage" is NOT lost revenue, NOT unauthorized, and NOT a profit threat — never frame it that way and never make it the Bottom Line as recoverable/at-risk margin. Treat NTE as an operational-friction and cycle-time problem (re-auth loop: tech → dispatch → approver → customer; return trips, idle time, dispatch labor, customer-trust risk). Quantify friction cost for visibility and recommend internal workflow mitigations only — do NOT recommend NTE threshold changes, raises, or customer renegotiation.
 
 ## Process Velocity
 1–2 bullets on invoice-lag / cash conversion if present.
 
 ## Operating Loop — Action Register
-A numbered list of 4–6 items, ordered by euro impact, built from the mission action register in context. Write EACH on a single line in exactly this format:
+A numbered list of 4–6 items, ordered by dollar impact, built from the mission action register in context. Write EACH on a single line in exactly this format:
 **<Action: imperative verb + what>** — Impact: **$X/yr** · Owner: <role or team> · Horizon: <timeframe>
 
 ## Risks & Watch Items
@@ -255,7 +255,7 @@ A numbered list of 4–6 items, ordered by euro impact, built from the mission a
 ## Assumptions & Data Sources
 1–2 bullets citing the data sources used (Internal job data, BLS, Census, EIA, NOAA weather) and flagging any MOCKED/SIMULATED inputs (e.g. TAM recon/OSINT signals, weather-urgency model, simulated AR/DSO collections signal) so the reader knows confidence levels.
 
-Rules: every recommendation MUST include a specific euro figure; use ONLY figures present in the provided context (never invent data); no filler, no "as an AI", no closing pleasantries; keep the entire briefing under ~430 words.`
+Rules: every recommendation MUST include a specific dollar figure; use ONLY figures present in the provided context (never invent data); no filler, no "as an AI", no closing pleasantries; keep the entire briefing under ~430 words.`
 
 export function BiDashboardDrawer() {
   const { biOpen, setBiOpen, data, allFindings, tenderStages, locale } = useStore()

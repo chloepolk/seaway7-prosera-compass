@@ -470,7 +470,7 @@ function missionFromPackage(pkg: TenderPackage, locale: Locale, stageOverride?: 
       baseline: 0,
       target: projectedValue,
       current: currentMetric,
-      unit: "€",
+      unit: locale === "fr" ? "€" : "$",
       direction: "increase",
     },
     openedAt: pkg.openedAt,

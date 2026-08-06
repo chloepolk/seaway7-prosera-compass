@@ -11,7 +11,7 @@ import { useStore } from "../_store"
 /* ------------------------------------------------------------------ */
 /*  Compass Profitability Matrix                                       */
 /*  Every recommendation placed on two axes the CEO cares about:       */
-/*  what it does to the euros (protect vs. create) and how fast      */
+/*  what it does to the dollars (protect vs. create) and how fast      */
 /*  (shock <24h / 1-30 days / >30 days), with the $ at a glance.       */
 /* ------------------------------------------------------------------ */
 

@@ -74,7 +74,7 @@ CONTEXT:
 ${JSON.stringify(ctx, null, 1)}
 
 INSTRUCTIONS:
-1. Frame this as fleet-wide exposure, not per-trip surcharge math. Reference the "every €0.09/gal = $X/yr" sensitivity metric.
+1. Frame this as fleet-wide exposure, not per-trip surcharge math. Reference the "every $0.10/gal = $X/yr" sensitivity metric.
 2. Compare the modeled price against fleet card baseline and current actuals.
 3. If the price represents an increase, quantify the margin erosion and which divisions absorb the most impact.
 4. Recommend the contract fuel clause strategy: escalation clauses pegged to fleet card actuals with quarterly review.

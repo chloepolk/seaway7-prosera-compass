@@ -38,7 +38,7 @@ function SeverityTag({ severity }: { severity: Severity }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Figure emphasis — bold the euro / % / multiplier / unit figures  */
+/*  Figure emphasis — bold the dollar / % / multiplier / unit figures  */
 /*  so numbers carry visual weight like the executive narrative.       */
 /* ------------------------------------------------------------------ */
 

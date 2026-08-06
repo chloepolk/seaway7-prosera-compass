@@ -256,7 +256,7 @@ function regionFindings(data: ComputedData): BPFinding[] {
         category: "margin-alert",
         severity: "high",
         title: `${regionLabels[best.region]} leads margin at ${pct(best.validated.avgMarginPct)} vs ${regionLabels[worst.region]} at ${pct(worst.validated.avgMarginPct)}`,
-        narrative: `A ${pct(spread)} margin spread across regions suggests that local labor markets, travel distances, or branch-level pricing discipline are impacting the bottom line. ${regionLabels[worst.region]} processes ${worst.jobCount} jobs but captures less margin per euro of revenue.${laborContext}`,
+        narrative: `A ${pct(spread)} margin spread across regions suggests that local labor markets, travel distances, or branch-level pricing discipline are impacting the bottom line. ${regionLabels[worst.region]} processes ${worst.jobCount} jobs but captures less margin per dollar of revenue.${laborContext}`,
         evidence: [
           ...regions.map(r => {
             const state = r.region as "RW" | "RS" | "RC" | "RE" | "RN" | "RM";
@@ -564,9 +564,9 @@ function dataQualityFindings(data: ComputedData): BPFinding[] {
       title: `${affected.length} jobs have no posted costs — margin overstated by up to ${usd(overstatedMargin)}`,
       narrative: `These jobs show revenue but zero actual cost in the field service platform. If costs are pending, the portfolio margin is overstated. If these are warranty or goodwill jobs, they should be categorized as such and excluded from pricing benchmarks.`,
       evidence: affected.slice(0, 8).map(j =>
-        `Job ${j.jobNumber} (${j.customerName}): ${usd(j.totalAmount ?? 0)} revenue, €0 cost`
+        `Job ${j.jobNumber} (${j.customerName}): ${usd(j.totalAmount ?? 0)} revenue, $0 cost`
       ),
-      recommendation: `Verify cost posting status for ${affected.length === 1 ? "this job" : `these ${affected.length} jobs`} in the field service platform. If costs are finalized at €0, tag as warranty/goodwill to prevent margin distortion.`,
+      recommendation: `Verify cost posting status for ${affected.length === 1 ? "this job" : `these ${affected.length} jobs`} in the field service platform. If costs are finalized at $0, tag as warranty/goodwill to prevent margin distortion.`,
       page: "customer-intel",
       drillLevel: "macro",
     });
@@ -581,7 +581,7 @@ function dataQualityFindings(data: ComputedData): BPFinding[] {
       category: "data-quality",
       severity: "high",
       title: `${affected.length} ${affected.length === 1 ? "job has" : "jobs have"} placeholder NTE values — excluded from NTE analysis`,
-      narrative: `NTE values under €9 are data entry placeholders. These produce extreme revenue-to-NTE ratios that distort escalation analysis. They have been excluded from NTE threshold analysis.`,
+      narrative: `NTE values under $10 are data entry placeholders. These produce extreme revenue-to-NTE ratios that distort escalation analysis. They have been excluded from NTE threshold analysis.`,
       evidence: affected.slice(0, 8).map(j =>
         `Job ${j.jobNumber} (${j.customerName}): NTE ${usd(j.amountNTE ?? 0)}, billed ${usd(j.totalAmount ?? 0)}, utilization ${j.nteUtilization != null ? (j.nteUtilization * 100).toFixed(0) + "%" : "N/A"}`
       ),
@@ -620,7 +620,7 @@ function dataQualityFindings(data: ComputedData): BPFinding[] {
         category: "data-quality",
         severity: "critical",
         title: `${customer.split(",")[0]}: NTE of ${usd(avgNTE)} guarantees losses — ${jobsOverNTE} of ${custJobs.length} jobs exceed NTE`,
-        narrative: `This contract's NTE cannot cover a single tech-hour at current labor rates (€25–€34/hr). ${jobsOverNTE} of ${custJobs.length} jobs cost more than the NTE to execute. Net loss on this program: ${usd(netLoss)}.`,
+        narrative: `This contract's NTE cannot cover a single tech-hour at current labor rates ($27–$37/hr). ${jobsOverNTE} of ${custJobs.length} jobs cost more than the NTE to execute. Net loss on this program: ${usd(netLoss)}.`,
         evidence: [
           `Average NTE: ${usd(avgNTE)}`,
           `Average actual cost: ${usd(avgCost)}`,
@@ -691,8 +691,8 @@ function dataQualityFindings(data: ComputedData): BPFinding[] {
       id: "dq-implausible-margin",
       category: "data-quality",
       severity: "critical",
-      title: `${implausibleJobs.length} jobs show 85%+ margin on €460+ revenue — costs almost certainly incomplete`,
-      narrative: `These jobs report margins that are economically impossible for field services (labor billing rates of €87–€115/hr against tech costs of €25–€41/hr cap realistic margins around 60–70%). The actual costs in the field service platform appear to be partially posted. Combined revenue of ${usd(totalRevenueExcluded)} is excluded from validated metrics until cost posting is completed.`,
+      title: `${implausibleJobs.length} jobs show 85%+ margin on $500+ revenue — costs almost certainly incomplete`,
+      narrative: `These jobs report margins that are economically impossible for field services (labor billing rates of $95–$125/hr against tech costs of $27–$45/hr cap realistic margins around 60–70%). The actual costs in the field service platform appear to be partially posted. Combined revenue of ${usd(totalRevenueExcluded)} is excluded from validated metrics until cost posting is completed.`,
       evidence: sorted.slice(0, 5).map(j =>
         `Job ${j.jobNumber} (${j.customerName}): ${usd(j.totalAmount ?? 0)} revenue, ${usd(j.actualCost ?? 0)} cost, ${pct(j.marginPct ?? 0)} margin`
       ),
@@ -747,7 +747,7 @@ function dataQualityFindings(data: ComputedData): BPFinding[] {
         `Total cost exposure: ${usd(totalCostExposed)} across ${openUnbilledJobs.length} jobs`,
         ...topCustomers.slice(0, 5).map(([name, custJobs]) => {
           const custCost = custJobs.reduce((s, j) => s + (j.actualCost ?? 0), 0);
-          return `${name.split(",")[0]}: ${custJobs.length} open ${custJobs.length === 1 ? "job" : "jobs"}, ${usd(custCost)} in posted costs, €0 revenue`;
+          return `${name.split(",")[0]}: ${custJobs.length} open ${custJobs.length === 1 ? "job" : "jobs"}, ${usd(custCost)} in posted costs, $0 revenue`;
         }),
       ],
       recommendation: `Monitor these open jobs. If they remain unbilled past 30 days, escalate to project management for invoicing. The ${usd(totalCostExposed)} in costs will correctly flow into margin calculations once revenue is posted.`,
@@ -906,10 +906,10 @@ function costIntelFindings(data: ComputedData): BPFinding[] {
       id: "cost-sync-issue",
       category: "data-quality",
       severity: "high",
-      title: `${syncIssueJobs.length} jobs have cost line items but €0 actual cost — platform sync issue`,
-      narrative: `These jobs have detailed cost line items totaling ${usd(totalLineCost)} but show €0 in the actualCost field. This is a platform rollup/sync failure, not genuinely zero-cost work. The margin on these jobs is overstated.`,
+      title: `${syncIssueJobs.length} jobs have cost line items but $0 actual cost — platform sync issue`,
+      narrative: `These jobs have detailed cost line items totaling ${usd(totalLineCost)} but show $0 in the actualCost field. This is a platform rollup/sync failure, not genuinely zero-cost work. The margin on these jobs is overstated.`,
       evidence: syncIssueJobs.slice(0, 5).map(j =>
-        `Job ${j.jobNumber} (${j.customerName}): ${j.costBreakdown!.lineCount} cost lines totaling ${usd(j.costBreakdown!.totalLineCost)}, actualCost = €0`
+        `Job ${j.jobNumber} (${j.customerName}): ${j.costBreakdown!.lineCount} cost lines totaling ${usd(j.costBreakdown!.totalLineCost)}, actualCost = $0`
       ),
       recommendation: `Trigger a cost rollup refresh in the field service platform for ${syncIssueJobs.length === 1 ? "this job" : `these ${syncIssueJobs.length} jobs`}. ${usd(totalLineCost)} in costs should be reflected in actuals.`,
       page: "customer-intel",
@@ -1079,7 +1079,7 @@ function laborMarketFindings(data: ComputedData): BPFinding[] {
           const latest = p.snapshots[p.snapshots.length - 1];
           return `${p.metroArea}: ${latest?.totalPermits.toLocaleString(activeLocaleTag()) ?? 0} total (${latest?.singleFamily.toLocaleString(activeLocaleTag()) ?? 0} SF, ${latest?.multiFamilyFivePlus.toLocaleString(activeLocaleTag()) ?? 0} MF 5+), ${p.constructionActivityLevel} activity`;
         }),
-        recommendation: `Target new construction HVAC contracts in ${signal.topMetro}. Each 1,000 residential permits generates ~€1.8-3.7M in commercial HVAC demand over 3 years. ${permits[0]?.notes ?? ""}`,
+        recommendation: `Target new construction HVAC contracts in ${signal.topMetro}. Each 1,000 residential permits generates ~$2-4M in commercial HVAC demand over 3 years. ${permits[0]?.notes ?? ""}`,
         page: "customer-intel",
         drillLevel: "region",
         regionScope: state,
@@ -1185,9 +1185,9 @@ function procurementFindings(): BPFinding[] {
       severity: "high",
       title: "European TP fabrication slots are contested",
       narrative:
-        "PKG-2102 (24 transition pieces) holds a reserved Q1 2027 fabrication slot. A late ITT risks losing the slot to a competing developer; the Batch 1 benchmark of €1.83M per unit landed DDP anchors the negotiation.",
+        "PKG-2102 (24 transition pieces) holds a reserved Q1 2027 fabrication slot. A late ITT risks losing the slot to a competing developer; the Batch 1 benchmark of $1.99M per unit landed DDP anchors the negotiation.",
       evidence: [
-        "Batch 1 award benchmark: €1.83M per unit landed DDP.",
+        "Batch 1 award benchmark: $1.99M per unit landed DDP.",
         "Three yards on the bidder list, submission deadline 17 Aug 2026.",
       ],
       recommendation: "Complete requirements extraction against TS-STR-TP-002 and issue inside the reserved-slot window.",
@@ -1200,7 +1200,7 @@ function procurementFindings(): BPFinding[] {
       severity: "medium",
       title: "Anode tender exposed to aluminium alloy volatility",
       narrative:
-        "PKG-2104 closes 24 July with four bidders. Clause 7.1 fixed pricing must hold without a commodities-index rider, or the €109k savings target erodes on award.",
+        "PKG-2104 closes 24 July with four bidders. Clause 7.1 fixed pricing must hold without a commodities-index rider, or the $118k savings target erodes on award.",
       evidence: [
         "S7-SCM-TC-2026 §7.1: fixed firm pricing, no escalation without an agreed commodities index.",
         "4 of 4 bidders acknowledged receipt; two clarifications answered inside the 7-day window.",

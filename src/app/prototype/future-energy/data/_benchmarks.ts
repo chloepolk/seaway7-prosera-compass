@@ -23,7 +23,7 @@ export const tradeMargins: TradeMarginBenchmark[] = [
     trade: "HVAC - Commercial",
     grossMarginRange: [0.40, 0.60],
     netMarginRange: [0.05, 0.12],
-    notes: "Higher equipment costs (€2.8k-€4.6k per replacement), frequently requires 2-person crews for installs which doubles labor impact. Well-run operations can reach 18-25% net.",
+    notes: "Higher equipment costs ($3k-$5k per replacement), frequently requires 2-person crews for installs which doubles labor impact. Well-run operations can reach 18-25% net.",
     source: "Mar-Hy Distributors / Profitability Partners (2026)",
   },
   {
@@ -78,10 +78,10 @@ export interface RevenueScaleBenchmark {
 }
 
 export const revenueScaleBenchmarks: RevenueScaleBenchmark[] = [
-  { revenueLabel: "~€1.8M", revenueFloor: 2_000_000, grossProfit: 0.50, overheadExMarketing: 0.30, marketingSpend: 0.12, netProfitRange: [0.05, 0.10], source: "Profitability Partners (2026)" },
-  { revenueLabel: "~€4.6M", revenueFloor: 5_000_000, grossProfit: 0.50, overheadExMarketing: 0.235, marketingSpend: 0.10, netProfitRange: [0.12, 0.18], source: "Profitability Partners (2026)" },
-  { revenueLabel: "~€9.2M", revenueFloor: 10_000_000, grossProfit: 0.50, overheadExMarketing: 0.22, marketingSpend: 0.08, netProfitRange: [0.15, 0.22], source: "Profitability Partners (2026)" },
-  { revenueLabel: "€18.4M+", revenueFloor: 20_000_000, grossProfit: 0.50, overheadExMarketing: 0.20, marketingSpend: 0.065, netProfitRange: [0.18, 0.25], source: "Profitability Partners (2026)" },
+  { revenueLabel: "~$2M", revenueFloor: 2_000_000, grossProfit: 0.50, overheadExMarketing: 0.30, marketingSpend: 0.12, netProfitRange: [0.05, 0.10], source: "Profitability Partners (2026)" },
+  { revenueLabel: "~$5M", revenueFloor: 5_000_000, grossProfit: 0.50, overheadExMarketing: 0.235, marketingSpend: 0.10, netProfitRange: [0.12, 0.18], source: "Profitability Partners (2026)" },
+  { revenueLabel: "~$10M", revenueFloor: 10_000_000, grossProfit: 0.50, overheadExMarketing: 0.22, marketingSpend: 0.08, netProfitRange: [0.15, 0.22], source: "Profitability Partners (2026)" },
+  { revenueLabel: "$20M+", revenueFloor: 20_000_000, grossProfit: 0.50, overheadExMarketing: 0.20, marketingSpend: 0.065, netProfitRange: [0.18, 0.25], source: "Profitability Partners (2026)" },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -325,7 +325,7 @@ export const peMetrics = {
   overheadConsolidation: {
     beforePct: 0.30,
     afterPct: 0.20,
-    notes: "Consolidating several €1.8M firms into €9.2M+ platform drops overhead from ~30% to ~20% of revenue.",
+    notes: "Consolidating several $2M firms into $10M+ platform drops overhead from ~30% to ~20% of revenue.",
     source: "Profitability Partners (2026)",
   },
   integrationMarketIntelligence: {
@@ -391,7 +391,7 @@ export const qsrBenchmarks = {
   },
   walkInFreezerFailureRisk: {
     inventoryLoss: 5000,
-    notes: "Walk-in freezer failure mid-service loses €4.6k+ in inventory plus thousands in lost sales.",
+    notes: "Walk-in freezer failure mid-service loses $5k+ in inventory plus thousands in lost sales.",
   },
   source: "RON Group / Restaurant365 / ServiceChannel",
 };
@@ -411,7 +411,7 @@ export const strategicFrameworks: StrategicFramework[] = [
   {
     name: "Whale Curve Analysis",
     description: "Top 20-30% of customers generate 150-200% of net profit. Bottom 20% destroy 50-80%. Largest customers often in 'profit taker' category due to deep discounts and high cost-to-serve.",
-    application: "Run whale curve on ACME Field Services customer base. Identify profit takers for repricing or divestment. Quantify euro impact of bottom-quintile remediation.",
+    application: "Run whale curve on ACME Field Services customer base. Identify profit takers for repricing or divestment. Quantify dollar impact of bottom-quintile remediation.",
     source: "NAW / Wilson Perumal / Pragmatic Institute",
   },
   {
@@ -434,14 +434,14 @@ export const strategicFrameworks: StrategicFramework[] = [
   },
   {
     name: "PE Overhead Leverage Model",
-    description: "Consolidating €1.8M firms into €9.2M+ platform drops overhead from ~30% to ~20% of revenue, expanding net margin from single digits to ~20%.",
+    description: "Consolidating $2M firms into $10M+ platform drops overhead from ~30% to ~20% of revenue, expanding net margin from single digits to ~20%.",
     application: "Position ACME Field Services's current overhead structure against this trajectory. Quantify expected overhead improvement from scale achieved through acquisitions.",
     source: "Profitability Partners / Kaplan & Strömberg (2009)",
   },
   {
     name: "Concentration Risk Thresholds",
     description: "Single customer >20-25% of revenue = high risk. Top 5 customers >50% of revenue = portfolio risk. Concentrated firms trade at 4.5x vs. 5.5x EBITDA.",
-    application: "Calculate ACME Field Services's concentration ratios. If above thresholds, prescribe diversification strategy with timeline and euro targets.",
+    application: "Calculate ACME Field Services's concentration ratios. If above thresholds, prescribe diversification strategy with timeline and dollar targets.",
     source: "Nuvera Partners / Corporate Finance Institute",
   },
   {
@@ -464,7 +464,7 @@ export const strategicFrameworks: StrategicFramework[] = [
   },
   {
     name: "Technician Utilization Leverage",
-    description: "Every percentage point of utilization gained adds €552-€1,104/year per tech. Top performers: 70-82%. Underperformers: <55%. Windshield time in sprawling metros: 30-40% of day.",
+    description: "Every percentage point of utilization gained adds $600-$1,200/year per tech. Top performers: 70-82%. Underperformers: <55%. Windshield time in sprawling metros: 30-40% of day.",
     application: "If ACME Field Services data shows low utilization signals (high visit counts with low revenue per visit), flag for route optimization and dispatch efficiency review.",
     source: "Oxmaint / FieldCamp / Praxedo",
   },

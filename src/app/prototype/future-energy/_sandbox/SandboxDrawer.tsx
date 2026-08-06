@@ -12,11 +12,12 @@ import { buildSandboxPrompt } from "./prompt"
 import { buildPortfolioContext } from "../agents/_context"
 import { useT } from "../_i18n/use-t"
 import { localeTag } from "../_i18n"
-import { activeLocaleTag, formatActiveUsd } from "../_i18n/legacy"
-import { formatEurUnit, toEur } from "../_i18n/currency"
+import { activeLocaleTag, formatActiveUsd, formatActiveEurUnit } from "../_i18n/legacy"
+import { displayAmount } from "../_i18n/currency"
+import type { Locale } from "../_i18n/types"
 
 const usd = (n: number) => `${n >= 0 ? "+" : ""}${formatActiveUsd(n, false)}`
-const eurGal = (n: number, locale: "en" | "fr" = "en") => formatEurUnit(n, locale)
+const fuelGal = (n: number) => formatActiveEurUnit(n)
 const pts = (n: number) => (n >= 0 ? "+" : "") + n.toFixed(1)
 const bps = (n: number) => (n >= 0 ? "+" : "") + Math.round(n)
 
@@ -171,7 +172,7 @@ export function SandboxDrawer() {
       "── Scenario Parameters ──",
       `Customer Mix: Exit ${scenario.customerMix.exitDogs} Dogs, Add ${scenario.customerMix.addStars} Stars`,
       `Pricing: Labor ${scenario.pricing.laborMultiplier > 0 ? scenario.pricing.laborMultiplier.toFixed(1) + "x" : "unchanged"}, Material ${scenario.pricing.materialMarkupPct > 0 ? scenario.pricing.materialMarkupPct + "%" : "unchanged"}`,
-      `Fuel: ${eurGal(scenario.fuel.pricePerGal)}/gal`,
+      `Fuel: ${fuelGal(scenario.fuel.pricePerGal)}/gal`,
       `NTE friction sensitivity: ${scenario.nte.thresholdMultiplier.toFixed(1)}x`,
       "",
       "── Projected Impact ──",
@@ -459,7 +460,9 @@ function FuelLevers({ scenario, currentPrice, onUpdate }: {
   onUpdate: (fn: (s: ScenarioState) => ScenarioState) => void
 }) {
   const t = useT()
+  const { locale } = useStore()
   const delta = scenario.fuel.pricePerGal - currentPrice
+  const shownDelta = displayAmount(delta, locale as Locale)
   return (
     <>
       <div className="flex items-center gap-1.5 text-xs font-semibold">
@@ -472,13 +475,13 @@ function FuelLevers({ scenario, currentPrice, onUpdate }: {
         min={2.50}
         max={6.00}
         step={0.05}
-        displayValue={eurGal(scenario.fuel.pricePerGal)}
+        displayValue={fuelGal(scenario.fuel.pricePerGal)}
         onChange={v => onUpdate(s => ({ ...s, fuel: { pricePerGal: v } }))}
       />
       <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-        <span>{t("sandbox.current")}: {eurGal(currentPrice)}</span>
+        <span>{t("sandbox.current")}: {fuelGal(currentPrice)}</span>
         <span className={cn(delta > 0 ? "text-[var(--color-accent-critical-text)]" : delta < 0 ? "text-[var(--color-accent-positive-text)]" : "")}>
-          {delta > 0 ? "+" : ""}{toEur(delta).toFixed(2)}/gal
+          {shownDelta > 0 ? "+" : ""}{shownDelta.toFixed(2)}/gal
         </span>
       </div>
     </>

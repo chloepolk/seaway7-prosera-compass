@@ -51,7 +51,7 @@ const FINDING_REASONING: Record<string, FindingReasoningFactory> = {
     ],
     equations: [
       "estimatedRecovery = Σ|dollarImpact| for top drag drivers",
-      "Prescription threshold: recovery > €1,840 × 0.87 (MONETARY_SCALE)",
+      "Prescription threshold: recovery > $2,000 × 0.87 (MONETARY_SCALE)",
     ],
     sources: ["Internal — Job cost lines (_costs.ts)", "Internal — Root cause engine (_rootcause.ts)"],
   }),
@@ -98,7 +98,7 @@ const FINDING_REASONING: Record<string, FindingReasoningFactory> = {
     ],
     equations: [
       "nteUtilization = totalAmount / amountNTE",
-      "savings = eliminatedEscalations × €46 truck roll × 40% return-trip rate",
+      "savings = eliminatedEscalations × $50 truck roll × 40% return-trip rate",
     ],
     sources: ["Internal — Platform job export (_raw.ts)", "Internal — Dispatch auth (_dispatch.ts)"],
   }),
@@ -129,11 +129,11 @@ const FINDING_REASONING: Record<string, FindingReasoningFactory> = {
   "dispatch-friction-portfolio": () => ({
     steps: [
       "Tracked NTE re-authorization events and return-trip patterns",
-      "Quantified truck-roll cost per escalation at €46/visit",
+      "Quantified truck-roll cost per escalation at $50/visit",
       "Ranked customers by escalation frequency × revenue impact",
     ],
     equations: [
-      "frictionCost = escalations × €46 × returnTripRate (40%)",
+      "frictionCost = escalations × $50 × returnTripRate (40%)",
     ],
     sources: ["Internal — Dispatch auth events (_dispatch.ts)"],
   }),

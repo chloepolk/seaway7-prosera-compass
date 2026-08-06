@@ -100,7 +100,7 @@ function FleetSpendChart({ data, spikeMonth }: { data: CombinedFuelMonth[]; spik
           <div>
             <h3 className="text-sm font-semibold">{localizeActiveCopy("Monthly Fleet Fuel Spend")}</h3>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              Fleet card transactions — 15-month series with unleaded €/gal overlay
+              Fleet card transactions — 15-month series with unleaded $/gal overlay
             </p>
           </div>
           <div className="flex items-center gap-4 text-[10px]">
@@ -110,7 +110,7 @@ function FleetSpendChart({ data, spikeMonth }: { data: CombinedFuelMonth[]; spik
             </span>
             <span className="flex items-center gap-1.5">
               <span className="inline-block h-0.5 w-6 bg-red-500" />
-              Unleaded €/gal
+              Unleaded $/gal
             </span>
           </div>
         </div>
@@ -152,7 +152,7 @@ function FleetSpendChart({ data, spikeMonth }: { data: CombinedFuelMonth[]; spik
                       <span className="font-mono font-medium">{fmtUsdExact(d?.totalSpend ?? 0)}</span>
                     </div>
                     <div className="flex items-center justify-between gap-4">
-                      <span className="text-muted-foreground">{localizeActiveCopy("Unleaded €/gal")}</span>
+                      <span className="text-muted-foreground">{localizeActiveCopy("Unleaded $/gal")}</span>
                       <span className="font-mono font-medium">${(d?.unleadedPPG ?? 0).toFixed(2)}</span>
                     </div>
                     {(d?.spikeImpact ?? 0) !== 0 && (
@@ -267,7 +267,7 @@ function DivisionCard({ div }: { div: DivisionFuelSummary }) {
             <p className="font-mono text-xs font-medium">{Math.round(div.totalAnnualGallons).toLocaleString(activeLocaleTag())}</p>
           </div>
           <div>
-            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">{localizeActiveCopy("Unleaded €/gal trend")}</p>
+            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">{localizeActiveCopy("Unleaded $/gal trend")}</p>
             <p className="font-mono text-xs font-medium">
               ${div.baselineAvgPricePerGal.toFixed(2)} → <span className={div.priceDeltaPct > 0 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}>
                 ${div.currentAvgPricePerGal.toFixed(2)}
@@ -303,7 +303,7 @@ function FuelSensitivityCard({ sensitivity }: { sensitivity: FuelSensitivityAnal
         <div className="mb-4">
           <h3 className="text-sm font-semibold">{localizeActiveCopy("Fuel Price Sensitivity")}</h3>
           <p className="text-[11px] text-muted-foreground mt-0.5">
-            {localizeActiveCopy("Fleet burns")} {Math.round(sensitivity.annualGallons).toLocaleString(activeLocaleTag())} {localizeActiveCopy("gal/yr")} — {localizeActiveCopy("every €0.09/gal move")} = {fmtUsd(sensitivity.impactPerDime)}/{localizeActiveCopy("yr impact")}
+            {localizeActiveCopy("Fleet burns")} {Math.round(sensitivity.annualGallons).toLocaleString(activeLocaleTag())} {localizeActiveCopy("gal/yr")} — {localizeActiveCopy("every $0.10/gal move")} = {fmtUsd(sensitivity.impactPerDime)}/{localizeActiveCopy("yr impact")}
           </p>
         </div>
 
@@ -314,7 +314,7 @@ function FuelSensitivityCard({ sensitivity }: { sensitivity: FuelSensitivityAnal
           </div>
           <div className="text-center">
             <p className="font-mono text-2xl font-bold text-foreground">{fmtUsd(sensitivity.impactPerDime)}</p>
-            <p className="text-[10px] text-muted-foreground mt-1">{localizeActiveCopy("annual fleet cost impact per €0.09/gal price move")}</p>
+            <p className="text-[10px] text-muted-foreground mt-1">{localizeActiveCopy("annual fleet cost impact per $0.10/gal price move")}</p>
           </div>
           <div className="flex items-center justify-between mt-3 text-[10px] text-muted-foreground">
             <span>{Math.round(sensitivity.annualGallons).toLocaleString(activeLocaleTag())} {localizeActiveCopy("gal/yr")}</span>
@@ -461,7 +461,7 @@ export function FuelIntegritySection() {
         <SafeIcon name="Fuel" className="h-4 w-4 text-red-600 dark:text-red-400" />
         <h3 className="text-sm font-semibold">{localizeActiveCopy("Fuel &amp; Fleet Cost Intelligence")}</h3>
         <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
-          {fmtUsd(act.totalAnnualSpend)} annual fleet fuel · {(act.unleadedPctOfVolume * 100).toFixed(0)}% unleaded · every €0.09/gal = {fmtUsd(fuel.sensitivity.impactPerDime)}/yr
+          {fmtUsd(act.totalAnnualSpend)} annual fleet fuel · {(act.unleadedPctOfVolume * 100).toFixed(0)}% unleaded · {localizeActiveCopy("every $0.10/gal move")} = {fmtUsd(fuel.sensitivity.impactPerDime)}/{localizeActiveCopy("yr")}
         </span>
       </div>
 

@@ -216,12 +216,12 @@ const FR: Record<string, string> = {
   "regional fit": "ajustement régional",
   "Fleet burns": "La flotte consomme",
   "gal/yr": "gal/an",
-  "every €0.09/gal move": "chaque variation de 0,09 €/gal",
-  "per €0.09/gal": "par 0,09 €/gal",
-  "Every €0.09/gal moves": "Chaque variation de 0,09 €/gal déplace",
-  "Unleaded €/gal": "Sans plomb €/gal",
-  "Unleaded €/gal trend": "Tendance sans plomb €/gal",
-  "annual fleet cost impact per €0.09/gal price move": "impact annuel du coût flotte par variation de 0,09 €/gal",
+  "every $0.10/gal move": "chaque variation de 0,09 €/gal",
+  "per $0.10/gal": "par 0,09 €/gal",
+  "Every $0.10/gal moves": "Chaque variation de 0,09 €/gal déplace",
+  "Unleaded $/gal": "Sans plomb €/gal",
+  "Unleaded $/gal trend": "Tendance sans plomb €/gal",
+  "annual fleet cost impact per $0.10/gal price move": "impact annuel du coût flotte par variation de 0,09 €/gal",
   "yr impact": "an d’impact",
   "baseline": "référence",
   "yr": "an",
@@ -398,6 +398,7 @@ export function activeLocaleTag(): "fr-FR" | "en-GB" {
   }
 }
 
+/** Format a USD seed amount for the active locale (EN → $, FR → €). */
 export function formatActiveUsd(value: number, compact = true): string {
   const locale = activeLocaleTag() === "fr-FR" ? "fr" : "en"
   return compact
@@ -405,7 +406,7 @@ export function formatActiveUsd(value: number, compact = true): string {
     : formatEur(value, locale, { maximumFractionDigits: 2, minimumFractionDigits: 0 })
 }
 
-/** Unit prices (per gal, per hour, etc.) with two decimals in EUR. */
+/** Unit prices (per gal, per hour, etc.) for the active locale. */
 export function formatActiveEurUnit(value: number): string {
   const locale = activeLocaleTag() === "fr-FR" ? "fr" : "en"
   return formatEur(value, locale, { maximumFractionDigits: 2, minimumFractionDigits: 2 })
