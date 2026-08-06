@@ -9,7 +9,8 @@ export async function POST(req: Request) {
   if (!hasAnyProvider()) return fallbackResponse()
 
   try {
-    const { context, drillState } = await req.json()
+    const { context, drillState, locale } = await req.json()
+    const language = locale === "fr" ? "Rédigez tous les champs textuels en français ; conservez les noms, normes, identifiants et références inchangés.\n\n" : ""
 
     const response = await callWithFallback({
       model: MODELS.openai,
@@ -18,7 +19,7 @@ export async function POST(req: Request) {
         { role: "system", content: PORTFOLIO_SPECIALIST_PROMPT },
         {
           role: "user",
-          content: `Analyze the following portfolio data and return your structured analysis.\n\nNavigation: ${JSON.stringify(drillState)}\n\nData:\n${JSON.stringify(context, null, 1)}`,
+          content: `${language}Analyze the following portfolio data and return your structured analysis.\n\nNavigation: ${JSON.stringify(drillState)}\n\nData:\n${JSON.stringify(context, null, 1)}`,
         },
       ],
       response_format: {

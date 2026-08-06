@@ -5,11 +5,14 @@ export const runtime = "nodejs"
 
 export async function POST(req: Request) {
   try {
-    const { scenarioPrompt } = await req.json()
+    const { scenarioPrompt, locale } = await req.json()
+    const language = locale === "fr"
+      ? "Répondez exclusivement en français. Conservez inchangés les noms propres, marques, normes, identifiants et références."
+      : "Respond exclusively in English."
 
     const stream = await createChatStream(
       SANDBOX_SYSTEM_PROMPT,
-      "",
+      language,
       [{ role: "user", content: scenarioPrompt }],
       0.3,
     )

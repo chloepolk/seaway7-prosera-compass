@@ -11,6 +11,7 @@
 
 import React from "react"
 import { cn } from "@/lib/utils"
+import { useStore } from "../_store"
 
 /* Bare document / standard / package references worth highlighting
    even when the model does not wrap them in brackets. */
@@ -96,7 +97,7 @@ function parseBlocks(content: string): Block[] {
       blocks.push({ kind: "bullet", text: bullet[1] })
       continue
     }
-    const next = line.match(/^next\s*:\s*(.*)$/i)
+    const next = line.match(/^(?:next|suivant|prochaine étape)\s*:\s*(.*)$/i)
     if (next) {
       blocks.push({ kind: "next", text: next[1] })
       continue
@@ -112,6 +113,7 @@ function parseBlocks(content: string): Block[] {
 }
 
 export function ChatMessageBody({ content, className }: { content: string; className?: string }) {
+  const { locale } = useStore()
   const blocks = parseBlocks(content)
   if (blocks.length === 0) return null
 
@@ -137,7 +139,9 @@ export function ChatMessageBody({ content, className }: { content: string; class
           case "next":
             return (
               <div key={i} className="mt-1 flex items-start gap-1.5 rounded-md border-l-2 border-primary bg-primary/5 px-2 py-1.5">
-                <span className="mt-px shrink-0 text-[9px] font-bold uppercase tracking-wider text-primary">Next</span>
+                <span className="mt-px shrink-0 text-[9px] font-bold uppercase tracking-wider text-primary">
+                  {locale === "fr" ? "Suite" : "Next"}
+                </span>
                 <p className="leading-snug text-foreground">
                   <InlineText text={block.text} />
                 </p>

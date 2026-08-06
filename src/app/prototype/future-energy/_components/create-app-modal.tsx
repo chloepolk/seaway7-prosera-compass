@@ -1,5 +1,7 @@
 "use client"
 
+import { localizeActiveCopy } from "../_i18n/legacy"
+
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
@@ -37,7 +39,7 @@ function normIdea(raw: unknown): AppIdea | null {
     rationale: typeof r.rationale === "string" ? r.rationale : "",
     internalBindings: Array.isArray(r.internalBindings) ? r.internalBindings.filter((s): s is string => typeof s === "string") : [],
     sources: sources
-      .map(s => (s && typeof s === "object" ? s as Record<string, unknown> : null))
+      .map(s =>(s && typeof s === "object" ? s as Record<string, unknown> : null))
       .filter((s): s is Record<string, unknown> => !!s && typeof s.label === "string")
       .map(s => ({
         id: typeof s.id === "string" && s.id ? s.id : String(s.label).toLowerCase().replace(/\s+/g, "-"),
@@ -62,7 +64,7 @@ function SourceBadges({ sources }: { sources: SourceRef[] }) {
     <div className="flex flex-wrap gap-1">
       {sources.slice(0, 4).map(s => (
         <span key={s.id} title={s.method ? `Modeled: ${s.method}` : s.label} className={cn("rounded-sm px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide", PROV_CLS[s.provenance])}>
-          {s.label} · {s.provenance}
+          {localizeActiveCopy(s.label)} · {s.provenance}
         </span>
       ))}
     </div>
@@ -70,7 +72,7 @@ function SourceBadges({ sources }: { sources: SourceRef[] }) {
 }
 
 export function CreateAppModal({ onClose, onCreated }: { onClose: () => void; onCreated: (id: string) => void }) {
-  const { saveCustomApp } = useStore()
+  const { saveCustomApp, locale } = useStore()
   const [phase, setPhase] = React.useState<Phase>("intent")
   const [intent, setIntent] = React.useState("")
   const [logs, setLogs] = React.useState<string[]>([])
@@ -95,10 +97,12 @@ export function CreateAppModal({ onClose, onCreated }: { onClose: () => void; on
   const startDiscovery = React.useCallback(async () => {
     clearTimers()
     setPhase("working"); setIdeas([]); setSelectedId(null); setFeatures(null); setError(null)
-    setLogs(["Reading the live portfolio dataset…", "Matching external signals to commercial field services…"])
+    setLogs(locale === "fr"
+      ? ["Lecture des données du portefeuille en direct…", "Rapprochement des signaux externes avec les services techniques commerciaux…"]
+      : ["Reading the live portfolio dataset…", "Matching external signals to commercial field services…"])
     const ctrl = new AbortController(); abortRef.current = ctrl
 
-    const sleep = (ms: number) => new Promise<void>(resolve => {
+    const sleep = (ms: number) =>new Promise<void>(resolve => {
       timersRef.current.push(setTimeout(resolve, ms))
     })
 
@@ -106,7 +110,7 @@ export function CreateAppModal({ onClose, onCreated }: { onClose: () => void; on
       const res = await fetch("/api/acme/app-architect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ intent }),
+        body: JSON.stringify({ intent, locale }),
         signal: ctrl.signal,
       })
       const json = await res.json()
@@ -115,7 +119,9 @@ export function CreateAppModal({ onClose, onCreated }: { onClose: () => void; on
       const ideaList: AppIdea[] = Array.isArray(data?.ideas) ? data.ideas.map(normIdea).filter((i: AppIdea | null): i is AppIdea => !!i) : []
 
       if (ideaList.length === 0) {
-        setError("The architect didn't return any ideas. Try a more specific intent and run discovery again.")
+        setError(locale === "fr"
+          ? "L’architecte n’a renvoyé aucune idée. Précisez votre intention et relancez la découverte."
+          : "The architect didn't return any ideas. Try a more specific intent and run discovery again.")
         setPhase("intent")
         return
       }
@@ -133,9 +139,9 @@ export function CreateAppModal({ onClose, onCreated }: { onClose: () => void; on
       }
       if (!ctrl.signal.aborted) setPhase("intent")
     } catch (err) {
-      if ((err as Error).name !== "AbortError") { setError("Discovery failed. Please try again."); setPhase("intent") }
+      if ((err as Error).name !== "AbortError") { setError(locale === "fr" ? "La découverte a échoué. Veuillez réessayer." : "Discovery failed. Please try again."); setPhase("intent") }
     }
-  }, [intent, clearTimers])
+  }, [intent, clearTimers, locale])
 
   const createApp = React.useCallback(async () => {
     if (!selected) return
@@ -145,7 +151,7 @@ export function CreateAppModal({ onClose, onCreated }: { onClose: () => void; on
       const res = await fetch("/api/acme/app-compose", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idea: selected, features: features ?? selected.features }),
+        body: JSON.stringify({ idea: selected, features: features ?? selected.features, locale }),
         signal: ctrl.signal,
       })
       const json = await res.json()
@@ -156,22 +162,22 @@ export function CreateAppModal({ onClose, onCreated }: { onClose: () => void; on
       onCreated(spec.id)
       onClose()
     } catch (err) {
-      if ((err as Error).name !== "AbortError") { setError("Couldn't compose that app. Pick another idea or retry."); setPhase("working") }
+      if ((err as Error).name !== "AbortError") { setError(locale === "fr" ? "Impossible de composer cette app. Choisissez une autre idée ou réessayez." : "Couldn't compose that app. Pick another idea or retry."); setPhase("working") }
     }
-  }, [selected, features, saveCustomApp, onCreated, onClose])
+  }, [selected, features, saveCustomApp, onCreated, onClose, locale])
 
   const toggleFeature = (k: keyof AppIdeaFeatures) =>
     setFeatures(prev => prev ? { ...prev, [k]: !prev[k] } : prev)
 
   return (
     <div className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto p-4 sm:p-8" role="dialog" aria-modal="true">
-      <button type="button" aria-label="Close" className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <button type="button" aria-label={localizeActiveCopy("Close")} className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 my-auto w-full max-w-2xl overflow-hidden rounded-2xl border bg-card shadow-2xl">
         <div className="flex items-center justify-between border-b px-5 py-3">
           <div className="flex items-center gap-2">
             <SafeIcon name="Sparkles" className="h-4 w-4 text-[var(--color-brand-strong)]" />
-            <h3 className="text-sm font-semibold">Create an app</h3>
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">agent-built</span>
+            <h3 className="text-sm font-semibold">{localizeActiveCopy("Create an app")}</h3>
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">{localizeActiveCopy("agent-built")}</span>
           </div>
           <button type="button" onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-muted">
             <SafeIcon name="X" className="h-4 w-4" />
@@ -181,11 +187,11 @@ export function CreateAppModal({ onClose, onCreated }: { onClose: () => void; on
         <div className="max-h-[72vh] space-y-4 overflow-y-auto p-5">
           {/* Intent */}
           <div>
-            <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">What do you want to understand?</label>
+            <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{localizeActiveCopy("What do you want to understand?")}</label>
             <textarea
               value={intent}
               onChange={e => setIntent(e.target.value)}
-              placeholder="e.g. Where can weather and material costs let us raise prices? — or leave blank and let the agent recommend."
+              placeholder={localizeActiveCopy("e.g. Where can weather and material costs let us raise prices? — or leave blank and let the agent recommend.")}
               rows={2}
               disabled={phase === "composing"}
               className="w-full resize-none rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-[var(--color-brand-primary)]"
@@ -198,11 +204,11 @@ export function CreateAppModal({ onClose, onCreated }: { onClose: () => void; on
                 className="inline-flex items-center gap-1.5 rounded-md bg-[var(--color-brand-primary)] px-3 py-1.5 text-[12px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
               >
                 <SafeIcon name="Compass" className="h-3.5 w-3.5" />
-                {phase === "working" ? "Discovering…" : ideas.length > 0 ? "Rediscover" : "Discover ideas"}
+                {localizeActiveCopy(phase === "working" ? "Discovering…" : ideas.length > 0 ? "Rediscover" : "Discover ideas")}
               </button>
               {phase === "intent" && (
                 <button type="button" onClick={() => { setIntent(""); startDiscovery() }} className="text-[11px] font-medium text-muted-foreground hover:text-foreground hover:underline">
-                  Just recommend something
+                  {localizeActiveCopy("Just recommend something")}
                 </button>
               )}
             </div>
@@ -218,10 +224,10 @@ export function CreateAppModal({ onClose, onCreated }: { onClose: () => void; on
                   {phase === "working" && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--color-brand-primary)] opacity-60" />}
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--color-brand-primary)]" />
                 </span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Discovery log</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{localizeActiveCopy("Discovery log")}</span>
               </div>
               <ul className="space-y-0.5">
-                {logs.map((l, i) => <li key={i} className="text-[11px] leading-relaxed text-muted-foreground">{l}</li>)}
+                {logs.map((l, i) => <li key={i} className="text-[11px] leading-relaxed text-muted-foreground">{localizeActiveCopy(l)}</li>)}
               </ul>
               <div ref={logEndRef} />
             </div>
@@ -230,7 +236,7 @@ export function CreateAppModal({ onClose, onCreated }: { onClose: () => void; on
           {/* Idea cards */}
           {ideas.length > 0 && (
             <div className="space-y-2">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Proposed apps {phase === "working" && "(streaming…)"}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{localizeActiveCopy("Proposed apps")} {phase === "working" && localizeActiveCopy("(streaming…)")}</span>
               {ideas.map(idea => {
                 const isSel = idea.id === selectedId
                 return (
@@ -249,8 +255,8 @@ export function CreateAppModal({ onClose, onCreated }: { onClose: () => void; on
                         <SafeIcon name={idea.icon} className="h-4 w-4" />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block text-[13px] font-semibold text-foreground">{idea.title}</span>
-                        <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">{idea.rationale}</span>
+                        <span className="block text-[13px] font-semibold text-foreground">{localizeActiveCopy(idea.title)}</span>
+                        <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">{localizeActiveCopy(idea.rationale)}</span>
                         <span className="mt-1.5 block"><SourceBadges sources={idea.sources} /></span>
                       </span>
                       <SafeIcon name={isSel ? "ChevronUp" : "ChevronDown"} className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
@@ -272,7 +278,7 @@ export function CreateAppModal({ onClose, onCreated }: { onClose: () => void; on
                                 )}
                               >
                                 <SafeIcon name={on ? "Check" : f.icon} className="h-3 w-3" />
-                                {f.label}
+                                {localizeActiveCopy(f.label)}
                               </button>
                             )
                           })}
@@ -284,7 +290,7 @@ export function CreateAppModal({ onClose, onCreated }: { onClose: () => void; on
                           className="inline-flex items-center gap-1.5 rounded-md bg-[var(--color-brand-primary)] px-3 py-1.5 text-[12px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                         >
                           <SafeIcon name="Plus" className="h-3.5 w-3.5" />
-                          {phase === "composing" ? "Composing…" : "Create this app"}
+                          {localizeActiveCopy(phase === "composing" ? "Composing…" : "Create this app")}
                         </button>
                       </div>
                     )}
@@ -296,7 +302,7 @@ export function CreateAppModal({ onClose, onCreated }: { onClose: () => void; on
 
           {phase === "working" && ideas.length === 0 && logs.length === 0 && (
             <div className="flex items-center justify-center gap-2 py-8 text-[12px] text-muted-foreground">
-              <SafeIcon name="Loader" className="h-4 w-4 animate-spin" /> Discovering opportunities…
+              <SafeIcon name="Loader" className="h-4 w-4 animate-spin" /> {localizeActiveCopy("Discovering opportunities…")}
             </div>
           )}
         </div>

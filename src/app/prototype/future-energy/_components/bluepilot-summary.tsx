@@ -8,17 +8,18 @@ import { enterMotion, insightsHeroShell, pcmButton } from "./motion"
 import type { Severity } from "../data/_insights"
 import { BluePilotReasoningButton, ReasoningExpand, ReasoningTooltip, type ReasoningContent } from "./reasoning-disclosure"
 import { isReasoningEmpty } from "./reasoning-helpers"
+import { useT } from "../_i18n/use-t"
 
 /* ------------------------------------------------------------------ */
 /*  Severity tag — mirrors the right-rail findings idiom (monochrome,  */
 /*  deliberately NOT the BCG tier palette) so nothing reads as a tier. */
 /* ------------------------------------------------------------------ */
 
-const severityTag: Record<Severity, { label: string; icon: string; cls: string }> = {
-  critical: { label: "Critical", icon: "OctagonAlert", cls: "bg-white text-[#14233D]" },
-  high: { label: "High", icon: "TriangleAlert", cls: "bg-white/20 text-white" },
-  medium: { label: "Medium", icon: "Info", cls: "bg-white/12 text-[#AECBDC]" },
-  info: { label: "Info", icon: "CircleDot", cls: "bg-white/8 text-[#AECBDC]/80" },
+const severityTag: Record<Severity, { labelKey: string; icon: string; cls: string }> = {
+  critical: { labelKey: "severity.critical", icon: "OctagonAlert", cls: "bg-white text-[#14233D]" },
+  high: { labelKey: "severity.high", icon: "TriangleAlert", cls: "bg-white/20 text-white" },
+  medium: { labelKey: "severity.medium", icon: "Info", cls: "bg-white/12 text-[#AECBDC]" },
+  info: { labelKey: "severity.info", icon: "CircleDot", cls: "bg-white/8 text-[#AECBDC]/80" },
 }
 
 function normalizeSeverity(s: string | undefined | null): Severity {
@@ -26,11 +27,12 @@ function normalizeSeverity(s: string | undefined | null): Severity {
 }
 
 function SeverityTag({ severity }: { severity: Severity }) {
+  const translate = useT()
   const t = severityTag[severity]
   return (
     <span className={cn("inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide", t.cls)}>
       <SafeIcon name={t.icon} className="h-2.5 w-2.5" />
-      {t.label}
+      {translate(t.labelKey)}
     </span>
   )
 }
@@ -88,10 +90,11 @@ export function BluePilotSummary({
   bulletReasoning = [],
   severity,
   reasoning,
-  eyebrow = "Trends, Insights & Actions",
+  eyebrow,
   collapsedSentences: _collapsedSentences = 2,
 }: BluePilotSummaryProps) {
   const [expanded, setExpanded] = React.useState(false)
+  const t = useT()
   const [reasoningOpen, setReasoningOpen] = React.useState(false)
   const sev = normalizeSeverity(severity)
   const hasReasoning = !isReasoningEmpty(reasoning)
@@ -114,7 +117,7 @@ export function BluePilotSummary({
           <div className="flex items-center gap-2">
             <span className="size-[7px] shrink-0 rounded-full bg-[#5BD2F2]" aria-hidden />
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#5BD2F2]">
-              {eyebrow}
+              {eyebrow ?? t("reasoning.trends")}
             </p>
           </div>
           <SeverityTag severity={sev} />
@@ -148,7 +151,7 @@ export function BluePilotSummary({
                 onClick={() => setExpanded(true)}
                 className={cn(pcmButton, HERO_CTA_BTN)}
               >
-                Show more
+                {t("reasoning.showMore")}
                 <SafeIcon name="ChevronDown" className="h-3.5 w-3.5" />
               </Button>
             )}
@@ -181,7 +184,7 @@ export function BluePilotSummary({
           {bullets.length > 0 && (
             <div className="space-y-2.5 border-t border-white/12 pt-4">
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5BD2F2]/80">
-                Recommended Actions
+                {t("reasoning.recommendedActions")}
               </p>
               <ol className="space-y-2">
                 {bullets.map((b, i) => (
@@ -195,7 +198,7 @@ export function BluePilotSummary({
                         <ReasoningTooltip
                           reasoning={bulletReasoning[i]}
                           iconClassName="text-[#AECBDC]/70"
-                          label={`Why action ${i + 1}`}
+                          label={t("reasoning.whyAction", { count: i + 1 })}
                           className="mt-0.5"
                         />
                       </span>
@@ -211,7 +214,7 @@ export function BluePilotSummary({
             onClick={() => setExpanded(false)}
             className={cn(pcmButton, "inline-flex items-center gap-1 text-[11px] font-medium text-[#5BD2F2] hover:underline")}
           >
-            Show less
+            {t("reasoning.showLess")}
             <SafeIcon name="ChevronUp" className="h-3 w-3" />
           </button>
         </div>
@@ -224,7 +227,8 @@ export function BluePilotSummary({
 /*  Loading skeleton — shared analyzing state                          */
 /* ------------------------------------------------------------------ */
 
-export function BluePilotSkeleton({ label = "BluePilot is analyzing…" }: { label?: string }) {
+export function BluePilotSkeleton({ label }: { label?: string }) {
+  const t = useT()
   const shimmerStyle: React.CSSProperties = {
     background: "linear-gradient(90deg, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.22) 37%, rgba(255,255,255,0.08) 63%)",
     backgroundSize: "200% 100%",
@@ -236,7 +240,7 @@ export function BluePilotSkeleton({ label = "BluePilot is analyzing…" }: { lab
         <div className="flex items-center gap-2">
           <span className="inline-block h-2 w-2 rounded-full" style={shimmerStyle} />
           <span className="text-[11px] font-medium uppercase tracking-wider text-[#5BD2F2]/70">
-            {label}
+            {label ?? t("agent.bluePilotAnalyzing")}
           </span>
         </div>
         <div className="h-5 w-2/3 rounded" style={shimmerStyle} />

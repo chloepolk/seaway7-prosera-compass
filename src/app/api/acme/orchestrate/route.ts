@@ -16,7 +16,10 @@ export async function POST(req: Request) {
   const model = gemini ? MODELS.geminiFlash : MODELS.openai
 
   try {
-    const { specialistOutputs, drillState, pageContext, orchestratorContext } = await req.json()
+    const { specialistOutputs, drillState, pageContext, orchestratorContext, locale } = await req.json()
+    const languageInstruction = locale === "fr"
+      ? "\nLANGUE OBLIGATOIRE : rédigez tous les champs de texte en français. Conservez inchangés les noms propres, marques, normes, identifiants et références documentaires.\n"
+      : "\nREQUIRED LANGUAGE: write all text fields in English.\n"
 
     const availableSpecialists = (specialistOutputs || []).filter(Boolean)
     if (availableSpecialists.length === 0) {
@@ -125,7 +128,7 @@ On the Pricing Intel page, frame as aggregate exposure + contract fuel-escalatio
 ${JSON.stringify(orchestratorContext.fuelExposure, null, 1)}`
       : ""
 
-    const userContent = `Synthesize the following specialist analyses into a unified intelligence briefing.
+    const userContent = `${languageInstruction}Synthesize the following specialist analyses into a unified intelligence briefing.
 
 Navigation Context: ${JSON.stringify(drillState)}
 Active Page: ${pageContext}

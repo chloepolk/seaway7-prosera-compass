@@ -3,14 +3,15 @@
 import * as React from "react"
 import { useStore } from "../_store"
 import { cn } from "@/lib/utils"
-import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { ActionCard } from "@/components/ActionCard"
 import { AgenticFocusHero } from "../_components/agentic-hero"
 import { RegionStrategyRow, StrategyFilterBar } from "../_components/hub/region-strategy-row"
 import { barFillMotion } from "../_components/motion"
-import type { ExpansionPrescription, ExpansionStrategy, MarketSignal, StrategyScorecard } from "../data/_expansion"
+import type { ExpansionStrategy, MarketSignal, StrategyScorecard } from "../data/_expansion"
 import { ReasoningTooltip } from "../_components/reasoning-disclosure"
 import { reasoningFromExpansionPrescription } from "../_components/reasoning-helpers"
+import { useT } from "../_i18n/use-t"
+import { localizeLegacyCopy } from "../_i18n/legacy"
 
 const strategyConfig: Record<ExpansionStrategy, { label: string; color: string; bg: string; icon: string; description: string }> = {
   invest:  { label: "Invest",   color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20", icon: "TrendingUp",  description: "Scale through M&A and sales" },
@@ -28,7 +29,8 @@ const sourceColors: Record<string, string> = {
 }
 
 export function MarketPositionPage() {
-  const { data, setPage } = useStore()
+  const { data, setPage, locale } = useStore()
+  const t = useT()
   const prescriptions = data?.expansionPrescriptions ?? []
   const [expandedRegion, setExpandedRegion] = React.useState<string | null>(null)
   const [strategyFilter, setStrategyFilter] = React.useState<ExpansionStrategy | null>(null)
@@ -36,7 +38,7 @@ export function MarketPositionPage() {
   if (prescriptions.length === 0) {
     return (
       <div className="flex h-full items-center justify-center px-6 py-16">
-        <p className="text-sm text-muted-foreground">Loading market data...</p>
+        <p className="text-sm text-muted-foreground">{t("market.loading")}</p>
       </div>
     )
   }
@@ -51,30 +53,30 @@ export function MarketPositionPage() {
   return (
     <div className="space-y-7">
       <AgenticFocusHero
-        eyebrow="Regional market intelligence · from BluePilot"
-        staticHeadline="Where to invest, defend, and harvest across six regions."
-        staticBody="Central is the growth engine at the strongest margin — scale it. Three regions need defending as wage and fuel costs climb. Mountain is a watch-list; harvest South and redeploy that capital."
+        eyebrow={t("market.eyebrow")}
+        staticHeadline={t("market.headline")}
+        staticBody={t("market.body")}
         staticReasoning={{
-          summary: "Regional strategy scored from BLS wages, Census construction, EIA fuel, and internal margin/footprint data.",
+          summary: t("market.reasoning"),
           steps: [
-            "Weighted scorecard: construction growth (25%), margin (20%), wages (15%), footprint (15%), fuel (15%), labor (10%)",
-            "Mapped composite score to invest / defend / harvest / explore posture per region",
-            "Assigned lever-specific actions per strategy bucket",
+            t("market.step1"),
+            t("market.step2"),
+            t("market.step3"),
           ],
         }}
-        agentReasoningSummary="BluePilot scored regional expansion posture from labor, construction demand, fuel, and portfolio signals."
-        ctaLabel="See top actions"
+        agentReasoningSummary={t("market.agentReasoning")}
+        ctaLabel={t("market.cta")}
         onCta={() => setPage("operating-loop")}
         stats={[
-          { value: String(prescriptions.length), label: "regions" },
-          { value: `${marginSpread}pt`, label: "margin spread" },
+          { value: String(prescriptions.length), label: t("market.regions") },
+          { value: `${marginSpread} pt`, label: t("market.marginSpread") },
         ]}
       />
 
       <div className="space-y-3">
         <div>
-          <h2 className="text-[18px] font-semibold text-[var(--color-text-primary)]">Your regions</h2>
-          <p className="text-[13px] text-[var(--color-text-muted)]">Grouped by strategy — where to grow, hold, and step back</p>
+          <h2 className="text-[18px] font-semibold text-[var(--color-text-primary)]">{t("market.yourRegions")}</h2>
+          <p className="text-[13px] text-[var(--color-text-muted)]">{t("market.grouped")}</p>
         </div>
         <StrategyFilterBar active={strategyFilter} onChange={setStrategyFilter} />
       </div>
@@ -100,7 +102,7 @@ export function MarketPositionPage() {
                 <div className="mt-2 space-y-4 rounded-[14px] border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] p-5">
                   <ScorecardBreakdown scorecard={rx.scorecard} composite={rx.compositeScore} strategy={rx.strategy} />
                   <div>
-                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Market Signals</p>
+                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{t("market.signals")}</p>
                     <div className="grid grid-cols-2 gap-2">
                       {rx.marketSignals.map((sig, i) => (
                         <SignalCard key={i} signal={sig} />
@@ -109,10 +111,19 @@ export function MarketPositionPage() {
                   </div>
                   {rx.actions.length > 0 && (
                     <div>
-                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Recommended Actions</p>
+                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{t("market.recommended")}</p>
                       <div className="space-y-2">
                         {rx.actions.map((action, i) => (
-                          <ActionCard key={i} action={action} />
+                          <ActionCard
+                            key={i}
+                            action={{
+                              ...action,
+                              action: localizeLegacyCopy(action.action, locale),
+                              rationale: localizeLegacyCopy(action.rationale, locale),
+                              expectedImpact: localizeLegacyCopy(action.expectedImpact, locale),
+                              math: action.math ? localizeLegacyCopy(action.math, locale) : action.math,
+                            }}
+                          />
                         ))}
                       </div>
                     </div>
@@ -143,23 +154,32 @@ function scoreColor(score: number): string {
 }
 
 function ScorecardBreakdown({ scorecard, composite, strategy }: { scorecard: StrategyScorecard; composite: number; strategy: ExpansionStrategy }) {
+  const t = useT()
   const cfg = strategyConfig[strategy]
+  const labels: Record<keyof StrategyScorecard, string> = {
+    constructionGrowth: t("market.construction"),
+    currentMargin: t("market.margin"),
+    wageFavorability: t("market.wage"),
+    footprintStrength: t("market.footprint"),
+    fuelExposure: t("market.fuel"),
+    laborSupply: t("market.labor"),
+  }
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Strategy Scorecard</p>
+        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">{t("market.scorecard")}</p>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-muted-foreground">Composite</span>
+          <span className="text-[10px] text-muted-foreground">{t("market.composite")}</span>
           <span className={cn("inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums border", cfg.bg, cfg.color)}>{composite}</span>
         </div>
       </div>
       <div className="space-y-1.5">
-        {scorecardMeta.map(({ key, label, weight, source }, i) => {
+        {scorecardMeta.map(({ key, weight, source }, i) => {
           const val = scorecard[key]
           const bar = barFillMotion(i, val, scoreColor(val))
           return (
             <div key={key} className="flex items-center gap-2 text-[11px]">
-              <span className="w-[110px] shrink-0 text-muted-foreground truncate">{label}</span>
+              <span className="w-[110px] shrink-0 text-muted-foreground truncate">{labels[key]}</span>
               <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
                 <div className={bar.className} style={bar.style} />
               </div>
@@ -177,18 +197,20 @@ function ScorecardBreakdown({ scorecard, composite, strategy }: { scorecard: Str
 }
 
 function SignalCard({ signal }: { signal: MarketSignal }) {
+  const t = useT()
+  const { locale } = useStore()
   return (
     <div className="rounded-lg border bg-muted/20 p-2.5 space-y-1">
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-          {signal.metric}
+          {localizeLegacyCopy(signal.metric, locale)}
           <ReasoningTooltip
             reasoning={{
               summary: signal.implication,
               equations: [`${signal.source} — ${signal.metric} = ${signal.value}`],
-              sources: [signal.source === "Internal" ? "Internal — Platform export" : `${signal.source} — External data`],
+              sources: [signal.source === "Internal" ? `Internal — ${t("market.platformExport")}` : `${signal.source} — ${t("market.externalData")}`],
             }}
-            label={`Why ${signal.metric} matters`}
+            label={t("market.whyMetric", { name: signal.metric })}
           />
         </span>
         <span className={cn("inline-flex items-center rounded px-1 py-px text-[8px] font-semibold tracking-wide", sourceColors[signal.source])}>

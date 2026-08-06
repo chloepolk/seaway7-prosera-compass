@@ -1,4 +1,6 @@
 /* ------------------------------------------------------------------ */
+
+import type { Locale } from "../../_i18n"
 /*  Bid returns across Meridian OWF ITTs                                */
 /*                                                                     */
 /*  Curated supplier inputs for the demo scoring engine. Scores are     */
@@ -249,8 +251,26 @@ export const ALL_BIDS: BidInput[] = [
   ...BIDS_ITT_MER_SCM_2103,
 ]
 
-export function bidsForPackage(packageId: string): BidInput[] {
-  return ALL_BIDS.filter((b) => b.packageId === packageId)
+const FR_INSIGHTS: Record<string, string> = {
+  "bid-jtech": "Conformité technique totale à TS-CBL-66KV-001, préavis FAT aligné et garantie standard. Légèrement au-dessus de l’offre la moins chère, mais meilleure qualité globale.",
+  "bid-nexcore": "Prix conforme le plus bas. Conformité technique partielle (substitution de fibre optique non approuvée) et préavis FAT porté à 45 jours — avantage prix réel, mais offre non exempte d’écarts.",
+  "bid-prysmatic": "Prix facial attractif, mais échec à la porte Incoterms DDP Rotterdam — offre non évaluable selon S7-SCM-TC-2026 §4.1.",
+  "bid-viking": "Franchit les portes avec une technique solide, mais garantie réduite à 12 mois après installation (>25 % sous la norme de 24 mois) — risque commercial élevé malgré un score composite compétitif.",
+  "bid-2104-nordanode": "Certificats complets de capacité électrochimique (≥2 500 Ah/kg) et livraison DDP sans écart. Candidat solide à l’attribution pour les anodes.",
+  "bid-2104-marinecast": "Prix le plus bas, mais conformité partielle de l’alliage et préavis FAT allongé — offre commercialement compétitive, plus faible en technique/QA.",
+  "bid-2104-galvano": "Certificat ISO 9001 expiré à la clôture — échec à une porte éliminatoire. Le prix facial n’est pas évaluable.",
+  "bid-2104-alloybay": "Dossier technique solide, mais garantie de 16 mois — insuffisance juridique et risque commercial élevé en cas d’attribution.",
+  "bid-2103-forgenord": "Seule offre entièrement conforme Type 3.2 / DNV parmi les deux réponses. La concurrence limitée favorise néanmoins ForgeNord sur la qualité.",
+  "bid-2103-heavyhook": "Prix inférieur, mais refus du knock-for-knock mutuel requis pour le remplacement du crochet côté navire — échec à une porte éliminatoire.",
+}
+
+export function localizedBids(locale: Locale): BidInput[] {
+  if (locale !== "fr") return ALL_BIDS
+  return ALL_BIDS.map((bid) => ({ ...bid, insight: FR_INSIGHTS[bid.id] ?? bid.insight }))
+}
+
+export function bidsForPackage(packageId: string, locale: Locale = "en"): BidInput[] {
+  return localizedBids(locale).filter((b) => b.packageId === packageId)
 }
 
 export function packagesWithBids(): string[] {

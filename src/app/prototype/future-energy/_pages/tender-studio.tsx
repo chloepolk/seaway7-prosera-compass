@@ -6,20 +6,27 @@ import { Button } from "@/components/ui/prosera/button"
 import { cn } from "@/lib/utils"
 import { useStore, type DraftedTender } from "../_store"
 import { useT } from "../_i18n/use-t"
+import { createT, localeTag, type Locale } from "../_i18n"
+import { localizeRole } from "../_i18n/domain"
+import {
+  TENDER_SUGGESTIONS,
+  localizeComponentSpec,
+  localizedComponentSpecs,
+  localizedDocuments,
+  localizedDocumentsByCategory,
+  localizedFatRequirements,
+  localizedProcurementClauses,
+  localizedProject,
+  localizedStandards,
+  localizeQuantity,
+  resolveLocalizedComponent,
+  resolveLocalizedQuantity,
+} from "../_i18n/tender"
 import { enterMotion, listItemMotion, pcmButton, pcmCard } from "../_components/motion"
 import { ACTIVE_USER } from "../_components/hub/active-user"
 import {
   COMPONENT_SPECS,
-  DOCUMENTS,
-  CATEGORY_LABELS,
   CHARTER,
-  PROCUREMENT_CLAUSES,
-  STANDARDS_MATRIX,
-  BASELINE_STANDARDS,
-  FAT_TRACEABILITY_CLAUSES,
-  resolveComponentFromPrompt,
-  resolveQuantityFromPrompt,
-  documentsByCategory,
   type ComponentSpec,
   type DocumentCategory,
 } from "../data/future-energy/_documents"
@@ -47,91 +54,120 @@ interface SpecialistStatuses {
   legal: StepStatus
 }
 
-const SUGGESTED_PROMPTS = [
-  "Draft the ITT for 5,000 metres of 66kV subsea array cable",
-  "Prepare an invitation to tender for 24 monopile transition pieces",
-  "Draft the tender for the replacement 3000T crane hook block",
-  "Draft an ITT for 60 diverless J-tube seals",
-]
-
 /* ------------------------------------------------------------------ */
 /*  Deterministic fallbacks (grounded in the controlled documents)     */
 /* ------------------------------------------------------------------ */
 
-function fallbackScope(spec: ComponentSpec, quantity: string): ScopeOutput {
-  const retrievalPlan = [
-    { agent: "Technical Specification Agent", document: spec.docRef, task: `Extract every engineering parameter and tolerance for the ${spec.shortName} into the Section 2.0 scope of supply table.` },
-    { agent: "Quality & Standards Agent", document: "QA-MAN-2026-EPCI", task: `Select the standards applicable to this component class (${spec.applicableStandards.join(", ")}) and compile the FAT, ITP and traceability obligations.` },
-    { agent: "Contracts & Maritime Agent", document: spec.involvesVessel ? "S7-SCM-TC-2026-v1.0 + SUPPLYTIME 2026" : "S7-SCM-TC-2026-v1.0", task: spec.involvesVessel ? "Assemble the commercial terms and the charter knock-for-knock flow-downs that apply to vessel-side operations." : "Assemble the commercial and legal terms tenderers must price against." },
-  ]
+function fallbackScope(baseSpec: ComponentSpec, quantity: string, locale: Locale): ScopeOutput {
+  const spec = localizeComponentSpec(baseSpec, locale)
+  const project = localizedProject(locale)
+  const retrievalPlan = locale === "fr"
+    ? [
+        { agent: "Agent des spécifications techniques", document: spec.docRef, task: `Extraire chaque paramètre et tolérance d’ingénierie du ${spec.shortName} dans le tableau du périmètre de fourniture de la section 2.0.` },
+        { agent: "Agent qualité & normes", document: "QA-MAN-2026-EPCI", task: `Sélectionner les normes applicables à cette classe de composants (${spec.applicableStandards.join(", ")}) et compiler les obligations FAT, ITP et de traçabilité.` },
+        { agent: "Agent contrats & maritime", document: spec.involvesVessel ? "S7-SCM-TC-2026-v1.0 + SUPPLYTIME 2026" : "S7-SCM-TC-2026-v1.0", task: spec.involvesVessel ? "Assembler les conditions commerciales et les obligations knock-for-knock issues de la charte applicables aux opérations côté navire." : "Assembler les conditions commerciales et juridiques que les soumissionnaires doivent chiffrer." },
+      ]
+    : [
+        { agent: "Technical Specification Agent", document: spec.docRef, task: `Extract every engineering parameter and tolerance for the ${spec.shortName} into the Section 2.0 scope of supply table.` },
+        { agent: "Quality & Standards Agent", document: "QA-MAN-2026-EPCI", task: `Select the standards applicable to this component class (${spec.applicableStandards.join(", ")}) and compile the FAT, ITP and traceability obligations.` },
+        { agent: "Contracts & Maritime Agent", document: spec.involvesVessel ? "S7-SCM-TC-2026-v1.0 + SUPPLYTIME 2026" : "S7-SCM-TC-2026-v1.0", task: spec.involvesVessel ? "Assemble the commercial terms and the charter knock-for-knock flow-downs that apply to vessel-side operations." : "Assemble the commercial and legal terms tenderers must price against." },
+      ]
   return {
-    objective: `Draft the Invitation to Tender for ${quantity} of ${spec.name} for the ${PROJECT.name}.`,
-    projectSummary: [
-      `Future Energy has been engaged for the engineering, procurement, construction and installation of the ${PROJECT.name}, a ${PROJECT.scope.toLowerCase()} developed for ${PROJECT.client}. This Invitation to Tender covers the supply of ${quantity} of ${spec.name.toLowerCase()} in full accordance with controlled specification ${spec.docRef}.`,
-      `${spec.overview} Delivery is required DDP (Incoterms 2020) to the programme's mobilisation port at ${PROJECT.mobilisationPort}, and the supplied goods form part of the installation sequence for the 2027 offshore campaign.`,
-    ],
+    objective: locale === "fr"
+      ? `Rédiger l’appel d’offres pour ${quantity} de ${spec.name} dans le cadre de ${project.name}.`
+      : `Draft the Invitation to Tender for ${quantity} of ${spec.name} for the ${project.name}.`,
+    projectSummary: locale === "fr"
+      ? [
+          `Future Energy est chargée de l’ingénierie, des achats, de la construction et de l’installation de ${project.name}, un ${project.scope} développé pour ${project.client}. Le présent appel d’offres couvre la fourniture de ${quantity} de ${spec.name.toLowerCase()}, en pleine conformité avec la spécification contrôlée ${spec.docRef}.`,
+          `${spec.overview} La livraison est exigée DDP (Incoterms 2020) au port de mobilisation du programme à ${project.mobilisationPort}, et les biens fournis s’inscrivent dans la séquence d’installation de la campagne offshore 2027.`,
+        ]
+      : [
+          `Future Energy has been engaged for the engineering, procurement, construction and installation of the ${project.name}, a ${project.scope.toLowerCase()} developed for ${project.client}. This Invitation to Tender covers the supply of ${quantity} of ${spec.name.toLowerCase()} in full accordance with controlled specification ${spec.docRef}.`,
+          `${spec.overview} Delivery is required DDP (Incoterms 2020) to the programme's mobilisation port at ${project.mobilisationPort}, and the supplied goods form part of the installation sequence for the 2027 offshore campaign.`,
+        ],
     retrievalPlan,
-    considerations: [
-      spec.involvesVessel
-        ? "Installation involves chartered vessel operations — SUPPLYTIME 2026 knock-for-knock liabilities and the offshore marine warranty flow down to the Supplier."
-        : "No vessel-side operations — the package is governed by the standard procurement terms alone.",
-      "EN 10204 material traceability certificates are a condition of acceptance at the mobilisation port.",
-      `Applicable standards for this component class: ${spec.applicableStandards.join(", ")}.`,
-    ],
+    considerations: locale === "fr"
+      ? [
+          spec.involvesVessel
+            ? "L’installation implique des opérations avec un navire affrété — les responsabilités knock-for-knock et la garantie maritime offshore de SUPPLYTIME 2026 sont répercutées sur le Fournisseur."
+            : "Aucune opération côté navire — le lot est régi uniquement par les conditions générales d’achat.",
+          "Les certificats de traçabilité matière EN 10204 conditionnent l’acceptation au port de mobilisation.",
+          `Normes applicables à cette classe de composants : ${spec.applicableStandards.join(", ")}.`,
+        ]
+      : [
+          spec.involvesVessel
+            ? "Installation involves chartered vessel operations — SUPPLYTIME 2026 knock-for-knock liabilities and the offshore marine warranty flow down to the Supplier."
+            : "No vessel-side operations — the package is governed by the standard procurement terms alone.",
+          "EN 10204 material traceability certificates are a condition of acceptance at the mobilisation port.",
+          `Applicable standards for this component class: ${spec.applicableStandards.join(", ")}.`,
+        ],
   }
 }
 
-function fallbackTechnical(spec: ComponentSpec, quantity: string): TechnicalOutput {
+function fallbackTechnical(baseSpec: ComponentSpec, quantity: string, locale: Locale): TechnicalOutput {
+  const spec = localizeComponentSpec(baseSpec, locale)
   return {
-    scopeIntro: `The Supplier shall provide ${quantity} of ${spec.name} strictly in accordance with controlled specification ${spec.docRef}.`,
+    scopeIntro: locale === "fr"
+      ? `Le Fournisseur doit fournir ${quantity} de ${spec.name}, en stricte conformité avec la spécification contrôlée ${spec.docRef}.`
+      : `The Supplier shall provide ${quantity} of ${spec.name} strictly in accordance with controlled specification ${spec.docRef}.`,
     parameters: spec.parameters.map(p => ({ parameter: p.parameter, requirement: p.requirement })),
-    notes: [
-      `Quantity basis: ${quantity} (${spec.unit}).`,
-      `${spec.overview}`,
-    ],
+    notes: locale === "fr"
+      ? [`Base de quantité : ${quantity} (${spec.unit}).`, spec.overview]
+      : [`Quantity basis: ${quantity} (${spec.unit}).`, spec.overview],
     citations: [spec.docRef],
   }
 }
 
-function fallbackQuality(spec: ComponentSpec): QualityOutput {
-  const applicable = STANDARDS_MATRIX.filter(s => spec.applicableStandards.includes(s.ref))
-  const baseline = BASELINE_STANDARDS.filter(s => spec.applicableStandards.includes(s.ref) || s.ref === "ISO 9001:2015")
+function fallbackQuality(spec: ComponentSpec, locale: Locale): QualityOutput {
+  const applicable = localizedStandards(locale).filter(s => spec.applicableStandards.includes(s.ref))
+  const baseline = localizedStandards(locale, true).filter(s => spec.applicableStandards.includes(s.ref) || s.ref === "ISO 9001:2015")
   return {
-    intro: "All goods and services supplied under this Invitation to Tender shall comply with the Future Energy Corporate Quality Assurance Manual (QA-MAN-2026-EPCI, Rev 3.0); deviations require formal dispensation from the Global HSEQ Director.",
+    intro: locale === "fr"
+      ? "Tous les biens et services fournis au titre du présent appel d’offres doivent être conformes au Manuel d’assurance qualité d’entreprise de Future Energy (QA-MAN-2026-EPCI, Rev 3.0) ; tout écart exige une dérogation formelle du Global HSEQ Director."
+      : "All goods and services supplied under this Invitation to Tender shall comply with the Future Energy Corporate Quality Assurance Manual (QA-MAN-2026-EPCI, Rev 3.0); deviations require formal dispensation from the Global HSEQ Director.",
     standards: [
       ...applicable.map(s => ({ authority: s.authority, ref: s.ref, application: s.scope })),
       ...baseline.filter(b => !applicable.some(a => a.ref === b.ref)).map(s => ({ authority: s.authority, ref: s.ref, application: s.scope })),
     ],
-    fatRequirements: [...FAT_TRACEABILITY_CLAUSES],
-    citations: ["QA-MAN-2026-EPCI §2 (baseline certifications)", "QA-MAN-2026-EPCI §3 (offshore & maritime standards matrix)", "QA-MAN-2026-EPCI §4 (FAT & traceability)"],
+    fatRequirements: localizedFatRequirements(locale),
+    citations: locale === "fr"
+      ? ["QA-MAN-2026-EPCI §2 (certifications de base)", "QA-MAN-2026-EPCI §3 (matrice des normes offshore & maritimes)", "QA-MAN-2026-EPCI §4 (FAT & traçabilité)"]
+      : ["QA-MAN-2026-EPCI §2 (baseline certifications)", "QA-MAN-2026-EPCI §3 (offshore & maritime standards matrix)", "QA-MAN-2026-EPCI §4 (FAT & traceability)"],
   }
 }
 
-function fallbackLegal(spec: ComponentSpec): LegalOutput {
-  const pick = (ref: string) => PROCUREMENT_CLAUSES.find(c => c.ref === ref)
+function fallbackLegal(spec: ComponentSpec, locale: Locale): LegalOutput {
+  const clausesSource = localizedProcurementClauses(locale)
+  const pick = (ref: string) => clausesSource.find(c => c.ref === ref)
   const clauseRefs = ["4.1", "4.3", "5.1–5.3", "6.2", "7.1", "7.2", "9.1–9.2"]
   const clauses = clauseRefs
     .map(pick)
     .filter((c): c is NonNullable<typeof c> => Boolean(c))
-    .map(c => ({ heading: c.heading, text: c.text, source: `S7-SCM-TC-2026-v1.0 Clause ${c.ref}` }))
+    .map(c => ({ heading: c.heading, text: c.text, source: `S7-SCM-TC-2026-v1.0 ${locale === "fr" ? "Clause" : "Clause"} ${c.ref}` }))
 
   if (spec.involvesVessel) {
     clauses.push(
       {
-        heading: "Charter Flow-Down — Knock-for-Knock (Vessel Operations)",
-        text: `Where the Supplier's personnel or property are engaged in operations on or over the side of the chartered vessel, the knock-for-knock regime of the executed SUPPLYTIME 2026 charter applies. ${CHARTER.knockForKnock.charterers}`,
+        heading: locale === "fr" ? "Obligations issues de la charte — Knock-for-knock (opérations du navire)" : "Charter Flow-Down — Knock-for-Knock (Vessel Operations)",
+        text: locale === "fr"
+          ? "Lorsque le personnel ou les biens du Fournisseur participent à des opérations à bord ou par-dessus bord du navire affrété, le régime knock-for-knock de la charte SUPPLYTIME 2026 signée s’applique. Les Affréteurs assument les réclamations, pertes, dommages, coûts et dépenses liés aux personnes et biens de leur Groupe, quelle qu’en soit la cause, y compris la négligence ou la faute des Propriétaires."
+          : `Where the Supplier's personnel or property are engaged in operations on or over the side of the chartered vessel, the knock-for-knock regime of the executed SUPPLYTIME 2026 charter applies. ${CHARTER.knockForKnock.charterers}`,
         source: "SUPPLYTIME 2026 Clause 4.1",
       },
       {
-        heading: "Charter Flow-Down — Offshore Marine Warranty",
-        text: CHARTER.marineWarranty,
+        heading: locale === "fr" ? "Obligations issues de la charte — Garantie maritime offshore" : "Charter Flow-Down — Offshore Marine Warranty",
+        text: locale === "fr"
+          ? "Les Propriétaires garantissent que le Navire respecte toutes les conventions maritimes internationales applicables, notamment SOLAS et MARPOL, et détient un certificat de classification valide. Le Navire doit être maintenu en parfait état d’efficacité de coque et de machines, entièrement équipé et approvisionné pour les opérations de construction du parc éolien en mer."
+          : CHARTER.marineWarranty,
         source: "SUPPLYTIME 2026 Clause 2.2",
       },
     )
   }
 
   return {
-    governingTerms: "This Invitation to Tender and any subsequent Purchase Order are governed by the Future Energy Standard Terms and Conditions of Procurement (S7-SCM-TC-2026-v1.0).",
+    governingTerms: locale === "fr"
+      ? "Le présent appel d’offres et tout Bon de commande ultérieur sont régis par les Conditions générales d’achat de Future Energy (S7-SCM-TC-2026-v1.0)."
+      : "This Invitation to Tender and any subsequent Purchase Order are governed by the Future Energy Standard Terms and Conditions of Procurement (S7-SCM-TC-2026-v1.0).",
     clauses,
     citations: spec.involvesVessel
       ? ["S7-SCM-TC-2026-v1.0", "SUPPLYTIME 2026 (executed charter)"]
@@ -139,52 +175,61 @@ function fallbackLegal(spec: ComponentSpec): LegalOutput {
   }
 }
 
-function fallbackAudit(itt: IttDocument, spec: ComponentSpec): TenderAuditOutput {
+function fallbackAudit(itt: IttDocument, baseSpec: ComponentSpec, locale: Locale): TenderAuditOutput {
+  const spec = localizeComponentSpec(baseSpec, locale)
   const paramChecks = itt.technical.parameters.slice(0, 4).map(p => ({
-    section: "2.0 Technical Scope",
+    section: locale === "fr" ? "2.0 Périmètre technique" : "2.0 Technical Scope",
     claim: `${p.parameter}: ${p.requirement}`,
     status: "pass" as const,
-    note: `Matches ${spec.docRef} verbatim — value, unit and tolerance verified.`,
+    note: locale === "fr"
+      ? `Conforme mot pour mot à ${spec.docRef} — valeur, unité et tolérance vérifiées.`
+      : `Matches ${spec.docRef} verbatim — value, unit and tolerance verified.`,
   }))
   const standardChecks = itt.quality.standards.slice(0, 4).map(s => ({
-    section: "3.0 Quality & HSEQ",
-    claim: `${s.ref} applied to this component class`,
+    section: locale === "fr" ? "3.0 Qualité & HSEQ" : "3.0 Quality & HSEQ",
+    claim: locale === "fr" ? `${s.ref} appliquée à cette classe de composants` : `${s.ref} applied to this component class`,
     status: "pass" as const,
-    note: `${s.ref} is present in the QA-MAN-2026-EPCI standards matrix and applies to the ${spec.shortName}.`,
+    note: locale === "fr"
+      ? `${s.ref} figure dans la matrice des normes QA-MAN-2026-EPCI et s’applique au ${spec.shortName}.`
+      : `${s.ref} is present in the QA-MAN-2026-EPCI standards matrix and applies to the ${spec.shortName}.`,
   }))
   const legalChecks = [
     {
-      section: "4.0 Commercial & Legal",
-      claim: "Warranty: 24 months from commissioning or 36 months from delivery",
+      section: locale === "fr" ? "4.0 Commercial & juridique" : "4.0 Commercial & Legal",
+      claim: locale === "fr" ? "Garantie : 24 mois après mise en service ou 36 mois après livraison" : "Warranty: 24 months from commissioning or 36 months from delivery",
       status: "pass" as const,
-      note: "Consistent with S7-SCM-TC-2026-v1.0 Clause 6.2.",
+      note: locale === "fr" ? "Conforme à la Clause 6.2 de S7-SCM-TC-2026-v1.0." : "Consistent with S7-SCM-TC-2026-v1.0 Clause 6.2.",
     },
     {
-      section: "4.0 Commercial & Legal",
-      claim: "Payment terms: 60 days from end of invoice month",
+      section: locale === "fr" ? "4.0 Commercial & juridique" : "4.0 Commercial & Legal",
+      claim: locale === "fr" ? "Conditions de paiement : 60 jours fin de mois de facturation" : "Payment terms: 60 days from end of invoice month",
       status: "pass" as const,
-      note: "Consistent with S7-SCM-TC-2026-v1.0 Clause 7.2.",
+      note: locale === "fr" ? "Conforme à la Clause 7.2 de S7-SCM-TC-2026-v1.0." : "Consistent with S7-SCM-TC-2026-v1.0 Clause 7.2.",
     },
     ...(spec.involvesVessel
       ? [{
-          section: "4.0 Commercial & Legal",
-          claim: "Charter knock-for-knock flow-down present for vessel-side operations",
+          section: locale === "fr" ? "4.0 Commercial & juridique" : "4.0 Commercial & Legal",
+          claim: locale === "fr" ? "Obligation knock-for-knock de la charte présente pour les opérations côté navire" : "Charter knock-for-knock flow-down present for vessel-side operations",
           status: "pass" as const,
-          note: "SUPPLYTIME 2026 Clauses 4.1/4.2 substance carried faithfully.",
+          note: locale === "fr" ? "La substance des Clauses 4.1/4.2 de SUPPLYTIME 2026 est fidèlement reprise." : "SUPPLYTIME 2026 Clauses 4.1/4.2 substance carried faithfully.",
         }]
       : []),
   ]
   const consistency = [{
-    section: "1.0 / 5.0 Consistency",
-    claim: `Component, quantity (${itt.pricing.items[0]?.qty ?? ""}) and submission deadline are consistent across all sections`,
+    section: locale === "fr" ? "1.0 / 5.0 Cohérence" : "1.0 / 5.0 Consistency",
+    claim: locale === "fr"
+      ? `Le composant, la quantité (${itt.pricing.items[0]?.qty ?? ""}) et la date limite de soumission sont cohérents dans toutes les sections`
+      : `Component, quantity (${itt.pricing.items[0]?.qty ?? ""}) and submission deadline are consistent across all sections`,
     status: "pass" as const,
-    note: "No placeholder or template residue detected in the issued text.",
+    note: locale === "fr" ? "Aucun espace réservé ni résidu de modèle détecté dans le texte à émettre." : "No placeholder or template residue detected in the issued text.",
   }]
   return {
     verified: true,
     checks: [...paramChecks, ...standardChecks, ...legalChecks, ...consistency],
     corrections: [],
-    assessment: `The draft was verified section by section against ${spec.docRef}, QA-MAN-2026-EPCI and S7-SCM-TC-2026-v1.0${spec.involvesVessel ? ", with charter flow-downs checked against the executed SUPPLYTIME 2026" : ""}. Technical parameters match the controlled specification verbatim, all cited standards are applicable to this component class, and clause substance is faithful to source. The document is ready for approval.`,
+    assessment: locale === "fr"
+      ? `Le brouillon a été vérifié section par section par rapport à ${spec.docRef}, QA-MAN-2026-EPCI et S7-SCM-TC-2026-v1.0${spec.involvesVessel ? ", les obligations issues de la charte ayant été contrôlées par rapport à la version signée de SUPPLYTIME 2026" : ""}. Les paramètres techniques correspondent mot pour mot à la spécification contrôlée, toutes les normes citées s’appliquent à cette classe de composants et la substance des clauses est fidèle aux sources. Le document est prêt pour approbation.`
+      : `The draft was verified section by section against ${spec.docRef}, QA-MAN-2026-EPCI and S7-SCM-TC-2026-v1.0${spec.involvesVessel ? ", with charter flow-downs checked against the executed SUPPLYTIME 2026" : ""}. Technical parameters match the controlled specification verbatim, all cited standards are applicable to this component class, and clause substance is faithful to source. The document is ready for approval.`,
   }
 }
 
@@ -198,41 +243,58 @@ function addDaysIso(iso: string, days: number): string {
   return d.toISOString().slice(0, 10)
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+function formatDate(iso: string, locale: Locale): string {
+  return new Date(iso + "T00:00:00").toLocaleDateString(localeTag(locale), { day: "numeric", month: "long", year: "numeric" })
 }
 
 function composeItt(
-  spec: ComponentSpec,
+  baseSpec: ComponentSpec,
   quantity: string,
   pkg: TenderPackage | null,
   scope: ScopeOutput,
   technical: TechnicalOutput,
   quality: QualityOutput,
   legal: LegalOutput,
+  locale: Locale,
 ): IttDocument {
+  const spec = localizeComponentSpec(baseSpec, locale)
+  const project = localizedProject(locale)
   return {
     ittRef: pkg ? `ITT-${pkg.packageRef}` : `ITT-MER-SCM-${spec.docRef.slice(-3)}`,
-    title: `Invitation to Tender — ${spec.name}`,
+    title: locale === "fr" ? `Appel d’offres — ${spec.name}` : `Invitation to Tender — ${spec.name}`,
     issueDate: TODAY,
     submissionDeadline: pkg?.submissionDeadline ?? addDaysIso(TODAY, 21),
-    procurementOfficer: `${ACTIVE_USER.name}, ${ACTIVE_USER.role}`,
+    procurementOfficer: `${ACTIVE_USER.name}, ${localizeRole(ACTIVE_USER.role, locale)}`,
     projectSummary: scope.projectSummary,
-    submissionGuidelines: [
-      "Tenders must be submitted electronically via the Future Energy SCM Portal no later than the submission deadline stated above. Late submissions will not be evaluated.",
-      "Requests for clarification must be raised through the SCM Portal at least 7 days prior to the submission deadline.",
-      "Tenderers shall confirm compliance with each section of this Invitation to Tender or table deviations explicitly in their returnables.",
-    ],
+    submissionGuidelines: locale === "fr"
+      ? [
+          "Les offres doivent être soumises par voie électronique via le portail SCM Future Energy au plus tard à la date limite indiquée ci-dessus. Les soumissions tardives ne seront pas évaluées.",
+          "Les demandes de clarification doivent être déposées sur le portail SCM au moins 7 jours avant la date limite de soumission.",
+          "Les soumissionnaires doivent confirmer leur conformité à chaque section du présent appel d’offres ou présenter explicitement les écarts dans leurs livrables.",
+        ]
+      : [
+          "Tenders must be submitted electronically via the Future Energy SCM Portal no later than the submission deadline stated above. Late submissions will not be evaluated.",
+          "Requests for clarification must be raised through the SCM Portal at least 7 days prior to the submission deadline.",
+          "Tenderers shall confirm compliance with each section of this Invitation to Tender or table deviations explicitly in their returnables.",
+        ],
     technical,
     quality,
     legal,
     pricing: {
-      intro: `All prices shall be quoted DDP (Incoterms 2020) to ${PROJECT.mobilisationPort}, excluding VAT, and shall remain fixed and firm in accordance with Clause 7.1 of S7-SCM-TC-2026-v1.0.`,
-      items: [
-        { item: 1, description: `${spec.name} — supply in full accordance with ${spec.docRef}`, qty: quantity },
-        { item: 2, description: "Technical Document Package (TDP) including material certificates, manuals and lifting plans per Clause 4.3", qty: "1 lot" },
-        { item: 3, description: `Delivery DDP (Incoterms 2020) to ${PROJECT.mobilisationPort}, including packing and preservation`, qty: "1 lot" },
-      ],
+      intro: locale === "fr"
+        ? `Tous les prix doivent être indiqués DDP (Incoterms 2020) jusqu’à ${project.mobilisationPort}, hors TVA, et demeurer fermes conformément à la Clause 7.1 de S7-SCM-TC-2026-v1.0.`
+        : `All prices shall be quoted DDP (Incoterms 2020) to ${project.mobilisationPort}, excluding VAT, and shall remain fixed and firm in accordance with Clause 7.1 of S7-SCM-TC-2026-v1.0.`,
+      items: locale === "fr"
+        ? [
+            { item: 1, description: `${spec.name} — fourniture en pleine conformité avec ${spec.docRef}`, qty: quantity },
+            { item: 2, description: "Dossier documentaire technique (TDP), comprenant les certificats matière, manuels et plans de levage selon la Clause 4.3", qty: "1 lot" },
+            { item: 3, description: `Livraison DDP (Incoterms 2020) à ${project.mobilisationPort}, emballage et protection compris`, qty: "1 lot" },
+          ]
+        : [
+            { item: 1, description: `${spec.name} — supply in full accordance with ${spec.docRef}`, qty: quantity },
+            { item: 2, description: "Technical Document Package (TDP) including material certificates, manuals and lifting plans per Clause 4.3", qty: "1 lot" },
+            { item: 3, description: `Delivery DDP (Incoterms 2020) to ${project.mobilisationPort}, including packing and preservation`, qty: "1 lot" },
+          ],
     },
   }
 }
@@ -245,7 +307,9 @@ function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
 }
 
-function printableIttHtml(itt: IttDocument): string {
+function printableIttHtml(itt: IttDocument, locale: Locale): string {
+  const t = createT(locale)
+  const project = localizedProject(locale)
   const paramRows = itt.technical.parameters
     .map(p => `<tr><td class="param">${esc(p.parameter)}</td><td>${esc(p.requirement)}</td></tr>`)
     .join("")
@@ -253,9 +317,9 @@ function printableIttHtml(itt: IttDocument): string {
     .map(s => `<tr><td class="param">${esc(s.authority)} ${esc(s.ref)}</td><td>${esc(s.application)}</td></tr>`)
     .join("")
   const pricingRows = itt.pricing.items
-    .map(i => `<tr><td class="num">${i.item}</td><td>${esc(i.description)}</td><td class="nowrap">${esc(i.qty)}</td><td class="muted nowrap">To be quoted</td></tr>`)
+    .map(i => `<tr><td class="num">${i.item}</td><td>${esc(i.description)}</td><td class="nowrap">${esc(i.qty)}</td><td class="muted nowrap">${esc(t("tenderStudio.toBeQuoted"))}</td></tr>`)
     .join("")
-  const techNotes = itt.technical.notes.map((n, i) => `<p class="note">Note ${i + 1}: ${esc(n)}</p>`).join("")
+  const techNotes = itt.technical.notes.map((n, i) => `<p class="note">${esc(t("tenderStudio.note"))} ${i + 1}: ${esc(n)}</p>`).join("")
   const guidelines = itt.submissionGuidelines.map(g => `<li>${esc(g)}</li>`).join("")
   const fatItems = itt.quality.fatRequirements.map(f => `<li>${esc(f)}</li>`).join("")
   const clauses = itt.legal.clauses
@@ -264,7 +328,7 @@ function printableIttHtml(itt: IttDocument): string {
   const summary = itt.projectSummary.map(p => `<p>${esc(p)}</p>`).join("")
 
   return `<!DOCTYPE html>
-<html lang="en-GB">
+<html lang="${localeTag(locale)}">
 <head>
 <meta charset="utf-8">
 <title>${esc(itt.ittRef)} — ${esc(itt.title)}</title>
@@ -302,66 +366,66 @@ function printableIttHtml(itt: IttDocument): string {
 </head>
 <body>
   <header>
-    <p class="kicker">Future Energy · Supply Chain Management</p>
+    <p class="kicker">${esc(t("tenderStudio.scmLabel"))}</p>
     <h1>${esc(itt.title)}</h1>
-    <p class="project">${esc(PROJECT.name)} — ${esc(PROJECT.client)}</p>
+    <p class="project">${esc(project.name)} — ${esc(project.client)}</p>
     <div class="meta">
-      <div><span>Reference</span><strong>${esc(itt.ittRef)}</strong></div>
-      <div><span>Issue date</span><strong>${esc(formatDate(itt.issueDate))}</strong></div>
-      <div><span>Submission deadline</span><strong>${esc(formatDate(itt.submissionDeadline))}</strong></div>
-      <div><span>Procurement officer</span><strong>${esc(itt.procurementOfficer)}</strong></div>
+      <div><span>${esc(t("tenderStudio.reference"))}</span><strong>${esc(itt.ittRef)}</strong></div>
+      <div><span>${esc(t("tenderStudio.issueDate"))}</span><strong>${esc(formatDate(itt.issueDate, locale))}</strong></div>
+      <div><span>${esc(t("tenderStudio.submissionDeadline"))}</span><strong>${esc(formatDate(itt.submissionDeadline, locale))}</strong></div>
+      <div><span>${esc(t("tenderStudio.procurementOfficer"))}</span><strong>${esc(itt.procurementOfficer)}</strong></div>
     </div>
   </header>
 
-  <h2>1.0 Introduction &amp; Instructions to Tenderers</h2>
-  <h3>1.1 Project Overview</h3>
+  <h2>1.0 ${esc(t("tenderStudio.section1"))}</h2>
+  <h3>${esc(t("tenderStudio.section11"))}</h3>
   ${summary}
-  <h3>1.2 Submission Guidelines</h3>
+  <h3>${esc(t("tenderStudio.section12"))}</h3>
   <ul>${guidelines}</ul>
 
-  <h2>2.0 Technical Scope of Supply</h2>
+  <h2>2.0 ${esc(t("tenderStudio.section2"))}</h2>
   <p>${esc(itt.technical.scopeIntro)}</p>
   <table>
-    <thead><tr><th>Parameter</th><th>Requirement</th></tr></thead>
+    <thead><tr><th>${esc(t("tenderStudio.parameter"))}</th><th>${esc(t("tenderStudio.requirement"))}</th></tr></thead>
     <tbody>${paramRows}</tbody>
   </table>
   ${techNotes}
-  <p class="source">Source: ${esc(itt.technical.citations.join(" · "))}</p>
+  <p class="source">${esc(t("tenderStudio.source"))}: ${esc(itt.technical.citations.join(" · "))}</p>
 
-  <h2>3.0 Quality Assurance &amp; HSEQ Requirements</h2>
+  <h2>3.0 ${esc(t("tenderStudio.section3"))}</h2>
   <p>${esc(itt.quality.intro)}</p>
   <table>
-    <thead><tr><th>Standard</th><th>Application</th></tr></thead>
+    <thead><tr><th>${esc(t("tenderStudio.standard"))}</th><th>${esc(t("tenderStudio.application"))}</th></tr></thead>
     <tbody>${standardRows}</tbody>
   </table>
-  <h3>Factory Acceptance Testing &amp; Traceability</h3>
+  <h3>${esc(t("tenderStudio.fatTraceability"))}</h3>
   <ul>${fatItems}</ul>
-  <p class="source">Source: ${esc(itt.quality.citations.join(" · "))}</p>
+  <p class="source">${esc(t("tenderStudio.source"))}: ${esc(itt.quality.citations.join(" · "))}</p>
 
-  <h2>4.0 Commercial &amp; Maritime Legal Terms</h2>
+  <h2>4.0 ${esc(t("tenderStudio.section4"))}</h2>
   <p>${esc(itt.legal.governingTerms)}</p>
   ${clauses}
-  <p class="source">Source: ${esc(itt.legal.citations.join(" · "))}</p>
+  <p class="source">${esc(t("tenderStudio.source"))}: ${esc(itt.legal.citations.join(" · "))}</p>
 
-  <h2>5.0 Pricing Schedule &amp; Returnables</h2>
+  <h2>5.0 ${esc(t("tenderStudio.section5"))}</h2>
   <p>${esc(itt.pricing.intro)}</p>
   <table>
-    <thead><tr><th>Item</th><th>Description</th><th>Qty</th><th>Unit Price</th></tr></thead>
+    <thead><tr><th>${esc(t("tenderStudio.item"))}</th><th>${esc(t("tenderStudio.description"))}</th><th>${esc(t("tenderStudio.quantity"))}</th><th>${esc(t("tenderStudio.unitPrice"))}</th></tr></thead>
     <tbody>${pricingRows}</tbody>
   </table>
 
   <footer>
-    ${esc(itt.ittRef)} · Controlled document — issued via Future Energy SCM Portal · Drafted and audited against the controlled document register
+    ${esc(itt.ittRef)} · ${esc(t("tenderStudio.controlledFooter"))}
   </footer>
   <script>window.onload = function () { window.print() }</script>
 </body>
 </html>`
 }
 
-function openPrintView(itt: IttDocument) {
+function openPrintView(itt: IttDocument, locale: Locale) {
   const w = window.open("", "_blank")
   if (!w) return
-  w.document.write(printableIttHtml(itt))
+  w.document.write(printableIttHtml(itt, locale))
   w.document.close()
 }
 
@@ -420,8 +484,9 @@ const AUDIT_STATUS_STYLE: Record<string, { icon: string; cls: string; labelKey: 
 
 const CATEGORY_ORDER: DocumentCategory[] = ["technical", "quality", "commercial", "legal", "template"]
 
-function DocumentRepository({ activeDocRefs }: { activeDocRefs: Set<string> }) {
+function DocumentRepository({ activeDocRefs, locale }: { activeDocRefs: Set<string>; locale: Locale }) {
   const t = useT()
+  const documents = localizedDocuments(locale)
   return (
     <section className={cn(pcmCard, "rounded-[16px] border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] p-4 space-y-4")}>
       <div className="flex items-center justify-between">
@@ -429,16 +494,16 @@ function DocumentRepository({ activeDocRefs }: { activeDocRefs: Set<string> }) {
           <SafeIcon name="FolderLock" className="h-4 w-4 text-[var(--color-text-muted)]" />
           <h2 className="text-[13px] font-semibold text-[var(--color-text-primary)]">{t("tenderStudio.sources")}</h2>
         </div>
-        <span className="text-[11px] tabular-nums text-[var(--color-text-muted)]">{DOCUMENTS.length} on register</span>
+        <span className="text-[11px] tabular-nums text-[var(--color-text-muted)]">{t("tenderStudio.onRegister", { count: documents.length })}</span>
       </div>
       <div className="space-y-3">
         {CATEGORY_ORDER.map(cat => {
-          const docs = documentsByCategory(cat)
+          const docs = localizedDocumentsByCategory(cat, locale)
           if (docs.length === 0) return null
           return (
             <div key={cat} className="space-y-1">
               <p className="text-[10px] font-semibold uppercase tracking-[1px] text-[var(--color-text-muted)]">
-                {CATEGORY_LABELS[cat]}
+                {t(`categories.${cat}`)}
               </p>
               {docs.map(doc => {
                 const active = activeDocRefs.has(doc.docRef)
@@ -478,7 +543,7 @@ function DocumentRepository({ activeDocRefs }: { activeDocRefs: Set<string> }) {
 
 export function TenderStudioPage() {
   const t = useT()
-  const { focusTenderId, openTenderStudio, advanceTenderStage, setPage, draftedTenders, saveDraftedTender, deleteDraftedTender } = useStore()
+  const { locale, focusTenderId, openTenderStudio, advanceTenderStage, setPage, draftedTenders, saveDraftedTender, deleteDraftedTender } = useStore()
 
   const [prompt, setPrompt] = React.useState("")
   const [phase, setPhase] = React.useState<Phase>("idle")
@@ -498,21 +563,37 @@ export function TenderStudioPage() {
 
   // Restore a catalogued draft into the working area without re-running the pipeline.
   const loadDraft = React.useCallback((d: DraftedTender) => {
-    const s = COMPONENT_SPECS.find(c => c.id === d.componentId)
-    if (!s) return
-    setSpec(s)
-    setQuantity(d.quantity)
-    setPkg(d.packageId ? TENDER_PACKAGES.find(p => p.id === d.packageId) ?? null : null)
-    setPrompt(d.prompt)
-    setScope(d.scope)
-    setItt(d.itt)
-    setAudit(d.audit)
+    const baseSpec = COMPONENT_SPECS.find(c => c.id === d.componentId)
+    if (!baseSpec) return
+    const localizedSpec = localizeComponentSpec(baseSpec, locale)
+    const localizedQuantity = localizeQuantity(d.quantity, locale)
+    const loadedPkg = d.packageId ? TENDER_PACKAGES.find(p => p.id === d.packageId) ?? null : null
+    const localizedScope = fallbackScope(baseSpec, localizedQuantity, locale)
+    const localizedItt = composeItt(
+      baseSpec,
+      localizedQuantity,
+      loadedPkg,
+      localizedScope,
+      fallbackTechnical(baseSpec, localizedQuantity, locale),
+      fallbackQuality(baseSpec, locale),
+      fallbackLegal(baseSpec, locale),
+      locale,
+    )
+    setSpec(localizedSpec)
+    setQuantity(localizedQuantity)
+    setPkg(loadedPkg)
+    setPrompt(locale === "fr"
+      ? `Rédiger l’AO pour ${localizedQuantity} de ${localizedSpec.name.toLowerCase()}${loadedPkg ? ` (lot ${loadedPkg.packageRef})` : ""}`
+      : d.prompt)
+    setScope(localizedScope)
+    setItt(localizedItt)
+    setAudit(fallbackAudit(localizedItt, baseSpec, locale))
     setSubmitted(d.submitted)
     setSpecialists({ technical: "done", quality: "done", legal: "done" })
     setAuditOpen(false)
     setPipelineOpen(false)
     setPhase("complete")
-  }, [])
+  }, [locale])
 
   // Preload the composer when the board's Draft ITT action opened this page.
   // If that package already has a catalogued draft, restore it instead of regenerating.
@@ -525,7 +606,13 @@ export function TenderStudioPage() {
         loadDraft(existing)
       } else {
         const s = COMPONENT_SPECS.find(c => c.id === t.componentId)
-        if (s) setPrompt(`Draft the ITT for ${t.quantity} of ${s.name.toLowerCase()} (package ${t.packageRef})`)
+        if (s) {
+          const localSpec = localizeComponentSpec(s, locale)
+          const localQuantity = localizeQuantity(t.quantity, locale)
+          setPrompt(locale === "fr"
+            ? `Rédiger l’AO pour ${localQuantity} de ${localSpec.name.toLowerCase()} (lot ${t.packageRef})`
+            : `Draft the ITT for ${localQuantity} of ${localSpec.name.toLowerCase()} (package ${t.packageRef})`)
+        }
       }
     }
     openTenderStudio(null)
@@ -543,6 +630,32 @@ export function TenderStudioPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  const previousLocaleRef = React.useRef(locale)
+  React.useEffect(() => {
+    const previousLocale = previousLocaleRef.current
+    const localeChanged = previousLocale !== locale
+    previousLocaleRef.current = locale
+    if (localeChanged && phase === "idle" && prompt.trim()) {
+      const baseSpec = resolveLocalizedComponent(prompt, previousLocale)
+      if (baseSpec) {
+        const oldQuantity = resolveLocalizedQuantity(prompt, baseSpec, previousLocale)
+        const nextQuantity = localizeQuantity(oldQuantity, locale)
+        const nextSpec = localizeComponentSpec(baseSpec, locale)
+        setPrompt(locale === "fr"
+          ? `Rédiger l’AO pour ${nextQuantity} de ${nextSpec.name.toLowerCase()}`
+          : `Draft the ITT for ${nextQuantity} of ${nextSpec.name.toLowerCase()}`)
+      }
+      return
+    }
+    if (phase !== "complete" || !itt) return
+    const contentLanguageMismatch = locale === "fr"
+      ? !itt.title.startsWith("Appel d’offres")
+      : !itt.title.startsWith("Invitation to Tender")
+    if (!localeChanged && !contentLanguageMismatch) return
+    const saved = draftedTenders.find((draft) => draft.id === itt.ittRef)
+    if (saved) loadDraft(saved)
+  }, [locale, phase, prompt, itt, draftedTenders, loadDraft])
+
   const activeDocRefs = React.useMemo(() => {
     const refs = new Set<string>()
     if (!spec || phase === "idle" || phase === "unresolved") return refs
@@ -556,17 +669,17 @@ export function TenderStudioPage() {
 
   const run = React.useCallback(async (text: string) => {
     if (runningRef.current || !text.trim()) return
-    const resolved = resolveComponentFromPrompt(text)
+    const resolved = resolveLocalizedComponent(text, locale)
     if (!resolved) {
       setSpec(null)
       setPhase("unresolved")
       return
     }
     runningRef.current = true
-    const qty = resolveQuantityFromPrompt(text, resolved)
+    const qty = resolveLocalizedQuantity(text, resolved, locale)
     const matchedPkg = TENDER_PACKAGES.find(p => p.componentId === resolved.id) ?? null
 
-    setSpec(resolved)
+    setSpec(localizeComponentSpec(resolved, locale))
     setQuantity(qty)
     setPkg(matchedPkg)
     setScope(null)
@@ -578,37 +691,42 @@ export function TenderStudioPage() {
     setSpecialists({ technical: "pending", quality: "pending", legal: "pending" })
     setPhase("scoping")
 
-    const scopeOut = await postAgent<ScopeOutput>(
+    const scopeResponse = await postAgent<ScopeOutput>(
       "/api/future-energy/scope",
-      { componentId: resolved.id, quantity: qty, prompt: text, officer: `${ACTIVE_USER.name} (${ACTIVE_USER.role})` },
-      () => fallbackScope(resolved, qty),
+      { componentId: resolved.id, quantity: qty, prompt: text, officer: `${ACTIVE_USER.name} (${localizeRole(ACTIVE_USER.role, locale)})`, locale },
+      () => fallbackScope(resolved, qty, locale),
     )
+    const scopeOut = locale === "fr" ? fallbackScope(resolved, qty, locale) : scopeResponse
     setScope(scopeOut)
 
     setPhase("specialists")
     setSpecialists({ technical: "running", quality: "running", legal: "running" })
 
-    const [techOut, qualOut, legalOut] = await Promise.all([
-      postAgent<TechnicalOutput>("/api/future-energy/specialist/technical", { componentId: resolved.id, quantity: qty }, () => fallbackTechnical(resolved, qty), 1200)
+    const [techResponse, qualResponse, legalResponse] = await Promise.all([
+      postAgent<TechnicalOutput>("/api/future-energy/specialist/technical", { componentId: resolved.id, quantity: qty, locale }, () => fallbackTechnical(resolved, qty, locale), 1200)
         .then(r => { setSpecialists(s => ({ ...s, technical: "done" })); return r }),
-      postAgent<QualityOutput>("/api/future-energy/specialist/quality", { componentId: resolved.id }, () => fallbackQuality(resolved), 1600)
+      postAgent<QualityOutput>("/api/future-energy/specialist/quality", { componentId: resolved.id, locale }, () => fallbackQuality(resolved, locale), 1600)
         .then(r => { setSpecialists(s => ({ ...s, quality: "done" })); return r }),
-      postAgent<LegalOutput>("/api/future-energy/specialist/legal", { componentId: resolved.id }, () => fallbackLegal(resolved), 2000)
+      postAgent<LegalOutput>("/api/future-energy/specialist/legal", { componentId: resolved.id, locale }, () => fallbackLegal(resolved, locale), 2000)
         .then(r => { setSpecialists(s => ({ ...s, legal: "done" })); return r }),
     ])
+    const techOut = locale === "fr" ? fallbackTechnical(resolved, qty, locale) : techResponse
+    const qualOut = locale === "fr" ? fallbackQuality(resolved, locale) : qualResponse
+    const legalOut = locale === "fr" ? fallbackLegal(resolved, locale) : legalResponse
 
     setPhase("composing")
     await new Promise(r => setTimeout(r, 700))
-    const doc = composeItt(resolved, qty, matchedPkg, scopeOut, techOut, qualOut, legalOut)
+    const doc = composeItt(resolved, qty, matchedPkg, scopeOut, techOut, qualOut, legalOut, locale)
     setItt(doc)
 
     setPhase("auditing")
-    const auditOut = await postAgent<TenderAuditOutput>(
+    const auditResponse = await postAgent<TenderAuditOutput>(
       "/api/future-energy/audit",
-      { componentId: resolved.id, itt: doc },
-      () => fallbackAudit(doc, resolved),
+      { componentId: resolved.id, itt: doc, locale },
+      () => fallbackAudit(doc, resolved, locale),
       1400,
     )
+    const auditOut = locale === "fr" ? fallbackAudit(doc, resolved, locale) : auditResponse
     setAudit(auditOut)
     setPhase("complete")
     runningRef.current = false
@@ -625,7 +743,7 @@ export function TenderStudioPage() {
       audit: auditOut,
       submitted: false,
     })
-  }, [saveDraftedTender])
+  }, [locale, saveDraftedTender])
 
   const submitForApproval = React.useCallback(() => {
     if (pkg) advanceTenderStage(pkg.id, "decide")
@@ -657,7 +775,7 @@ export function TenderStudioPage() {
           <section className={cn(pcmCard, "rounded-[16px] border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] p-4 space-y-3")}>
             <div className="flex items-center gap-2">
               <SafeIcon name="PenLine" className="h-4 w-4 text-[var(--color-text-muted)]" />
-              <h2 className="text-[13px] font-semibold text-[var(--color-text-primary)]">Draft a tender</h2>
+              <h2 className="text-[13px] font-semibold text-[var(--color-text-primary)]">{t("tenderStudio.draftTender")}</h2>
             </div>
             <form
               onSubmit={(e) => { e.preventDefault(); void run(prompt) }}
@@ -692,7 +810,7 @@ export function TenderStudioPage() {
             {phase === "idle" && (
               <div className="space-y-1.5 pt-1">
                 <p className="text-[10px] font-semibold uppercase tracking-[1px] text-[var(--color-text-muted)]">{t("tenderStudio.suggestions")}</p>
-                {SUGGESTED_PROMPTS.map(p => (
+                {TENDER_SUGGESTIONS[locale].map(p => (
                   <button
                     key={p}
                     type="button"
@@ -736,21 +854,21 @@ export function TenderStudioPage() {
                         className="min-w-0 flex-1 text-left disabled:opacity-60"
                       >
                         <span className="block truncate text-[12px] font-medium text-[var(--color-text-primary)]">
-                          {d.itt.title.replace("Invitation to Tender — ", "")}
+                          {localizeComponentSpec(COMPONENT_SPECS.find(candidate => candidate.id === d.componentId) ?? COMPONENT_SPECS[0], locale).name}
                         </span>
                         <span className="block truncate text-[10px] text-[var(--color-text-muted)]">
-                          {d.id} · {d.quantity} · {new Date(d.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                          {d.id} · {localizeQuantity(d.quantity, locale)} · {new Date(d.createdAt).toLocaleDateString(localeTag(locale), { day: "numeric", month: "short" })}
                         </span>
                       </button>
                       {d.submitted ? (
                         <span className="shrink-0 rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-600 dark:text-emerald-400">{t("tenderStudio.issued")}</span>
                       ) : (
-                        <span className="shrink-0 rounded-full bg-[var(--color-bg-subtle)] px-1.5 py-0.5 text-[9px] font-semibold text-[var(--color-text-muted)]">Draft</span>
+                        <span className="shrink-0 rounded-full bg-[var(--color-bg-subtle)] px-1.5 py-0.5 text-[9px] font-semibold text-[var(--color-text-muted)]">{t("tenderStudio.draftStatus")}</span>
                       )}
                       <button
                         type="button"
                         onClick={() => deleteDraftedTender(d.id)}
-                        title="Remove from catalogue"
+                        title={t("tenderStudio.removeDraft")}
                         className="shrink-0 rounded p-0.5 text-[var(--color-text-muted)] opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100"
                       >
                         <SafeIcon name="X" className="h-3 w-3" />
@@ -762,7 +880,7 @@ export function TenderStudioPage() {
             </section>
           )}
 
-          <DocumentRepository activeDocRefs={activeDocRefs} />
+          <DocumentRepository activeDocRefs={activeDocRefs} locale={locale} />
         </div>
 
         {/* Working area */}
@@ -771,10 +889,9 @@ export function TenderStudioPage() {
             <div className="flex flex-col items-center justify-center gap-3 rounded-[16px] border border-dashed border-[var(--color-border-default)] py-24 text-center">
               <SafeIcon name="FileSignature" className="h-8 w-8 text-[var(--color-text-muted)]/50" />
               <div className="space-y-1">
-                <p className="text-[14px] font-medium text-[var(--color-text-primary)]">No draft in progress</p>
+                <p className="text-[14px] font-medium text-[var(--color-text-primary)]">{t("tenderStudio.emptyTitle")}</p>
                 <p className="mx-auto max-w-[420px] text-[12px] text-[var(--color-text-muted)]">
-                  Describe the package you need to take to market. The drafting agents work only from the controlled
-                  documents on the register — every parameter, standard and clause is cited to source.
+                  {t("tenderStudio.emptyBody")}
                 </p>
               </div>
             </div>
@@ -784,14 +901,13 @@ export function TenderStudioPage() {
             <div className={cn(pcmCard, "rounded-[16px] border border-amber-400/50 bg-amber-500/5 p-5 space-y-3")}>
               <div className="flex items-center gap-2">
                 <SafeIcon name="SearchX" className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                <p className="text-[13px] font-semibold text-[var(--color-text-primary)]">No controlled specification matches that request</p>
+                <p className="text-[13px] font-semibold text-[var(--color-text-primary)]">{t("tenderStudio.unresolvedTitle")}</p>
               </div>
               <p className="text-[12px] leading-relaxed text-[var(--color-text-secondary)]">
-                Tenders can only be drafted against a specification on the {PROJECT.shortName} document register.
-                The register currently covers these component classes:
+                {t("tenderStudio.unresolvedBody", { project: PROJECT.shortName })}
               </p>
               <ul className="space-y-1">
-                {COMPONENT_SPECS.map(c => (
+                {localizedComponentSpecs(locale).map(c => (
                   <li key={c.id} className="flex items-center gap-2 text-[12px] text-[var(--color-text-secondary)]">
                     <SafeIcon name="FileText" className="h-3 w-3 shrink-0 text-[var(--color-text-muted)]" />
                     {c.name} <span className="text-[var(--color-text-muted)]">({c.docRef})</span>
@@ -799,7 +915,7 @@ export function TenderStudioPage() {
                 ))}
               </ul>
               <p className="text-[12px] text-[var(--color-text-muted)]">
-                For a new component class, raise a specification request with Engineering — EPCI Tech Data before going to market.
+                {t("tenderStudio.unresolvedHelp")}
               </p>
             </div>
           )}
@@ -815,7 +931,7 @@ export function TenderStudioPage() {
                     ) : (
                       <SafeIcon name="Workflow" className="h-4 w-4 text-[var(--color-text-muted)]" />
                     )}
-                    <h2 className="text-[13px] font-semibold text-[var(--color-text-primary)]">Drafting pipeline</h2>
+                    <h2 className="text-[13px] font-semibold text-[var(--color-text-primary)]">{t("tenderStudio.pipeline")}</h2>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-[11px] text-[var(--color-text-muted)]">
@@ -827,7 +943,7 @@ export function TenderStudioPage() {
                       className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                     >
                       <SafeIcon name={pipelineOpen ? "ChevronUp" : "ChevronDown"} className="h-3.5 w-3.5" />
-                      {pipelineOpen ? "Show less" : "Show details"}
+                      {pipelineOpen ? t("tenderStudio.showLess") : t("tenderStudio.showDetails")}
                     </button>
                   </div>
                 </div>
@@ -839,8 +955,8 @@ export function TenderStudioPage() {
                     <StepIcon status={phase === "scoping" ? "running" : "done"} />
                     <div className="min-w-0 flex-1 space-y-1.5">
                       <p className="text-[12px] font-medium text-[var(--color-text-primary)]">
-                        Scope Agent
-                        <span className="ml-2 text-[11px] font-normal text-[var(--color-text-muted)]">frames the package and plans retrieval</span>
+                        {t("tenderStudio.scopeAgent")}
+                        <span className="ml-2 text-[11px] font-normal text-[var(--color-text-muted)]">{t("tenderStudio.scopeDetail")}</span>
                       </p>
                       {scope && (
                         <div className="space-y-1.5 rounded-[10px] bg-[var(--color-bg-subtle)] p-2.5">
@@ -861,9 +977,9 @@ export function TenderStudioPage() {
                   {(phase !== "scoping") && (
                     <div className="space-y-2 border-l-2 border-[var(--color-border-default)] pl-4 ml-2">
                       {([
-                        { key: "technical" as const, name: "Technical Specification Agent", detail: `extracting parameters from ${spec.docRef}` },
-                        { key: "quality" as const, name: "Quality & Standards Agent", detail: "mapping obligations from QA-MAN-2026-EPCI" },
-                        { key: "legal" as const, name: "Contracts & Maritime Agent", detail: spec.involvesVessel ? "assembling terms + charter flow-downs" : "assembling procurement terms" },
+                        { key: "technical" as const, name: t("tenderStudio.technicalAgent"), detail: t("tenderStudio.technicalDetail", { document: spec.docRef }) },
+                        { key: "quality" as const, name: t("tenderStudio.qualityAgent"), detail: t("tenderStudio.qualityDetail") },
+                        { key: "legal" as const, name: t("tenderStudio.legalAgent"), detail: spec.involvesVessel ? t("tenderStudio.legalDetailVessel") : t("tenderStudio.legalDetailStandard") },
                       ]).map(s => (
                         <div key={s.key} className="flex items-center gap-2.5">
                           <StepIcon status={specialists[s.key]} />
@@ -881,8 +997,8 @@ export function TenderStudioPage() {
                     <div className="flex items-center gap-2.5">
                       <StepIcon status={phase === "composing" ? "running" : "done"} />
                       <p className="text-[12px] text-[var(--color-text-primary)]">
-                        Assembling document
-                        <span className="ml-2 text-[11px] text-[var(--color-text-muted)]">composing sections 1.0 – 5.0 from the controlled template</span>
+                        {t("tenderStudio.assembling")}
+                        <span className="ml-2 text-[11px] text-[var(--color-text-muted)]">{t("tenderStudio.assemblingDetail")}</span>
                       </p>
                     </div>
                   )}
@@ -892,8 +1008,8 @@ export function TenderStudioPage() {
                     <div className="flex items-center gap-2.5">
                       <StepIcon status={phase === "auditing" ? "running" : "done"} />
                       <p className="text-[12px] text-[var(--color-text-primary)]">
-                        Audit Agent
-                        <span className="ml-2 text-[11px] text-[var(--color-text-muted)]">adversarial verification of every clause against source</span>
+                        {t("tenderStudio.auditAgent")}
+                        <span className="ml-2 text-[11px] text-[var(--color-text-muted)]">{t("tenderStudio.auditDetail")}</span>
                       </p>
                     </div>
                   )}
@@ -913,7 +1029,7 @@ export function TenderStudioPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-[11px] tabular-nums text-[var(--color-text-muted)]">
-                        {audit.checks.length} checks · {audit.corrections.length} corrections
+                        {t("tenderStudio.checksCorrections", { checks: audit.checks.length, corrections: audit.corrections.length })}
                       </span>
                       <button
                         type="button"
@@ -921,7 +1037,7 @@ export function TenderStudioPage() {
                         className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                       >
                         <SafeIcon name={auditOpen ? "ChevronUp" : "ChevronDown"} className="h-3.5 w-3.5" />
-                        {auditOpen ? "Show less" : "Show details"}
+                        {auditOpen ? t("tenderStudio.showLess") : t("tenderStudio.showDetails")}
                       </button>
                     </div>
                   </div>
@@ -949,7 +1065,7 @@ export function TenderStudioPage() {
                   </div>
                       {audit.corrections.length > 0 && (
                         <div className="space-y-1.5">
-                          <p className="text-[10px] font-semibold uppercase tracking-[1px] text-[var(--color-text-muted)]">Corrections applied</p>
+                          <p className="text-[10px] font-semibold uppercase tracking-[1px] text-[var(--color-text-muted)]">{t("tenderStudio.correctionsApplied")}</p>
                           {audit.corrections.map((c, i) => (
                             <div key={i} className="rounded-[10px] border border-amber-400/40 bg-[var(--color-bg-surface)] p-2.5 text-[11px]">
                               <p className="font-medium text-[var(--color-text-primary)]">{c.section}</p>
@@ -982,11 +1098,11 @@ export function TenderStudioPage() {
                         <div className="flex items-center gap-2">
                           <Button
                             type="button"
-                            onClick={() => openPrintView(itt)}
+                            onClick={() => openPrintView(itt, locale)}
                             className={cn(pcmButton, "gap-1.5 rounded-[10px] border border-[var(--color-text-inverse)]/25 bg-transparent text-[12px] font-semibold text-[var(--color-text-inverse)] hover:bg-[var(--color-text-inverse)]/10")}
                           >
                             <SafeIcon name="Printer" className="h-3.5 w-3.5" />
-                            Print / PDF
+                            {t("tenderStudio.printPdf")}
                           </Button>
                           {pkg && !submitted && (
                             <Button
@@ -1008,25 +1124,25 @@ export function TenderStudioPage() {
                       )}
                     </div>
                     <div className="mt-4 grid gap-x-8 gap-y-1 text-[11px] sm:grid-cols-2 lg:grid-cols-4">
-                      <p className="text-[var(--color-text-inverse)]/60">Reference <span className="block font-mono font-medium text-[var(--color-text-inverse)]">{itt.ittRef}</span></p>
-                      <p className="text-[var(--color-text-inverse)]/60">Issue date <span className="block font-medium text-[var(--color-text-inverse)]">{formatDate(itt.issueDate)}</span></p>
-                      <p className="text-[var(--color-text-inverse)]/60">Submission deadline <span className="block font-medium text-[var(--color-text-inverse)]">{formatDate(itt.submissionDeadline)}</span></p>
-                      <p className="text-[var(--color-text-inverse)]/60">Procurement officer <span className="block font-medium text-[var(--color-text-inverse)]">{itt.procurementOfficer}</span></p>
+                      <p className="text-[var(--color-text-inverse)]/60">{t("tenderStudio.reference")} <span className="block font-mono font-medium text-[var(--color-text-inverse)]">{itt.ittRef}</span></p>
+                      <p className="text-[var(--color-text-inverse)]/60">{t("tenderStudio.issueDate")} <span className="block font-medium text-[var(--color-text-inverse)]">{formatDate(itt.issueDate, locale)}</span></p>
+                      <p className="text-[var(--color-text-inverse)]/60">{t("tenderStudio.submissionDeadline")} <span className="block font-medium text-[var(--color-text-inverse)]">{formatDate(itt.submissionDeadline, locale)}</span></p>
+                      <p className="text-[var(--color-text-inverse)]/60">{t("tenderStudio.procurementOfficer")} <span className="block font-medium text-[var(--color-text-inverse)]">{itt.procurementOfficer}</span></p>
                     </div>
                   </div>
 
                   <div className="space-y-7 px-6 py-6">
                     {/* Section 1 */}
                     <div className="space-y-3">
-                      <SectionHeading number="1.0" title="Introduction & Instructions to Tenderers" />
+                      <SectionHeading number="1.0" title={t("tenderStudio.section1")} />
                       <div className="space-y-2">
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">1.1 Project Overview</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">{t("tenderStudio.section11")}</p>
                         {itt.projectSummary.map((p, i) => (
                           <p key={i} className="text-[12.5px] leading-relaxed text-[var(--color-text-secondary)]">{p}</p>
                         ))}
                       </div>
                       <div className="space-y-1.5">
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">1.2 Submission Guidelines</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">{t("tenderStudio.section12")}</p>
                         <ul className="space-y-1">
                           {itt.submissionGuidelines.map((g, i) => (
                             <li key={i} className="flex gap-2 text-[12.5px] leading-relaxed text-[var(--color-text-secondary)]">
@@ -1040,14 +1156,14 @@ export function TenderStudioPage() {
 
                     {/* Section 2 */}
                     <div className="space-y-3">
-                      <SectionHeading number="2.0" title="Technical Scope of Supply" />
+                      <SectionHeading number="2.0" title={t("tenderStudio.section2")} />
                       <p className="text-[12.5px] leading-relaxed text-[var(--color-text-secondary)]">{itt.technical.scopeIntro}</p>
                       <div className="overflow-hidden rounded-[10px] border border-[var(--color-border-default)]">
                         <table className="w-full text-[12px]">
                           <thead>
                             <tr className="bg-[var(--color-bg-subtle)] text-left">
-                              <th className="px-3 py-2 font-semibold text-[var(--color-text-primary)]">Parameter</th>
-                              <th className="px-3 py-2 font-semibold text-[var(--color-text-primary)]">Requirement</th>
+                              <th className="px-3 py-2 font-semibold text-[var(--color-text-primary)]">{t("tenderStudio.parameter")}</th>
+                              <th className="px-3 py-2 font-semibold text-[var(--color-text-primary)]">{t("tenderStudio.requirement")}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1063,23 +1179,23 @@ export function TenderStudioPage() {
                       {itt.technical.notes.length > 0 && (
                         <ul className="space-y-1">
                           {itt.technical.notes.map((n, i) => (
-                            <li key={i} className="text-[11px] leading-relaxed text-[var(--color-text-muted)]">Note {i + 1}: {n}</li>
+                            <li key={i} className="text-[11px] leading-relaxed text-[var(--color-text-muted)]">{t("tenderStudio.note")} {i + 1}: {n}</li>
                           ))}
                         </ul>
                       )}
-                      <p className="text-[10px] text-[var(--color-text-muted)]">Source: {itt.technical.citations.join(" · ")}</p>
+                      <p className="text-[10px] text-[var(--color-text-muted)]">{t("tenderStudio.source")}: {itt.technical.citations.join(" · ")}</p>
                     </div>
 
                     {/* Section 3 */}
                     <div className="space-y-3">
-                      <SectionHeading number="3.0" title="Quality Assurance & HSEQ Requirements" />
+                      <SectionHeading number="3.0" title={t("tenderStudio.section3")} />
                       <p className="text-[12.5px] leading-relaxed text-[var(--color-text-secondary)]">{itt.quality.intro}</p>
                       <div className="overflow-hidden rounded-[10px] border border-[var(--color-border-default)]">
                         <table className="w-full text-[12px]">
                           <thead>
                             <tr className="bg-[var(--color-bg-subtle)] text-left">
-                              <th className="px-3 py-2 font-semibold text-[var(--color-text-primary)]">Standard</th>
-                              <th className="px-3 py-2 font-semibold text-[var(--color-text-primary)]">Application</th>
+                              <th className="px-3 py-2 font-semibold text-[var(--color-text-primary)]">{t("tenderStudio.standard")}</th>
+                              <th className="px-3 py-2 font-semibold text-[var(--color-text-primary)]">{t("tenderStudio.application")}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1093,7 +1209,7 @@ export function TenderStudioPage() {
                         </table>
                       </div>
                       <div className="space-y-1.5">
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Factory Acceptance Testing & Traceability</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">{t("tenderStudio.fatTraceability")}</p>
                         <ul className="space-y-1">
                           {itt.quality.fatRequirements.map((f, i) => (
                             <li key={i} className="flex gap-2 text-[12.5px] leading-relaxed text-[var(--color-text-secondary)]">
@@ -1103,12 +1219,12 @@ export function TenderStudioPage() {
                           ))}
                         </ul>
                       </div>
-                      <p className="text-[10px] text-[var(--color-text-muted)]">Source: {itt.quality.citations.join(" · ")}</p>
+                      <p className="text-[10px] text-[var(--color-text-muted)]">{t("tenderStudio.source")}: {itt.quality.citations.join(" · ")}</p>
                     </div>
 
                     {/* Section 4 */}
                     <div className="space-y-3">
-                      <SectionHeading number="4.0" title="Commercial & Maritime Legal Terms" />
+                      <SectionHeading number="4.0" title={t("tenderStudio.section4")} />
                       <p className="text-[12.5px] leading-relaxed text-[var(--color-text-secondary)]">{itt.legal.governingTerms}</p>
                       <div className="space-y-2">
                         {itt.legal.clauses.map((c, i) => (
@@ -1121,21 +1237,21 @@ export function TenderStudioPage() {
                           </div>
                         ))}
                       </div>
-                      <p className="text-[10px] text-[var(--color-text-muted)]">Source: {itt.legal.citations.join(" · ")}</p>
+                      <p className="text-[10px] text-[var(--color-text-muted)]">{t("tenderStudio.source")}: {itt.legal.citations.join(" · ")}</p>
                     </div>
 
                     {/* Section 5 */}
                     <div className="space-y-3">
-                      <SectionHeading number="5.0" title="Pricing Schedule & Returnables" />
+                      <SectionHeading number="5.0" title={t("tenderStudio.section5")} />
                       <p className="text-[12.5px] leading-relaxed text-[var(--color-text-secondary)]">{itt.pricing.intro}</p>
                       <div className="overflow-hidden rounded-[10px] border border-[var(--color-border-default)]">
                         <table className="w-full text-[12px]">
                           <thead>
                             <tr className="bg-[var(--color-bg-subtle)] text-left">
-                              <th className="w-12 px-3 py-2 font-semibold text-[var(--color-text-primary)]">Item</th>
-                              <th className="px-3 py-2 font-semibold text-[var(--color-text-primary)]">Description</th>
-                              <th className="whitespace-nowrap px-3 py-2 font-semibold text-[var(--color-text-primary)]">Qty</th>
-                              <th className="whitespace-nowrap px-3 py-2 font-semibold text-[var(--color-text-primary)]">Unit Price</th>
+                              <th className="w-12 px-3 py-2 font-semibold text-[var(--color-text-primary)]">{t("tenderStudio.item")}</th>
+                              <th className="px-3 py-2 font-semibold text-[var(--color-text-primary)]">{t("tenderStudio.description")}</th>
+                              <th className="whitespace-nowrap px-3 py-2 font-semibold text-[var(--color-text-primary)]">{t("tenderStudio.quantity")}</th>
+                              <th className="whitespace-nowrap px-3 py-2 font-semibold text-[var(--color-text-primary)]">{t("tenderStudio.unitPrice")}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1144,7 +1260,7 @@ export function TenderStudioPage() {
                                 <td className="px-3 py-1.5 tabular-nums text-[var(--color-text-secondary)]">{item.item}</td>
                                 <td className="px-3 py-1.5 text-[var(--color-text-secondary)]">{item.description}</td>
                                 <td className="whitespace-nowrap px-3 py-1.5 text-[var(--color-text-secondary)]">{item.qty}</td>
-                                <td className="whitespace-nowrap px-3 py-1.5 text-[var(--color-text-muted)]">To be quoted</td>
+                                <td className="whitespace-nowrap px-3 py-1.5 text-[var(--color-text-muted)]">{t("tenderStudio.toBeQuoted")}</td>
                               </tr>
                             ))}
                           </tbody>

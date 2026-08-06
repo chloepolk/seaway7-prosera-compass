@@ -12,11 +12,14 @@ import type { TranslateFn } from "../../_i18n"
 import type { ActionTimelineEntry, AgentTimelineSubEntry, TimelineEntryStatus } from "./hub-types"
 import { ACTIVE_USER, displayName } from "./active-user"
 import { avatarColor, avatarSrcFor } from "./avatar-color"
+import { useStore } from "../../_store"
+import { localeTag } from "../../_i18n"
+import { localizeRole } from "../../_i18n/domain"
 
-function formatDate(iso: string): string {
+function formatDate(iso: string, locale: "en" | "fr"): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return iso
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+  return d.toLocaleDateString(localeTag(locale), { month: "short", day: "numeric", year: "numeric" })
 }
 
 /** Illustrated (or coloured-initial fallback) avatar for every human on the timeline. */
@@ -46,23 +49,25 @@ function statusPill(
   t: TranslateFn,
   completedAt?: string,
   dueAt?: string,
+  locale: "en" | "fr" = "en",
 ): { label: string; tone: PillTone } {
   if (status === "done") {
     return {
-      label: completedAt ? t("timeline.doneDated", { date: formatDate(completedAt) }) : t("timeline.done"),
+      label: completedAt ? t("timeline.doneDated", { date: formatDate(completedAt, locale) }) : t("timeline.done"),
       tone: "done",
     }
   }
   if (status === "current") return { label: t("timeline.inProgress"), tone: "current" }
   return {
-    label: dueAt ? t("timeline.due", { date: formatDate(dueAt) }) : t("timeline.pending"),
+    label: dueAt ? t("timeline.due", { date: formatDate(dueAt, locale) }) : t("timeline.pending"),
     tone: "upcoming",
   }
 }
 
 function StatusPill({ status, completedAt, dueAt }: { status: TimelineEntryStatus; completedAt?: string; dueAt?: string }) {
   const t = useT()
-  const { label, tone } = statusPill(status, t, completedAt, dueAt)
+  const { locale } = useStore()
+  const { label, tone } = statusPill(status, t, completedAt, dueAt, locale)
   return (
     <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap", PILL_CLS[tone])}>
       {label}
@@ -73,6 +78,7 @@ function StatusPill({ status, completedAt, dueAt }: { status: TimelineEntryStatu
 /** A single BluePilot agent sub-activity inside the shaded AI layer. */
 function AgentRow({ agent }: { agent: AgentTimelineSubEntry }) {
   const t = useT()
+  const { locale } = useStore()
   const isDone = agent.status === "done"
   const isCurrent = agent.status === "current"
   return (
@@ -92,9 +98,9 @@ function AgentRow({ agent }: { agent: AgentTimelineSubEntry }) {
           {agent.label}
         </p>
         <p className="mt-0.5 text-[10px] text-[var(--color-text-muted)]">
-          {isDone && agent.completedAt ? formatDate(agent.completedAt) : null}
+          {isDone && agent.completedAt ? formatDate(agent.completedAt, locale) : null}
           {isCurrent ? <span className="font-medium text-[var(--color-brand-strong)]">{t("timeline.inProgress")}</span> : null}
-          {!isDone && !isCurrent && agent.dueAt ? t("timeline.due", { date: formatDate(agent.dueAt) }) : null}
+          {!isDone && !isCurrent && agent.dueAt ? t("timeline.due", { date: formatDate(agent.dueAt, locale) }) : null}
         </p>
       </div>
     </div>
@@ -102,6 +108,8 @@ function AgentRow({ agent }: { agent: AgentTimelineSubEntry }) {
 }
 
 function TimelineRow({ entry }: { entry: ActionTimelineEntry }) {
+  const t = useT()
+  const { locale } = useStore()
   const hasAgents = !!entry.agentSteps && entry.agentSteps.length > 0
 
   const header = (
@@ -110,8 +118,10 @@ function TimelineRow({ entry }: { entry: ActionTimelineEntry }) {
       <div className="min-w-0 flex-1">
         <p className="truncate text-[12px] font-semibold text-[var(--color-text-primary)]">{entry.label}</p>
         <p className="truncate text-[10px] text-[var(--color-text-muted)]">
-          <span className="font-medium text-[var(--color-text-secondary)]">{displayName(entry.assignee)}</span>
-          {entry.assigneeRole ? ` · ${entry.assigneeRole}` : null}
+          <span className="font-medium text-[var(--color-text-secondary)]">
+            {displayName(entry.assignee) === "You" ? t("common.you") : displayName(entry.assignee)}
+          </span>
+          {entry.assigneeRole ? ` · ${localizeRole(entry.assigneeRole, locale)}` : null}
         </p>
       </div>
       <StatusPill status={entry.status} completedAt={entry.completedAt} dueAt={entry.dueAt} />
@@ -139,7 +149,7 @@ function TimelineRow({ entry }: { entry: ActionTimelineEntry }) {
           <div className="flex items-center gap-1.5">
             <SafeIcon name="Sparkles" className="size-3 text-[var(--color-brand-strong)]" />
             <span className="text-[9px] font-semibold uppercase tracking-wider text-[var(--color-brand-strong)]">
-              BluePilot activity
+              {t("timeline.activity")}
             </span>
           </div>
           {entry.agentSteps!.map((agent) => (
@@ -158,10 +168,11 @@ export function ActionCompletionTimeline({
   entries: ActionTimelineEntry[]
   className?: string
 }) {
+  const t = useT()
   if (entries.length === 0) {
     return (
       <div className={cn("rounded-[12px] border border-dashed border-[var(--color-border-default)] px-3 py-6 text-center", className)}>
-        <p className="text-[11px] text-[var(--color-text-muted)]">No timeline steps yet.</p>
+        <p className="text-[11px] text-[var(--color-text-muted)]">{t("timeline.empty")}</p>
       </div>
     )
   }
@@ -169,7 +180,7 @@ export function ActionCompletionTimeline({
   return (
     <div className={cn("min-w-0", className)}>
       <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-        Actions taken
+        {t("timeline.actionsTaken")}
       </p>
       <div className="mt-2 max-h-[280px] space-y-1.5 overflow-y-auto pr-1">
         {entries.map((entry) => (

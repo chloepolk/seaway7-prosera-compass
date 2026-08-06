@@ -254,8 +254,8 @@ function storeBriefing(key: CacheKey, result: CachedResult) {
   } catch {}
 }
 
-function makeCacheKey(state: CockpitState): CacheKey {
-  return `${state.activePage}:${state.drillLevel}:${state.selectedRegion ?? ""}:${state.selectedCity ?? ""}:${state.selectedCustomer ?? ""}:${state.selectedJobType ?? ""}`
+function makeCacheKey(state: CockpitState, locale: Locale): CacheKey {
+  return `${locale}:${state.activePage}:${state.drillLevel}:${state.selectedRegion ?? ""}:${state.selectedCity ?? ""}:${state.selectedCustomer ?? ""}:${state.selectedJobType ?? ""}`
 }
 
 const ALL_AGENT_PAGES: Page[] = [
@@ -299,7 +299,15 @@ function getSpecialistsForPage(page: Page): ("portfolio" | "pricing" | "market")
   }
 }
 
-function getPageContext(page: Page): string {
+function getPageContext(page: Page, locale: Locale): string {
+  if (locale === "fr") {
+    switch (page) {
+      case "operating-loop": return "Centre d’actions — pipeline actif des appels d’offres du programme éolien offshore Meridian, où les lots d’achats progressent par 5 portes (Cadré → Spécifié → Approuvé → Émis → Attribué), avec responsable, date limite de soumission, objectif d’économies et registre cumulé des économies"
+      case "tender-studio": return "Studio d’appels d’offres — espace de rédaction des AO depuis les documents contrôlés, avec pipeline multi-agents d’assemblage, d’audit et de rendu"
+      case "bid-evaluation": return "Évaluation des offres — portefeuille de réponses fournisseurs dépouillées avec portes éliminatoires et notation composite sur 100, matrice et recommandations d’attribution"
+      default: return "Espace de gestion de la chaîne d’approvisionnement du programme éolien offshore Meridian"
+    }
+  }
   switch (page) {
     case "operating-loop": return "Action Centre — the live tender pipeline for the Meridian offshore wind programme, where procurement packages move through 5 gates (Scoped → Specified → Approved → Issued → Awarded), each with an accountable owner, submission deadline and savings target, plus an accumulated savings ledger of awarded packages"
     case "tender-studio": return "Tender Studio — the ITT drafting workspace: a controlled document repository (engineering specifications, QA manual, procurement terms, charter party), a drafting prompt, and the multi-agent pipeline that assembles, audits and renders a complete Invitation to Tender"
@@ -369,9 +377,10 @@ type PipelineOptions = {
 async function executeAgentPipeline(
   cockpitState: CockpitState,
   data: ComputedData,
+  locale: Locale,
   { silent = false, signal, setAgentState }: PipelineOptions,
 ): Promise<void> {
-  const cacheKey = makeCacheKey(cockpitState)
+  const cacheKey = makeCacheKey(cockpitState, locale)
   if (agentCache.has(cacheKey)) return
 
   const update = (fn: React.SetStateAction<AgentState>) => {
@@ -402,7 +411,7 @@ async function executeAgentPipeline(
         const res = await fetch(`/api/acme/specialist/${id}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ context: contextMap[id], drillState: drill }),
+          body: JSON.stringify({ context: contextMap[id], drillState: drill, locale }),
           signal,
         })
         const json: AgentApiResponse<SpecialistOutput> = await res.json()
@@ -425,7 +434,9 @@ async function executeAgentPipeline(
         update(s => ({
           ...s,
           agentPhase: "idle",
-          agentError: "BluePilot unavailable — configure OPENAI_API_KEY, GEMINI_API_KEY, or ANTHROPIC_API_KEY in Vercel",
+          agentError: locale === "fr"
+            ? "BluePilot indisponible — configurez OPENAI_API_KEY, GEMINI_API_KEY ou ANTHROPIC_API_KEY dans Vercel"
+            : "BluePilot unavailable — configure OPENAI_API_KEY, GEMINI_API_KEY, or ANTHROPIC_API_KEY in Vercel",
         }))
       }
       return
@@ -433,7 +444,7 @@ async function executeAgentPipeline(
 
     update(s => ({ ...s, agentPhase: "orchestrating" }))
 
-    const orchestratorContext = buildOrchestratorContext(specialistOutputs, drill, getPageContext(cockpitState.activePage), data)
+    const orchestratorContext = buildOrchestratorContext(specialistOutputs, drill, getPageContext(cockpitState.activePage, locale), data)
 
     const orchRes = await fetch("/api/acme/orchestrate", {
       method: "POST",
@@ -441,8 +452,9 @@ async function executeAgentPipeline(
       body: JSON.stringify({
         specialistOutputs,
         drillState: drill,
-        pageContext: getPageContext(cockpitState.activePage),
+        pageContext: getPageContext(cockpitState.activePage, locale),
         orchestratorContext,
+        locale,
       }),
       signal,
     })
@@ -454,7 +466,9 @@ async function executeAgentPipeline(
         update(s => ({
           ...s,
           agentPhase: "idle",
-          agentError: orchJson.error ?? "BluePilot orchestration failed — using static analysis",
+          agentError: locale === "fr"
+            ? "Échec de l’orchestration BluePilot — utilisation de l’analyse statique"
+            : (orchJson.error ?? "BluePilot orchestration failed — using static analysis"),
         }))
       }
       return
@@ -479,6 +493,7 @@ async function executeAgentPipeline(
         sourceData: verifierContext.sourceData,
         drillState: drill,
         verifiableBenchmarks: verifierContext.verifiableBenchmarks,
+        locale,
       }),
       signal,
     })
@@ -519,7 +534,9 @@ async function executeAgentPipeline(
       update(s => ({
         ...s,
         agentPhase: "idle",
-        agentError: err instanceof Error ? err.message : "Pipeline error",
+        agentError: locale === "fr"
+          ? "Erreur du pipeline BluePilot"
+          : (err instanceof Error ? err.message : "Pipeline error"),
       }))
     }
   }
@@ -528,9 +545,10 @@ async function executeAgentPipeline(
 async function runPipelineWithDedup(
   cockpitState: CockpitState,
   data: ComputedData,
+  locale: Locale,
   options: PipelineOptions,
 ): Promise<void> {
-  const cacheKey = makeCacheKey(cockpitState)
+  const cacheKey = makeCacheKey(cockpitState, locale)
   if (agentCache.has(cacheKey)) return
 
   const existing = inFlightPipelines.get(cacheKey)
@@ -539,7 +557,7 @@ async function runPipelineWithDedup(
     return
   }
 
-  const promise = executeAgentPipeline(cockpitState, data, options)
+  const promise = executeAgentPipeline(cockpitState, data, locale, options)
   inFlightPipelines.set(cacheKey, promise)
   try {
     await promise
@@ -578,11 +596,6 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
       document.documentElement.lang = locale === "fr" ? "fr" : "en"
     }
   }, [locale])
-
-  const setLocale = React.useCallback((next: Locale) => {
-    setLocaleState(next)
-    persistLocale(next)
-  }, [])
 
   const [state, setState] = React.useState<CockpitState>({
     activePage: "operating-loop",
@@ -669,7 +682,7 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
   /* ---------------------------------------------------------------- */
 
   const applyCachedAgentState = React.useCallback((cockpitState: CockpitState) => {
-    const cached = agentCache.get(makeCacheKey(cockpitState))
+    const cached = agentCache.get(makeCacheKey(cockpitState, locale))
     if (!cached) return false
     setAgentState({
       agentPhase: "complete",
@@ -678,12 +691,12 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
       agentError: null,
     })
     return true
-  }, [])
+  }, [locale])
 
   const runAgentPipeline = React.useCallback(async (cockpitState: CockpitState) => {
     if (applyCachedAgentState(cockpitState)) return
 
-    const cacheKey = makeCacheKey(cockpitState)
+    const cacheKey = makeCacheKey(cockpitState, locale)
     const inFlight = inFlightPipelines.get(cacheKey)
     if (inFlight) {
       setAgentState(s => ({ ...s, agentPhase: "specialists", agentError: null, orchestratorResult: null, verifierResult: null }))
@@ -706,7 +719,7 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
         verifierResult: stored.verifier,
         agentError: null,
       })
-      await runPipelineWithDedup(cockpitState, data, {
+      await runPipelineWithDedup(cockpitState, data, locale, {
         silent: true,
         signal: controller.signal,
       })
@@ -716,7 +729,7 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
       return
     }
 
-    await runPipelineWithDedup(cockpitState, data, {
+    await runPipelineWithDedup(cockpitState, data, locale, {
       silent: false,
       signal: controller.signal,
       setAgentState,
@@ -725,7 +738,7 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
     if (!controller.signal.aborted) {
       applyCachedAgentState(cockpitState)
     }
-  }, [applyCachedAgentState, data])
+  }, [applyCachedAgentState, data, locale])
 
   const prefetchAllAgentInsights = React.useCallback(async (currentState: CockpitState) => {
     if (prefetchAbortRef.current) prefetchAbortRef.current.abort()
@@ -737,14 +750,14 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
 
       const prefetchState = macroCockpitState(page)
       if (page === currentState.activePage && isMacroState(currentState)) continue
-      if (agentCache.has(makeCacheKey(prefetchState))) continue
+      if (agentCache.has(makeCacheKey(prefetchState, locale))) continue
 
-      await runPipelineWithDedup(prefetchState, data, {
+      await runPipelineWithDedup(prefetchState, data, locale, {
         silent: true,
         signal: controller.signal,
       })
     }
-  }, [data])
+  }, [data, locale])
 
   // Run pipeline for the active view after login and on navigation changes.
   React.useEffect(() => {
@@ -753,7 +766,7 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
     return () => {
       if (abortRef.current) abortRef.current.abort()
     }
-  }, [authenticated, state.activePage, state.drillLevel, state.selectedRegion, state.selectedCity, state.selectedCustomer, state.selectedJobType, runAgentPipeline])
+  }, [authenticated, state.activePage, state.drillLevel, state.selectedRegion, state.selectedCity, state.selectedCustomer, state.selectedJobType, locale, runAgentPipeline])
 
   // Prefetch macro-level insights for every page on login (Ask chat excluded).
   React.useEffect(() => {
@@ -762,7 +775,7 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
     return () => {
       if (prefetchAbortRef.current) prefetchAbortRef.current.abort()
     }
-  }, [authenticated, prefetchAllAgentInsights])
+  }, [authenticated, locale, prefetchAllAgentInsights])
 
   /* ---------------------------------------------------------------- */
   /*  Derived Values                                                   */
@@ -881,6 +894,23 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
   const [chatLoading, setChatLoading] = React.useState(false)
   const chatAbortRef = React.useRef<AbortController | null>(null)
 
+  const setLocale = React.useCallback((next: Locale) => {
+    abortRef.current?.abort()
+    prefetchAbortRef.current?.abort()
+    chatAbortRef.current?.abort()
+    clearAgentCache()
+    setAgentState({
+      agentPhase: "idle",
+      orchestratorResult: null,
+      verifierResult: null,
+      agentError: null,
+    })
+    setChatMessages([])
+    setChatLoading(false)
+    setLocaleState(next)
+    persistLocale(next)
+  }, [])
+
   const login = React.useCallback(() => {
     if (abortRef.current) abortRef.current.abort()
     if (prefetchAbortRef.current) prefetchAbortRef.current.abort()
@@ -931,8 +961,8 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
       portfolio: buildPortfolioContext(data, drill),
       pricing: buildPricingContext(data, drill),
       market: buildMarketContext(data, drill),
-      orchestratorData: buildOrchestratorContext([], drill, getPageContext(state.activePage), data),
-      bidEvaluation: buildBidEvaluationContext(),
+      orchestratorData: buildOrchestratorContext([], drill, getPageContext(state.activePage, locale), data),
+      bidEvaluation: buildBidEvaluationContext(locale),
     }
 
     const controller = new AbortController()
@@ -943,14 +973,14 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
       const res = await fetch("/api/acme/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: allMessages, dataContext, chatBriefing }),
+        body: JSON.stringify({ messages: allMessages, dataContext, chatBriefing, locale }),
         signal: controller.signal,
       })
 
       if (!res.ok || !res.body) {
         setChatMessages(prev => {
           const copy = [...prev]
-          copy[copy.length - 1] = { role: "assistant", content: "Unable to connect to BluePilot. Please try again." }
+          copy[copy.length - 1] = { role: "assistant", content: locale === "fr" ? "Impossible de se connecter à BluePilot. Veuillez réessayer." : "Unable to connect to BluePilot. Please try again." }
           return copy
         })
         setChatLoading(false)
@@ -976,14 +1006,14 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
       if ((err as Error).name !== "AbortError") {
         setChatMessages(prev => {
           const copy = [...prev]
-          copy[copy.length - 1] = { role: "assistant", content: "Something went wrong. Please try again." }
+          copy[copy.length - 1] = { role: "assistant", content: locale === "fr" ? "Une erreur s’est produite. Veuillez réessayer." : "Something went wrong. Please try again." }
           return copy
         })
       }
     } finally {
       setChatLoading(false)
     }
-  }, [chatLoading, chatMessages, state, data])
+  }, [chatLoading, chatMessages, state, data, locale])
 
   /* ---------------------------------------------------------------- */
   /*  Sandbox State                                                    */

@@ -1,6 +1,7 @@
 import { getClient, getGeminiClient, callWithRetry, extractJson, MODELS, fallbackResponse, errorResponse } from "@/lib/compass/engine"
 import { SCOPE_SCHEMA } from "@/app/prototype/future-energy/agents/_tender-types"
-import { TENDER_SCOPE_PROMPT } from "@/app/prototype/future-energy/agents/_tender-prompts"
+import { TENDER_SCOPE_PROMPT, tenderLanguageInstruction } from "@/app/prototype/future-energy/agents/_tender-prompts"
+import type { Locale } from "@/app/prototype/future-energy/_i18n/types"
 import { componentById, documentRegisterSummary } from "@/app/prototype/future-energy/data/future-energy/_documents"
 import { PROJECT } from "@/app/prototype/future-energy/data/future-energy/_tenders"
 
@@ -14,7 +15,8 @@ export async function POST(req: Request) {
   if (!client) return fallbackResponse()
 
   try {
-    const { componentId, quantity, prompt, officer } = await req.json()
+    const { componentId, quantity, prompt, officer, locale: requestedLocale } = await req.json()
+    const locale: Locale = requestedLocale === "fr" ? "fr" : "en"
     const spec = componentById(componentId)
     if (!spec) return errorResponse(new Error("Unknown component"))
 
@@ -39,7 +41,7 @@ Produce the scope frame and retrieval plan.`
         model: openai ? MODELS.openai : MODELS.gemini,
         temperature: 0.2,
         messages: [
-          { role: "system", content: TENDER_SCOPE_PROMPT },
+          { role: "system", content: `${TENDER_SCOPE_PROMPT}\n\n${tenderLanguageInstruction(locale)}` },
           { role: "user", content: userContent },
         ],
         response_format: { type: "json_schema", json_schema: SCOPE_SCHEMA },

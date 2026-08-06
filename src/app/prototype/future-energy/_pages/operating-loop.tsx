@@ -7,7 +7,7 @@ import { personForRole } from "../_diamond/org"
 import { formatCurrency } from "../_diamond/stages"
 import type { DiamondMission, MissionHorizon } from "../_diamond/types"
 import { AgenticFocusHero } from "../_components/agentic-hero"
-import { PortfolioLedger, compactUsd } from "../_components/hub/portfolio-ledger"
+import { PortfolioLedger } from "../_components/hub/portfolio-ledger"
 import { ActionFilterBar, type AssigneeKey, type HorizonKey } from "../_components/hub/action-filter-bar"
 import { MissionActionCard } from "../_components/hub/mission-action-card"
 import { translatedFlightPathSteps, flightProgressLabel, flightStepIdForStage } from "../_components/hub/flight-stages"
@@ -27,6 +27,7 @@ import {
 import { displayName, isMissionOwnedByActiveUser } from "../_components/hub/active-user"
 import { listItemMotion } from "../_components/motion"
 import { reasoningFromMission, buildActionBoardHeroReasoning } from "../_components/reasoning-helpers"
+import type { Locale } from "../_i18n"
 
 const HORIZON_MAP: Record<HorizonKey, MissionHorizon> = {
   immediate: "shock",
@@ -75,15 +76,15 @@ function EmptyState() {
   )
 }
 
-function missionFields(mission: DiamondMission, patch?: MissionSessionPatch) {
+function missionFields(mission: DiamondMission, locale: Locale, patch?: MissionSessionPatch) {
   const stage = patch?.stage ?? mission.stage
   const ownerRole = patch?.ownerRole ?? mission.owner
   return {
     narrative: patch?.recommendation ?? mission.recommendation,
     risk: patch?.risk ?? mission.risk,
     confidence: patch?.confidence ?? mission.confidence,
-    reasoning: patch?.reasoning ?? reasoningFromMission(mission),
-    timelineEntries: patch?.timelineEntries ?? buildFullTimeline(mission),
+    reasoning: patch?.reasoning ?? reasoningFromMission(mission, locale),
+    timelineEntries: patch?.timelineEntries ?? buildFullTimeline(mission, locale),
     stage,
     ownerRole,
   }
@@ -98,6 +99,7 @@ export function OperatingLoopPage() {
     tenderStages,
     openTenderStudio,
     openBidEvaluation,
+    locale,
   } = useStore()
   const flightPathSteps = translatedFlightPathSteps(t)
 
@@ -130,7 +132,7 @@ export function OperatingLoopPage() {
     setCompletingMissionId(id)
   }, [])
 
-  const { missions, closed } = React.useMemo(() => buildDiamondMissions(tenderStages), [tenderStages])
+  const { missions, closed } = React.useMemo(() => buildDiamondMissions(tenderStages, locale), [tenderStages, locale])
   const orderedMissions = React.useMemo(() => orderMissions(missions, missionPriority), [missions, missionPriority])
 
   const saveEdit = React.useCallback((missionId: string, oldValue: string, newValue: string) => {
@@ -145,7 +147,7 @@ export function OperatingLoopPage() {
     setReconcilingId(missionId)
     setReconcilePhase(t("actionCentre.ingestingEdit"))
 
-    void reconcileMissionAfterEdit(mission, newValue, setReconcilePhase).then((patch) => {
+    void reconcileMissionAfterEdit(mission, newValue, setReconcilePhase, locale).then((patch) => {
       setMissionPatches((prev) => ({ ...prev, [missionId]: patch }))
       setAuditLog((prev) => ({
         ...prev,
@@ -160,11 +162,11 @@ export function OperatingLoopPage() {
           },
         ],
       }))
-      setSessionHeroNote(`BluePilot updated "${mission.name}" after your edit — risk, confidence, and timeline refreshed.`)
+      setSessionHeroNote(t("actionCentre.updatedAfterEdit", { name: mission.name }))
       setReconcilingId(null)
       setReconcilePhase("")
     })
-  }, [orderedMissions, t])
+  }, [orderedMissions, t, locale])
 
   const saveComplete = React.useCallback((missionId: string, oldValue: string, confirmedAction: string) => {
     const mission = orderedMissions.find((m) => m.id === missionId)
@@ -186,7 +188,7 @@ export function OperatingLoopPage() {
     setReconcilingId(missionId)
     setReconcilePhase(t("actionCentre.ingestingEdit"))
 
-    void reconcileMissionAfterComplete(effectiveMission, confirmedAction, setReconcilePhase).then((patch) => {
+    void reconcileMissionAfterComplete(effectiveMission, confirmedAction, setReconcilePhase, locale).then((patch) => {
       setMissionPatches((prev) => ({
         ...prev,
         [missionId]: { ...(prev[missionId] ?? {}), ...patch },
@@ -208,7 +210,7 @@ export function OperatingLoopPage() {
       setReconcilingId(null)
       setReconcilePhase("")
     })
-  }, [orderedMissions, missionPatches, t])
+  }, [orderedMissions, missionPatches, t, locale])
 
   const roi = React.useMemo(() => buildPortfolioRoi(orderedMissions, closed), [orderedMissions, closed])
 
@@ -231,9 +233,9 @@ export function OperatingLoopPage() {
   const closedCards = React.useMemo(
     () =>
       [...closed]
-        .map(closedRecordToCardData)
+        .map((record) => closedRecordToCardData(record, locale))
         .sort((a, b) => b.completionDate.localeCompare(a.completionDate)),
-    [closed],
+    [closed, locale],
   )
 
   const showOpen = statusFilter === null || statusFilter === "open"
@@ -248,7 +250,7 @@ export function OperatingLoopPage() {
   const createTotal = orderedMissions.filter((m) => m.valueType === "creation").reduce((s, m) => s + m.projectedValue, 0)
 
   const staticHeroHeadline = t("actionCentre.heroHeadline", {
-    amount: compactUsd(protectTotal + createTotal),
+    amount: formatCurrency(protectTotal + createTotal, locale),
   })
   const staticHeroBody = t("actionCentre.heroBody", { count: openMissions.length })
 
@@ -257,15 +259,16 @@ export function OperatingLoopPage() {
       buildActionBoardHeroReasoning(orderedMissions, {
         agentSteps: bpReasoning.map((s) => s.text),
         useAgentSteps: !useStaticFallback && bpReasoning.length > 0,
+        locale,
       }),
-    [orderedMissions, bpReasoning, useStaticFallback],
+    [orderedMissions, bpReasoning, useStaticFallback, locale],
   )
 
   const renderOpenMission = (mission: DiamondMission, i: number) => {
     const expanded = expandedId === mission.id
     const patch = missionPatches[mission.id]
-    const fields = missionFields(mission, patch)
-    const person = personForRole(fields.ownerRole)
+    const fields = missionFields(mission, locale, patch)
+    const person = personForRole(fields.ownerRole, locale)
     const motion = listItemMotion(i)
     const reconciling = reconcilingId === mission.id
     const assignedToYou = isMissionOwnedByActiveUser({ ...mission, owner: fields.ownerRole })
@@ -291,7 +294,7 @@ export function OperatingLoopPage() {
           rank={i + 1}
           title={mission.name}
           narrative={fields.narrative}
-          valueChip={formatCurrency(mission.projectedValue)}
+          valueChip={formatCurrency(mission.projectedValue, locale)}
           valueType={mission.valueType}
           statusLabel={t(`health.${mission.health}`).toUpperCase()}
           statusTone={mission.health}
@@ -322,9 +325,9 @@ export function OperatingLoopPage() {
 
   const renderCompletedMission = (mission: DiamondMission, i: number) => {
     const expanded = expandedId === mission.id
-    const person = personForRole(mission.owner)
+    const person = personForRole(mission.owner, locale)
     const patch = missionPatches[mission.id]
-    const fields = missionFields(mission, patch)
+    const fields = missionFields(mission, locale, patch)
     const motion = listItemMotion(i)
     return (
       <div key={mission.id} className={motion.className} style={motion.style}>
@@ -332,7 +335,7 @@ export function OperatingLoopPage() {
           rank={i + 1}
           title={mission.name}
           narrative={fields.narrative}
-          valueChip={formatCurrency(mission.realizedValue ?? mission.projectedValue)}
+          valueChip={formatCurrency(mission.realizedValue ?? mission.projectedValue, locale)}
           valueType={mission.valueType}
           statusLabel={t("actionCentre.landed")}
           statusTone="on_track"
@@ -398,8 +401,8 @@ export function OperatingLoopPage() {
         ctaLabel={t("actionCentre.reviewPipeline")}
         onCta={() => document.getElementById("actions-section")?.scrollIntoView({ behavior: "smooth" })}
         stats={[
-          { value: compactUsd(protectTotal), label: t("actionCentre.valueProtection") },
-          { value: compactUsd(createTotal), label: t("actionCentre.valueCreation") },
+          { value: formatCurrency(protectTotal, locale), label: t("actionCentre.valueProtection") },
+          { value: formatCurrency(createTotal, locale), label: t("actionCentre.valueCreation") },
         ]}
       />
 
@@ -407,7 +410,7 @@ export function OperatingLoopPage() {
 
       <div id="actions-section" className="space-y-4">
         <div className="space-y-3">
-          <h2 className="text-[18px] font-semibold text-[var(--color-text-primary)]">Actions</h2>
+          <h2 className="text-[18px] font-semibold text-[var(--color-text-primary)]">{t("actionCentre.actions")}</h2>
           <ActionFilterBar
             horizon={horizonFilter}
             onHorizonChange={setHorizonFilter}
@@ -485,7 +488,7 @@ export function OperatingLoopPage() {
         const mission = orderedMissions.find((m) => m.id === emailPreviewMissionId)
         if (!mission) return null
         const patch = missionPatches[emailPreviewMissionId]
-        const fields = missionFields(mission, patch)
+        const fields = missionFields(mission, locale, patch)
         return (
           <EmailPreviewModal
             mission={mission}

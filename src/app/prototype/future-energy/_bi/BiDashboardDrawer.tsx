@@ -7,21 +7,20 @@ import { Button } from "@/components/ui/prosera/button"
 import { useStore } from "../_store"
 import { buildChatBriefing, buildPortfolioContext } from "../agents/_context"
 import { buildDiamondMissions, buildPortfolioRoi } from "../_diamond/adapter"
+import { useT } from "../_i18n/use-t"
+import { localeTag } from "../_i18n"
+import { formatActivePercent, formatActiveUsd } from "../_i18n/legacy"
 
 /* ------------------------------------------------------------------ */
 /*  Formatters                                                         */
 /* ------------------------------------------------------------------ */
 
 function fmtUsd(n: number): string {
-  const abs = Math.abs(n)
-  const sign = n < 0 ? "-" : ""
-  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`
-  if (abs >= 1_000) return `${sign}$${(abs / 1_000).toFixed(abs >= 10_000 ? 0 : 1)}k`
-  return `${sign}$${abs.toFixed(0)}`
+  return formatActiveUsd(n)
 }
 
 function fmtPct(n: number): string {
-  return `${(n * 100).toFixed(1)}%`
+  return formatActivePercent(n)
 }
 
 /* ------------------------------------------------------------------ */
@@ -259,14 +258,15 @@ A numbered list of 4–6 items, ordered by dollar impact, built from the mission
 Rules: every recommendation MUST include a specific dollar figure; use ONLY figures present in the provided context (never invent data); no filler, no "as an AI", no closing pleasantries; keep the entire briefing under ~430 words.`
 
 export function BiDashboardDrawer() {
-  const { biOpen, setBiOpen, data, allFindings, tenderStages } = useStore()
+  const { biOpen, setBiOpen, data, allFindings, tenderStages, locale } = useStore()
+  const t = useT()
 
   const briefing = React.useMemo(() => buildChatBriefing(data), [data])
-  const signals = React.useMemo(() => parseSignals(briefing), [briefing])
+  const signals = React.useMemo(() => locale === "fr" ? [] : parseSignals(briefing), [briefing, locale])
   const roi = React.useMemo(() => {
-    const { missions, closed } = buildDiamondMissions(tenderStages)
+    const { missions, closed } = buildDiamondMissions(tenderStages, locale)
     return buildPortfolioRoi(missions, closed)
-  }, [tenderStages])
+  }, [tenderStages, locale])
 
   const v = data.portfolioSummary.validated
   const scored = data.customers.filter(c => c.customerScore)
@@ -294,7 +294,7 @@ export function BiDashboardDrawer() {
     abortRef.current = controller
     setLoading(true)
     setNarrative("")
-    setGeneratedAt(new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }))
+    setGeneratedAt(new Date().toLocaleDateString(localeTag(locale), { year: "numeric", month: "long", day: "numeric" }))
 
     const dataContext = buildPortfolioContext(data, {
       page: "customer-intel",
@@ -306,7 +306,7 @@ export function BiDashboardDrawer() {
     })
 
     // Action register from the Operating Loop so the report and the loop stay consistent.
-    const { missions } = buildDiamondMissions(tenderStages)
+    const { missions } = buildDiamondMissions(tenderStages, locale)
     const horizonFor = (c: string) => (c === "days" ? "0-2 weeks" : c === "weeks" ? "4-6 weeks" : "this quarter")
     dataContext.operatingLoop = {
       realizedToDate: fmtUsd(roi.realizedToDate),
@@ -329,15 +329,16 @@ export function BiDashboardDrawer() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        messages: [{ role: "user", content: EXEC_PROMPT }],
+        messages: [{ role: "user", content: locale === "fr" ? `Répondez exclusivement en français.\n\n${EXEC_PROMPT}` : EXEC_PROMPT }],
         dataContext,
         chatBriefing: briefing,
+        locale,
       }),
       signal: controller.signal,
     })
       .then(async res => {
         if (!res.ok || !res.body) {
-          setNarrative("Unable to reach BluePilot. Check API key configuration — the deterministic signals below remain available.")
+          setNarrative(t("bi.unable"))
           setLoading(false)
           return
         }
@@ -354,35 +355,41 @@ export function BiDashboardDrawer() {
       })
       .catch(err => {
         if ((err as Error).name !== "AbortError") {
-          setNarrative("Something went wrong generating the summary. The deterministic signals below remain available.")
+          setNarrative(t("bi.error"))
           setLoading(false)
         }
       })
-  }, [data, briefing, roi])
+  }, [data, briefing, roi, locale, t, tenderStages])
+
+  React.useEffect(() => {
+    abortRef.current?.abort()
+    setNarrative("")
+    setLoading(false)
+  }, [locale])
 
   const buildReportText = React.useCallback(() => {
     return [
-      "═══ BluePilot Executive BI Summary — ACME Field Services ═══",
+      locale === "fr" ? "═══ Synthèse BI de direction BluePilot — ACME Field Services ═══" : "═══ BluePilot Executive BI Summary — ACME Field Services ═══",
       "",
-      `Date: ${new Date().toLocaleString()}`,
+      `${locale === "fr" ? "Date" : "Date"}: ${new Date().toLocaleString(localeTag(locale))}`,
       "",
-      "── Portfolio KPIs ──",
-      `Revenue (validated): ${fmtUsd(v.totalRevenue)}`,
-      `Avg margin: ${fmtPct(v.avgMarginPct)}`,
-      `Avg Customer Score (CI-04): ${avgScore}/100`,
-      `Operating Loop — realized to date: ${fmtUsd(roi.realizedToDate)} (${roi.blendedRoi.toFixed(1)}x blended ROI)`,
-      `Operating Loop — in-flight pipeline: ${fmtUsd(roi.inFlightProjected)} across ${roi.inFlightCount} missions`,
-      `High-severity findings: ${highSeverity}`,
+      locale === "fr" ? "── KPI du portefeuille ──" : "── Portfolio KPIs ──",
+      `${locale === "fr" ? "Chiffre d’affaires validé" : "Revenue (validated)"}: ${fmtUsd(v.totalRevenue)}`,
+      `${locale === "fr" ? "Marge moyenne" : "Avg margin"}: ${fmtPct(v.avgMarginPct)}`,
+      `${locale === "fr" ? "Score client moyen (CI-04)" : "Avg Customer Score (CI-04)"}: ${avgScore}/100`,
+      `${locale === "fr" ? "Centre d’actions — réalisé à ce jour" : "Operating Loop — realized to date"}: ${fmtUsd(roi.realizedToDate)} (${roi.blendedRoi.toFixed(1)}× ROI)`,
+      `${locale === "fr" ? "Centre d’actions — pipeline en cours" : "Operating Loop — in-flight pipeline"}: ${fmtUsd(roi.inFlightProjected)} · ${roi.inFlightCount} missions`,
+      `${locale === "fr" ? "Constats de gravité élevée" : "High-severity findings"}: ${highSeverity}`,
       "",
-      "── Cross-Page Signals ──",
+      locale === "fr" ? "── Signaux transversaux ──" : "── Cross-Page Signals ──",
       ...signals.map(s => `• ${s.label}: ${s.body}`),
       "",
-      "── Executive Briefing ──",
-      narrative ? markdownToPlainText(narrative) : "(not yet generated)",
+      locale === "fr" ? "── Synthèse de direction ──" : "── Executive Briefing ──",
+      narrative ? markdownToPlainText(narrative) : locale === "fr" ? "(pas encore générée)" : "(not yet generated)",
       "",
-      "── Powered by BluePilot / Future Energy ──",
+      locale === "fr" ? "── Propulsé par BluePilot / Future Energy ──" : "── Powered by BluePilot / Future Energy ──",
     ].join("\n")
-  }, [v, avgScore, roi, highSeverity, signals, narrative])
+  }, [v, avgScore, roi, highSeverity, signals, narrative, locale])
 
   // Pull a "## Heading" section's body out of the generated markdown.
   const getSection = React.useCallback((heading: string): string[] => {
@@ -403,6 +410,25 @@ export function BiDashboardDrawer() {
   const buildEmailText = React.useCallback(() => {
     const bottomLine = getSection("Bottom Line")
     const recs = getSection("Operating Loop").filter(l => /\d|\$/.test(l)).slice(0, 3)
+    if (locale === "fr") {
+      return [
+        "À : Direction d’ACME Field Services",
+        "Objet : Synthèse BI de direction — actions prioritaires",
+        "",
+        "Bonjour,",
+        "",
+        bottomLine.length > 0
+          ? bottomLine.join(" ")
+          : `Portefeuille à ${fmtUsd(v.totalRevenue)} de chiffre d’affaires et ${fmtPct(v.avgMarginPct)} de marge. ${topSignal ? `${topSignal.label} : ${topSignal.body}` : ""}`,
+        "",
+        "Actions prioritaires :",
+        ...(recs.length > 0 ? recs.map((r, i) => `${i + 1}. ${r}`) : [`1. Pipeline du Centre d’actions : ${fmtUsd(roi.inFlightProjected)} sur ${roi.inFlightCount} missions.`]),
+        "",
+        `Le Centre d’actions a réalisé ${fmtUsd(roi.realizedToDate)} à ce jour (${roi.blendedRoi.toFixed(1)}× de ROI combiné).`,
+        "",
+        "Synthèse complète dans le résumé BI. — BluePilot",
+      ].join("\n")
+    }
     return [
       "To: ACME Field Services Leadership",
       "Subject: Executive BI Summary — Prioritized Actions",
@@ -420,11 +446,24 @@ export function BiDashboardDrawer() {
       "",
       "Full briefing in the BI Summary. — BluePilot",
     ].join("\n")
-  }, [getSection, v, topSignal, roi])
+  }, [getSection, v, topSignal, roi, locale])
 
   const buildAudioScript = React.useCallback(() => {
     const bottomLine = getSection("Bottom Line")
     const findings = [...getSection("What Changed"), ...getSection("Customer Health")].slice(0, 4)
+    if (locale === "fr") {
+      return [
+        "[Script de narration — environ 45 secondes]",
+        "",
+        "Bonjour. Voici votre synthèse de direction ACME Field Services.",
+        bottomLine.length > 0 ? bottomLine.join(" ") : `Le portefeuille atteint ${fmtUsd(v.totalRevenue)} de chiffre d’affaires validé et ${fmtPct(v.avgMarginPct)} de marge.`,
+        "",
+        "Les points clés :",
+        ...(findings.length > 0 ? findings.map(f => `… ${f}`) : signals.slice(0, 3).map(s => `… ${s.label} : ${s.body}`)),
+        "",
+        `Dans le Centre d’actions, ${fmtUsd(roi.realizedToDate)} ont été réalisés et ${fmtUsd(roi.inFlightProjected)} sont en cours. Fin de la synthèse.`,
+      ].join("\n")
+    }
     return [
       "[Narration script — ~45 seconds]",
       "",
@@ -436,39 +475,46 @@ export function BiDashboardDrawer() {
       "",
       `Across the operating loop, we've realized ${fmtUsd(roi.realizedToDate)} to date, with ${fmtUsd(roi.inFlightProjected)} in flight. That's your brief.`,
     ].join("\n")
-  }, [getSection, v, signals, roi])
+  }, [getSection, v, signals, roi, locale])
 
   const buildTextDigest = React.useCallback(() => {
-    const lead = topSignal ? `${topSignal.label}` : "Portfolio stable"
+    const lead = topSignal ? `${topSignal.label}` : locale === "fr" ? "Portefeuille stable" : "Portfolio stable"
+    if (locale === "fr") {
+      return [
+        `BI ACME : ${fmtUsd(v.totalRevenue)} CA · ${fmtPct(v.avgMarginPct)} marge · SC ${avgScore}/100`,
+        `Signal principal : ${lead}`,
+        `Boucle : ${fmtUsd(roi.realizedToDate)} réalisés, ${fmtUsd(roi.inFlightProjected)} en cours (${roi.inFlightCount} missions)`,
+      ].join("\n")
+    }
     return [
       `ACME BI: ${fmtUsd(v.totalRevenue)} rev · ${fmtPct(v.avgMarginPct)} margin · CS ${avgScore}/100`,
       `Top signal: ${lead}`,
       `Loop: ${fmtUsd(roi.realizedToDate)} realized, ${fmtUsd(roi.inFlightProjected)} in flight (${roi.inFlightCount} missions)`,
     ].join("\n")
-  }, [topSignal, v, avgScore, roi])
+  }, [topSignal, v, avgScore, roi, locale])
 
   const onExport = React.useCallback((kind: "report" | "audio" | "email" | "text") => {
     if (kind === "report") {
       navigator.clipboard.writeText(buildReportText())
-      flashStatus("Executive report copied to clipboard.")
+      flashStatus(locale === "fr" ? "Rapport de direction copié dans le presse-papiers." : "Executive report copied to clipboard.")
       return
     }
     if (kind === "audio") {
       navigator.clipboard.writeText(buildAudioScript())
-      flashStatus("Narration script copied — audio brief queued for leadership (simulated).")
+      flashStatus(locale === "fr" ? "Script de narration copié — briefing audio préparé pour la direction (simulation)." : "Narration script copied — audio brief queued for leadership (simulated).")
       return
     }
     if (kind === "email") {
       navigator.clipboard.writeText(buildEmailText())
-      flashStatus("Email draft copied to clipboard for the leadership distribution list (simulated).")
+      flashStatus(locale === "fr" ? "Brouillon d’e-mail copié pour la liste de diffusion de la direction (simulation)." : "Email draft copied to clipboard for the leadership distribution list (simulated).")
       return
     }
     if (kind === "text") {
       navigator.clipboard.writeText(buildTextDigest())
-      flashStatus("SMS digest copied — sent to the on-call principal (simulated).")
+      flashStatus(locale === "fr" ? "Synthèse SMS copiée — envoyée au responsable d’astreinte (simulation)." : "SMS digest copied — sent to the on-call principal (simulated).")
       return
     }
-  }, [buildReportText, buildAudioScript, buildEmailText, buildTextDigest, flashStatus])
+  }, [buildReportText, buildAudioScript, buildEmailText, buildTextDigest, flashStatus, locale])
 
   React.useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => { if (e.key === "Escape" && biOpen) setBiOpen(false) }
@@ -495,27 +541,27 @@ export function BiDashboardDrawer() {
         <div className="flex items-center gap-2.5 min-w-0">
           <SafeIcon name="LayoutDashboard" className="h-4 w-4 shrink-0 text-brand-strong" />
           <div className="min-w-0">
-            <span className="text-sm font-semibold text-foreground">Executive summary</span>
-            <p className="text-[12px] text-muted-foreground">Portfolio rollup across every intelligence view</p>
+            <span className="text-sm font-semibold text-foreground">{t("bi.title")}</span>
+            <p className="text-[12px] text-muted-foreground">{t("bi.subtitle")}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Button size="sm" className="h-7 gap-1.5 text-xs" onClick={generate} disabled={loading}>
             <SafeIcon name="Sparkles" className="h-3 w-3" />
-            {loading ? "Generating…" : narrative ? "Regenerate" : "Generate with BluePilot"}
+            {loading ? t("bi.generating") : narrative ? t("bi.regenerate") : t("bi.generate")}
           </Button>
           <div className="flex items-center gap-1">
             <Button variant="outline" size="sm" className="h-7 gap-1 text-[11px]" onClick={() => onExport("report")}>
-              <SafeIcon name="Copy" className="h-3 w-3" /> Report
+              <SafeIcon name="Copy" className="h-3 w-3" /> {t("bi.report")}
             </Button>
             <Button variant="outline" size="sm" className="h-7 gap-1 text-[11px]" onClick={() => onExport("audio")}>
-              <SafeIcon name="Volume2" className="h-3 w-3" /> Audio
+              <SafeIcon name="Volume2" className="h-3 w-3" /> {t("bi.audio")}
             </Button>
             <Button variant="outline" size="sm" className="h-7 gap-1 text-[11px]" onClick={() => onExport("email")}>
-              <SafeIcon name="Mail" className="h-3 w-3" /> Email
+              <SafeIcon name="Mail" className="h-3 w-3" /> {t("bi.email")}
             </Button>
             <Button variant="outline" size="sm" className="h-7 gap-1 text-[11px]" onClick={() => onExport("text")}>
-              <SafeIcon name="MessageSquare" className="h-3 w-3" /> Text
+              <SafeIcon name="MessageSquare" className="h-3 w-3" /> {t("bi.text")}
             </Button>
           </div>
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setBiOpen(false)}>
@@ -536,19 +582,19 @@ export function BiDashboardDrawer() {
         {/* Left: KPIs + calm Signals rail */}
         <div className="overflow-y-auto px-5 py-5 space-y-6">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <Kpi label="Revenue" value={fmtUsd(v.totalRevenue)} sub={`${v.jobCount} validated jobs`} icon="DollarSign" />
-            <Kpi label="Avg margin" value={fmtPct(v.avgMarginPct)} tone="blue" sub={`${data.portfolioSummary.totalCustomers} customers`} icon="Percent" />
-            <Kpi label="Avg customer score" value={`${avgScore}/100`} tone="green" sub="CI-04 composite" icon="Gauge" />
-            <Kpi label="ROI realized" value={fmtUsd(roi.realizedToDate)} tone="green" sub={`${roi.blendedRoi.toFixed(1)}x blended`} icon="TrendingUp" />
-            <Kpi label="In-flight pipeline" value={fmtUsd(roi.inFlightProjected)} tone="blue" sub={`${roi.inFlightCount} missions`} icon="Rocket" />
-            <Kpi label="Needs attention" value={String(highSeverity)} tone={highSeverity > 0 ? "amber" : "default"} sub="High-priority items" icon="TriangleAlert" />
+            <Kpi label={t("bi.revenue")} value={fmtUsd(v.totalRevenue)} sub={t("bi.validatedJobs", { count: v.jobCount })} icon="DollarSign" />
+            <Kpi label={t("bi.avgMargin")} value={fmtPct(v.avgMarginPct)} tone="blue" sub={t("bi.customers", { count: data.portfolioSummary.totalCustomers })} icon="Percent" />
+            <Kpi label={t("bi.avgCustomerScore")} value={`${avgScore}/100`} tone="green" sub={t("bi.composite")} icon="Gauge" />
+            <Kpi label={t("bi.roiRealized")} value={fmtUsd(roi.realizedToDate)} tone="green" sub={t("bi.blended", { value: roi.blendedRoi.toFixed(1) })} icon="TrendingUp" />
+            <Kpi label={t("bi.inFlight")} value={fmtUsd(roi.inFlightProjected)} tone="blue" sub={t("bi.missions", { count: roi.inFlightCount })} icon="Rocket" />
+            <Kpi label={t("bi.needsAttention")} value={String(highSeverity)} tone={highSeverity > 0 ? "amber" : "default"} sub={t("bi.priorityItems")} icon="TriangleAlert" />
           </div>
 
           <section className="space-y-4">
             <div className="space-y-1">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-muted-foreground">Signals</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-muted-foreground">{t("bi.signals")}</p>
               <p className="text-[12px] text-muted-foreground">
-                {signals.length} cross-page {signals.length === 1 ? "signal" : "signals"} from your current cohort
+                {t("bi.signalCount", { count: signals.length })}
               </p>
             </div>
             <div className="space-y-5">
@@ -568,7 +614,7 @@ export function BiDashboardDrawer() {
                 )
               })}
               {signals.length === 0 && (
-                <p className="text-[13px] text-muted-foreground">No material signals in the current cohort.</p>
+                <p className="text-[13px] text-muted-foreground">{t("bi.noSignals")}</p>
               )}
             </div>
           </section>
@@ -578,7 +624,7 @@ export function BiDashboardDrawer() {
         <div className="overflow-y-auto px-5 py-5">
           <div className="mb-4 flex items-center gap-1.5">
             <SafeIcon name="BrainCircuit" className="h-3.5 w-3.5 text-brand-strong" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.35em] text-muted-foreground">Executive narrative</span>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.35em] text-muted-foreground">{t("bi.narrative")}</span>
             {loading && (
               <span className="ml-1 inline-flex items-center gap-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-brand-strong animate-pulse" />
@@ -591,12 +637,12 @@ export function BiDashboardDrawer() {
             <div className="overflow-hidden rounded-[16px] border border-border bg-card shadow-sm">
               <div className="flex items-start justify-between gap-3 border-b border-border bg-muted/30 px-5 py-3">
                 <div className="min-w-0">
-                  <div className="text-[14px] font-semibold tracking-tight text-foreground">Executive briefing</div>
-                  <div className="text-[11px] text-muted-foreground">BluePilot intelligence</div>
+                  <div className="text-[14px] font-semibold tracking-tight text-foreground">{t("bi.briefing")}</div>
+                  <div className="text-[11px] text-muted-foreground">{t("bi.intelligence")}</div>
                 </div>
                 <div className="shrink-0 text-right">
                   {generatedAt && <div className="text-[11px] font-medium text-muted-foreground">{generatedAt}</div>}
-                  <div className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/70">Confidential</div>
+                  <div className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/70">{t("bi.confidential")}</div>
                 </div>
               </div>
               <div className="p-5">
@@ -613,9 +659,9 @@ export function BiDashboardDrawer() {
             <div className="flex h-[70%] flex-col items-center justify-center gap-4 px-6 text-center">
               <SafeIcon name="Sparkles" className="h-8 w-8 text-muted-foreground/30" />
               <div className="space-y-1.5">
-                <p className="text-sm font-medium text-muted-foreground">Generate an executive briefing</p>
+                <p className="text-sm font-medium text-muted-foreground">{t("bi.emptyTitle")}</p>
                 <p className="text-[13px] leading-relaxed text-muted-foreground/80">
-                  BluePilot turns the signals on the left into a prioritized, dollar-quantified summary. Signals are available now.
+                  {t("bi.emptyBody")}
                 </p>
               </div>
             </div>

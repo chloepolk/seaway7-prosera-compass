@@ -1,5 +1,7 @@
 "use client"
 
+import { activeLocaleTag, formatActiveUsd, localizeActiveCopy } from "../_i18n/legacy"
+
 import * as React from "react"
 import { Badge } from "@/components/ui/prosera/badge"
 import { cn } from "@/lib/utils"
@@ -40,15 +42,11 @@ const COHORT_NOW_MS = new Date("2026-06-03T00:00:00Z").getTime()
 /* ------------------------------------------------------------------ */
 
 function fmtUsd(n: number): string {
-  const abs = Math.abs(n)
-  const sign = n < 0 ? "-" : ""
-  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`
-  if (abs >= 1_000) return `${sign}$${(abs / 1_000).toFixed(abs >= 10_000 ? 0 : 1)}k`
-  return `${sign}$${abs.toFixed(0)}`
+  return formatActiveUsd(n)
 }
 
 function fmtDays(n: number): string {
-  return `${n.toFixed(n < 10 ? 1 : 0)} days`
+  return `${n.toLocaleString(activeLocaleTag(), { maximumFractionDigits: n < 10 ? 1 : 0 })} ${localizeActiveCopy(n === 1 ? "day" : "days")}`
 }
 
 function median(sorted: number[]): number {
@@ -149,17 +147,17 @@ function computeCI05(jobs: Job[]): CI05 {
     const med = median(lags)
     const p75 = percentile(lags, 75)
     const avg = lags.length > 0 ? lags.reduce((s, d) => s + d, 0) / lags.length : 0
-    const withinTarget = lags.filter(d => d <= TARGET_LAG_DAYS).length
+    const withinTarget = lags.filter(d =>d<= TARGET_LAG_DAYS).length
     const withinTargetPct = lags.length > 0 ? withinTarget / lags.length : 0
 
     const cashTiedUp = uninvoiced.reduce((s, j) => s + (j.totalAmount ?? j.totalAmountQuoted ?? 0), 0)
     const uninvoiced48hrCash = uninvoiced48hr.reduce((s, j) => s + (j.totalAmount ?? j.totalAmountQuoted ?? 0), 0)
 
     // Aging buckets on invoiced lag
-    const b0 = lags.filter(d => d <= 2).length
-    const b1 = lags.filter(d => d > 2 && d <= 7).length
-    const b2 = lags.filter(d => d > 7 && d <= 14).length
-    const b3 = lags.filter(d => d > 14 && d <= 30).length
+    const b0 = lags.filter(d =>d<= 2).length
+    const b1 = lags.filter(d => d >2 && d<= 7).length
+    const b2 = lags.filter(d => d >7 && d<= 14).length
+    const b3 = lags.filter(d => d >14 && d<= 30).length
     const b4 = lags.filter(d => d > 30).length
     const buckets: LagBucket[] = [
       { label: "≤2d (target)", count: b0, color: "bg-emerald-500", tone: "good" },
@@ -282,8 +280,8 @@ function AgingDistribution({ buckets }: { buckets: LagBucket[] }) {
           if (b.count === 0) return null
           const pct = (b.count / total) * 100
           return (
-            <div key={b.label} className={`${b.color} flex items-center justify-center text-[10px] font-medium text-white`}
-              style={{ width: `${pct}%`, minWidth: b.count > 0 ? 44 : 0 }} title={`${b.label}: ${b.count} jobs`}>
+            <div key={localizeActiveCopy(b.label)} className={`${b.color} flex items-center justify-center text-[10px] font-medium text-white`}
+              style={{ width: `${pct}%`, minWidth: b.count > 0 ? 44 : 0 }} title={`${localizeActiveCopy(b.label)} : ${b.count} ${localizeActiveCopy("jobs")}`}>
               <span className="truncate px-1">{b.count}</span>
             </div>
           )
@@ -291,9 +289,9 @@ function AgingDistribution({ buckets }: { buckets: LagBucket[] }) {
       </div>
       <div className="flex flex-wrap gap-x-4 gap-y-1">
         {buckets.map(b => (
-          <span key={b.label} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <span key={localizeActiveCopy(b.label)} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <span className={`inline-block h-2 w-2 rounded-full ${b.color}`} />
-            {b.label}<span className="font-mono">{b.count}</span>
+            {localizeActiveCopy(b.label)}<span className="font-mono">{b.count}</span>
           </span>
         ))}
       </div>
@@ -332,7 +330,7 @@ function LagAgingDetail() {
           },
           {
             label: "Unbilled backlog",
-            value: ci05.uninvoiced48hrCount.toLocaleString(),
+            value: ci05.uninvoiced48hrCount.toLocaleString(activeLocaleTag()),
             sublabel: "open · 48hr+ since completion",
             tone: ci05.uninvoiced48hrCount > 0 ? "critical" : "positive",
             reasoning: reasoningFromKpi(
@@ -354,8 +352,8 @@ function LagAgingDetail() {
       />
       <section className="space-y-3">
         <div className="flex items-center gap-2">
-          <h3 className="text-xs font-medium uppercase tracking-wider text-[var(--color-text-muted)]">Invoice lag aging</h3>
-          <span className="text-[10px] text-[var(--color-text-muted)]/70">days from completion to first invoice</span>
+          <h3 className="text-xs font-medium uppercase tracking-wider text-[var(--color-text-muted)]">{localizeActiveCopy("Invoice lag aging")}</h3>
+          <span className="text-[10px] text-[var(--color-text-muted)]/70">{localizeActiveCopy("days from completion to first invoice")}</span>
         </div>
         <AgingDistribution buckets={ci05.buckets} />
       </section>
@@ -371,17 +369,17 @@ function VelocityByRegionDetail() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] text-left text-xs text-[var(--color-text-muted)]">
-              <th className="px-4 py-3 font-medium">Region</th>
-              <th className="px-4 py-3 font-medium text-right">Invoiced jobs</th>
-              <th className="px-4 py-3 font-medium text-right">Median lag</th>
-              <th className="px-4 py-3 font-medium text-right">Uninvoiced 48hr+</th>
+              <th className="px-4 py-3 font-medium">{localizeActiveCopy("Region")}</th>
+              <th className="px-4 py-3 font-medium text-right">{localizeActiveCopy("Invoiced jobs")}</th>
+              <th className="px-4 py-3 font-medium text-right">{localizeActiveCopy("Median lag")}</th>
+              <th className="px-4 py-3 font-medium text-right">{localizeActiveCopy("Uninvoiced 48hr+")}</th>
             </tr>
           </thead>
           <tbody>
             {ci05.byRegion.map(r => (
               <tr key={r.region} className="border-b border-[var(--color-border-default)]/60 last:border-0">
                 <td className="px-4 py-2.5 font-medium text-[var(--color-text-primary)]">{regionLabels[r.region] ?? r.region}</td>
-                <td className="px-4 py-2.5 text-right font-mono tabular-nums text-[var(--color-text-secondary)]">{r.invoicedCount.toLocaleString()}</td>
+                <td className="px-4 py-2.5 text-right font-mono tabular-nums text-[var(--color-text-secondary)]">{r.invoicedCount.toLocaleString(activeLocaleTag())}</td>
                 <td className={cn(
                   "px-4 py-2.5 text-right font-mono tabular-nums",
                   r.medianLag > 7 ? "text-[var(--color-accent-critical)]" : r.medianLag > TARGET_LAG_DAYS ? "text-[var(--color-accent-warning)]" : "text-[var(--color-accent-positive)]",
@@ -407,12 +405,12 @@ function SlowestCustomersDetail() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] text-left text-xs text-[var(--color-text-muted)]">
-              <th className="px-4 py-3 font-medium">Customer</th>
-              <th className="px-4 py-3 font-medium">Region</th>
-              <th className="px-4 py-3 font-medium text-right">Invoiced jobs</th>
-              <th className="px-4 py-3 font-medium text-right">Avg lag</th>
-              <th className="px-4 py-3 font-medium text-right">Uninvoiced</th>
-              <th className="px-4 py-3 font-medium text-right">Cash tied up</th>
+              <th className="px-4 py-3 font-medium">{localizeActiveCopy("Customer")}</th>
+              <th className="px-4 py-3 font-medium">{localizeActiveCopy("Region")}</th>
+              <th className="px-4 py-3 font-medium text-right">{localizeActiveCopy("Invoiced jobs")}</th>
+              <th className="px-4 py-3 font-medium text-right">{localizeActiveCopy("Avg lag")}</th>
+              <th className="px-4 py-3 font-medium text-right">{localizeActiveCopy("Uninvoiced")}</th>
+              <th className="px-4 py-3 font-medium text-right">{localizeActiveCopy("Cash tied up")}</th>
             </tr>
           </thead>
           <tbody>
@@ -454,18 +452,18 @@ function InvoiceAlertsDetail() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] text-left text-xs text-[var(--color-text-muted)]">
-              <th className="px-4 py-3 font-medium">Job #</th>
-              <th className="px-4 py-3 font-medium">Customer</th>
-              <th className="px-4 py-3 font-medium">Type</th>
-              <th className="px-4 py-3 font-medium">Region</th>
-              <th className="px-4 py-3 font-medium text-right">Age / lag</th>
-              <th className="px-4 py-3 font-medium text-right">Amount</th>
-              <th className="px-4 py-3 font-medium text-center">Status</th>
+              <th className="px-4 py-3 font-medium">{localizeActiveCopy("Job #")}</th>
+              <th className="px-4 py-3 font-medium">{localizeActiveCopy("Customer")}</th>
+              <th className="px-4 py-3 font-medium">{localizeActiveCopy("Type")}</th>
+              <th className="px-4 py-3 font-medium">{localizeActiveCopy("Region")}</th>
+              <th className="px-4 py-3 font-medium text-right">{localizeActiveCopy("Age / lag")}</th>
+              <th className="px-4 py-3 font-medium text-right">{localizeActiveCopy("Amount")}</th>
+              <th className="px-4 py-3 font-medium text-center">{localizeActiveCopy("Status")}</th>
             </tr>
           </thead>
           <tbody>
             {ci05.alerts.map(a => (
-              <tr key={`${a.jobNumber}-${a.status}`} className="border-b border-[var(--color-border-default)]/60 transition-colors last:border-0 hover:bg-[var(--color-bg-subtle)]">
+              <tr key={`${a.jobNumber}-${localizeActiveCopy(a.status)}`} className="border-b border-[var(--color-border-default)]/60 transition-colors last:border-0 hover:bg-[var(--color-bg-subtle)]">
                 <td className="px-4 py-2.5 font-mono text-xs text-[var(--color-text-secondary)]">{a.jobNumber}</td>
                 <td className="max-w-[180px] truncate px-4 py-2.5 text-[var(--color-text-primary)]">{a.customerName}</td>
                 <td className="px-4 py-2.5 text-xs text-[var(--color-text-secondary)]">{a.jobType}</td>
@@ -630,7 +628,7 @@ export function ProcessVelocityPage() {
   }, [undoState])
 
   const slowest = ci05.byRegion[0]
-  const heroBody = `On average it takes ${fmtDays(ci05.medianLag)} to send the first invoice after a job — only ${(ci05.withinTargetPct * 100).toFixed(0)}% of already-invoiced jobs met the two-day target${slowest ? `, and ${regionLabels[slowest.region] ?? slowest.region} is slowest at ${fmtDays(slowest.medianLag)}` : ""}. Separately, ${ci05.uninvoiced48hrCount.toLocaleString()} completed job${ci05.uninvoiced48hrCount !== 1 ? "s" : ""} remain${ci05.uninvoiced48hrCount === 1 ? "s" : ""} in the open unbilled backlog (48hr+ with no invoice). Speeding up the hand-off from finished job to invoice is the quickest way to free up cash.`
+  const heroBody = `On average it takes ${fmtDays(ci05.medianLag)} to send the first invoice after a job — only ${(ci05.withinTargetPct * 100).toFixed(0)}% of already-invoiced jobs met the two-day target${slowest ? `, and ${regionLabels[slowest.region] ?? slowest.region} is slowest at ${fmtDays(slowest.medianLag)}` : ""}. Separately, ${ci05.uninvoiced48hrCount.toLocaleString(activeLocaleTag())} completed job${ci05.uninvoiced48hrCount !== 1 ? "s" : ""} remain${ci05.uninvoiced48hrCount === 1 ? "s" : ""} in the open unbilled backlog (48hr+ with no invoice). Speeding up the hand-off from finished job to invoice is the quickest way to free up cash.`
 
   const goActionBoard = () => {
     setFocusMission(null)
@@ -766,10 +764,10 @@ export function ProcessVelocityPage() {
         staticReasoning={{
           summary: "Invoice lag computed from completion-to-first-invoice timestamps across all validated jobs.",
           evidence: [
-            `Historical 48hr target rate: ${(ci05.withinTargetPct * 100).toFixed(0)}% of ${ci05.invoicedCount.toLocaleString()} invoiced jobs`,
-            `Open unbilled backlog: ${ci05.uninvoiced48hrCount.toLocaleString()} jobs 48hr+ since completion · ${fmtUsd(ci05.uninvoiced48hrCash)} tied up`,
+            `Historical 48hr target rate: ${(ci05.withinTargetPct * 100).toFixed(0)}% of ${ci05.invoicedCount.toLocaleString(activeLocaleTag())} invoiced jobs`,
+            `Open unbilled backlog: ${ci05.uninvoiced48hrCount.toLocaleString(activeLocaleTag())} jobs 48hr+ since completion · ${fmtUsd(ci05.uninvoiced48hrCash)} tied up`,
             ci05.lateInvoiceCount > 0
-              ? `${ci05.lateInvoiceCount.toLocaleString()} additional late-invoice alert${ci05.lateInvoiceCount !== 1 ? "s" : ""} (already billed, but took >7 days)`
+              ? `${ci05.lateInvoiceCount.toLocaleString(activeLocaleTag())} additional late-invoice alert${ci05.lateInvoiceCount !== 1 ? "s" : ""} (already billed, but took >7 days)`
               : null,
           ].filter(Boolean) as string[],
           conclusion: "Accelerating the job-to-invoice handoff is the fastest path to cash recovery.",
@@ -824,33 +822,33 @@ export function ProcessVelocityPage() {
 
       <div className="grid gap-3 lg:grid-cols-3">
         <PriorityCard
-          title="Invoice Lag & Aging"
+          title={localizeActiveCopy("Invoice Lag & Aging")}
           tag="Historical review"
           tagTone="process"
           headline={`${(ci05.withinTargetPct * 100).toFixed(0)}%`}
           headlineSub="of invoiced jobs met the 48-hr target"
-          detail={`Historical cohort review across ${ci05.invoicedCount.toLocaleString()} completed jobs that already have invoices — only ${(ci05.withinTargetPct * 100).toFixed(0)}% were billed within two days. Median lag is ${fmtDays(ci05.medianLag)}. This measures past billing speed, not open unbilled jobs.`}
+          detail={`Historical cohort review across ${ci05.invoicedCount.toLocaleString(activeLocaleTag())} completed jobs that already have invoices — only ${(ci05.withinTargetPct * 100).toFixed(0)}% were billed within two days. Median lag is ${fmtDays(ci05.medianLag)}. This measures past billing speed, not open unbilled jobs.`}
           figureValue={`${(ci05.withinTargetPct * 100).toFixed(0)}%`}
           figureTone="bad"
           reasoning={{
             summary: "Historical review of days-to-invoice on jobs that already have a first invoice.",
             evidence: [
-              `${ci05.invoicedCount.toLocaleString()} invoiced jobs in cohort`,
+              `${ci05.invoicedCount.toLocaleString(activeLocaleTag())} invoiced jobs in cohort`,
               `Median lag: ${fmtDays(ci05.medianLag)}`,
             ],
             conclusion: "Tighten dispatch-to-billing handoff to improve the historical target rate on future jobs.",
           }}
         />
         <PriorityCard
-          title="Unbilled Backlog"
+          title={localizeActiveCopy("Unbilled Backlog")}
           tag="Open now"
           tagTone="watch"
           headline={String(ci05.uninvoiced48hrCount)}
           headlineSub="awaiting first invoice · 48hr+ since completion"
           detail={[
-            `${ci05.uninvoiced48hrCount.toLocaleString()} completed job${ci05.uninvoiced48hrCount !== 1 ? "s" : ""} still ha${ci05.uninvoiced48hrCount === 1 ? "s" : "ve"} no first invoice after 48+ hours — ${fmtUsd(ci05.uninvoiced48hrCash)} waiting to be collected.`,
+            `${ci05.uninvoiced48hrCount.toLocaleString(activeLocaleTag())} completed job${ci05.uninvoiced48hrCount !== 1 ? "s" : ""} still ha${ci05.uninvoiced48hrCount === 1 ? "s" : "ve"} no first invoice after 48+ hours — ${fmtUsd(ci05.uninvoiced48hrCash)} waiting to be collected.`,
             ci05.lateInvoiceCount > 0
-              ? `Separately, ${ci05.lateInvoiceCount.toLocaleString()} already-invoiced job${ci05.lateInvoiceCount !== 1 ? "s" : ""} took more than a week to bill (see Billing Alerts tile).`
+              ? `Separately, ${ci05.lateInvoiceCount.toLocaleString(activeLocaleTag())} already-invoiced job${ci05.lateInvoiceCount !== 1 ? "s" : ""} took more than a week to bill (see Billing Alerts tile).`
               : null,
             "This is the live backlog, separate from the historical target-rate percentage.",
           ].filter(Boolean).join(" ")}
@@ -858,17 +856,17 @@ export function ProcessVelocityPage() {
           reasoning={{
             summary: "Open unbilled backlog: completed jobs with no first invoice after 48+ hours.",
             evidence: [
-              `${ci05.uninvoiced48hrCount.toLocaleString()} jobs awaiting first invoice`,
+              `${ci05.uninvoiced48hrCount.toLocaleString(activeLocaleTag())} jobs awaiting first invoice`,
               `${fmtUsd(ci05.uninvoiced48hrCash)} in unbilled revenue`,
               ...(ci05.lateInvoiceCount > 0
-                ? [`${ci05.lateInvoiceCount.toLocaleString()} late-invoice alerts (already billed, >7 day lag) are tracked separately`]
+                ? [`${ci05.lateInvoiceCount.toLocaleString(activeLocaleTag())} late-invoice alerts (already billed, >7 day lag) are tracked separately`]
                 : []),
             ],
             conclusion: "Bill backlog jobs immediately to release tied-up cash.",
           }}
         />
         <PriorityCard
-          title="Velocity by Region"
+          title={localizeActiveCopy("Velocity by Region")}
           tag="Process"
           tagTone="process"
           headline={slowest ? fmtDays(slowest.medianLag) : "—"}
@@ -893,7 +891,7 @@ export function ProcessVelocityPage() {
         <div className="flex flex-wrap items-center gap-4 rounded-[14px] border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-5 py-4 shadow-[0_6px_16px_rgba(26,38,64,0.05)]">
           <span className="size-2 shrink-0 rounded-full bg-[var(--color-accent-warning)]" aria-hidden />
           <div className="min-w-0 flex-1">
-            <p className="text-[14px] font-semibold text-[var(--color-text-primary)]">Weather → Capacity signal</p>
+            <p className="text-[14px] font-semibold text-[var(--color-text-primary)]">{localizeActiveCopy("Weather → Capacity signal")}</p>
             <p className="text-[13px] text-[var(--color-text-secondary)]">
               {weather.activeExtremeEvents.length} forecast demand window{weather.activeExtremeEvents.length !== 1 ? "s" : ""} ahead — stage invoicing and crew capacity before the surge slows your handoff.
             </p>
@@ -906,7 +904,7 @@ export function ProcessVelocityPage() {
 
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-[18px] font-semibold text-[var(--color-text-primary)]">All apps</h2>
+          <h2 className="text-[18px] font-semibold text-[var(--color-text-primary)]">{localizeActiveCopy("All apps")}</h2>
           <div className="flex gap-2">
             <ControlButton onClick={() => setCreateOpen(true)}>
               Create app
@@ -959,13 +957,13 @@ export function ProcessVelocityPage() {
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" role="dialog" aria-modal="true">
           <button
             type="button"
-            aria-label="Close"
+            aria-label={localizeActiveCopy("Close")}
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setOpenCustomSpecId(null)}
           />
           <div className="relative z-10 flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-[16px] border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] shadow-2xl">
             <div className="flex shrink-0 items-center justify-between border-b border-[var(--color-border-default)] px-5 py-3">
-              <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{openCustomSpec.title}</h3>
+              <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{localizeActiveCopy(openCustomSpec.title)}</h3>
               <button
                 type="button"
                 onClick={() => setOpenCustomSpecId(null)}
@@ -990,7 +988,7 @@ export function ProcessVelocityPage() {
         >
           <SafeIcon name="Trash2" className="h-3.5 w-3.5 text-[var(--color-text-muted)]" />
           <span className="text-[12px] text-[var(--color-text-primary)]">
-            Removed <span className="font-medium">{undoState.title}</span>
+            Removed <span className="font-medium">{localizeActiveCopy(undoState.title)}</span>
           </span>
           <button
             type="button"

@@ -1,3 +1,4 @@
+import { activeLocaleTag } from "../_i18n/legacy"
 import type { ComputedData, CustomerAggregate, RegionAggregate, JobTypeQuoteAnalysis, DispatchAuthEvent } from "./_transform";
 import type { DispatchEfficiencyReport, CustomerEscalationProfile } from "./_dispatch";
 import { regionLabels, type Region } from "./_regions";
@@ -471,7 +472,7 @@ function pricingFindings(data: ComputedData): BPFinding[] {
           `Job ${e.jobNumber} (${e.customerName}): billed ${usd(e.totalAmount)} on ${usd(e.amountNTE)} NTE auth (${e.workflowOutcome}), ${e.visitCount} visits`
         ),
       ],
-      recommendation: `Dispatch Operations Lead: deploy single-queue re-auth on top ${Math.min(5, escalationEvents.length)} friction accounts — ${escalationEvents.length}/${dispatchEvents.length} jobs (${pct(escalationRate)}) exceed customer-set NTE; cut ${(avgVisitsEscalated - avgVisitsWithin).toFixed(1)} extra visits/job via one-pass approver routing (est. $${Math.round(escalationEvents.length * 50 * 0.4).toLocaleString()}/yr truck-roll savings).`,
+      recommendation: `Dispatch Operations Lead: deploy single-queue re-auth on top ${Math.min(5, escalationEvents.length)} friction accounts — ${escalationEvents.length}/${dispatchEvents.length} jobs (${pct(escalationRate)}) exceed customer-set NTE; cut ${(avgVisitsEscalated - avgVisitsWithin).toFixed(1)} extra visits/job via one-pass approver routing (est. $${Math.round(escalationEvents.length * 50 * 0.4).toLocaleString(activeLocaleTag())}/yr truck-roll savings).`,
       page: "pricing-intel",
       drillLevel: "macro",
     });
@@ -1049,7 +1050,7 @@ function laborMarketFindings(data: ComputedData): BPFinding[] {
         evidence: [
           `2019 mean wage: $${(earliest.meanAnnualWage / 1000).toFixed(0)}k → 2023: $${(latest.meanAnnualWage / 1000).toFixed(0)}k`,
           `Location quotient: ${latest.locationQuotient?.toFixed(2) ?? "N/A"} (${(latest.locationQuotient ?? 0) < 0.9 ? "below-average tech density — supply constrained" : "adequate tech supply"})`,
-          `Estimated tech pool: ${latest.employment?.toLocaleString() ?? "N/A"} in metro`,
+          `Estimated tech pool: ${latest.employment?.toLocaleString(activeLocaleTag()) ?? "N/A"} in metro`,
           `National 4-year growth: ${pct(0.159)} — ${state} ${wage.fourYearChangePct > 0.159 ? "outpacing" : "trailing"} national`,
         ],
         recommendation: `Build annual ${pct(wage.fourYearChangePct / 4)} labor rate escalation into all ${regionLabels[state]} contracts. For T&M work, verify hourly billing rates reflect the ${pricingBenchmarks.laborRateMultiplier.range[0]}-${pricingBenchmarks.laborRateMultiplier.range[1]}x multiplier on current actual labor costs of $${(latest.meanAnnualWage / 2080).toFixed(0)}/hr.`,
@@ -1074,11 +1075,11 @@ function laborMarketFindings(data: ComputedData): BPFinding[] {
         id: `construction-growth-${state}`,
         category: "acquisition-signal",
         severity: "info",
-        title: `${signal.topMetro}: ${totalPermits.toLocaleString()} building permits in 2024 — expansion opportunity`,
-        narrative: `Census Bureau data shows ${signal.signal} construction activity in ${regionLabels[state]}. ${permits.map(p => `${p.metroArea}: ${p.snapshots[p.snapshots.length - 1]?.totalPermits.toLocaleString()} permits (${pct(p.twoYearChangePct)} vs. 2022)`).join(". ")}. New construction creates HVAC installation demand and establishes long-term service relationships.`,
+        title: `${signal.topMetro}: ${totalPermits.toLocaleString(activeLocaleTag())} building permits in 2024 — expansion opportunity`,
+        narrative: `Census Bureau data shows ${signal.signal} construction activity in ${regionLabels[state]}. ${permits.map(p => `${p.metroArea}: ${p.snapshots[p.snapshots.length - 1]?.totalPermits.toLocaleString(activeLocaleTag())} permits (${pct(p.twoYearChangePct)} vs. 2022)`).join(". ")}. New construction creates HVAC installation demand and establishes long-term service relationships.`,
         evidence: permits.map(p => {
           const latest = p.snapshots[p.snapshots.length - 1];
-          return `${p.metroArea}: ${latest?.totalPermits.toLocaleString() ?? 0} total (${latest?.singleFamily.toLocaleString() ?? 0} SF, ${latest?.multiFamilyFivePlus.toLocaleString() ?? 0} MF 5+), ${p.constructionActivityLevel} activity`;
+          return `${p.metroArea}: ${latest?.totalPermits.toLocaleString(activeLocaleTag()) ?? 0} total (${latest?.singleFamily.toLocaleString(activeLocaleTag()) ?? 0} SF, ${latest?.multiFamilyFivePlus.toLocaleString(activeLocaleTag()) ?? 0} MF 5+), ${p.constructionActivityLevel} activity`;
         }),
         recommendation: `Target new construction HVAC contracts in ${signal.topMetro}. Each 1,000 residential permits generates ~$2-4M in commercial HVAC demand over 3 years. ${permits[0]?.notes ?? ""}`,
         page: "customer-intel",
@@ -1096,7 +1097,7 @@ function laborMarketFindings(data: ComputedData): BPFinding[] {
         narrative: `New construction activity in ${regionLabels[state]} is declining. This reduces installation revenue but increases retrofit and replacement demand as existing building stock ages. ${permits[0]?.notes ?? ""}`,
         evidence: permits.map(p => {
           const latest = p.snapshots[p.snapshots.length - 1];
-          return `${p.metroArea}: ${latest?.totalPermits.toLocaleString() ?? 0} permits, ${pct(p.twoYearChangePct)} vs. 2022`;
+          return `${p.metroArea}: ${latest?.totalPermits.toLocaleString(activeLocaleTag()) ?? 0} permits, ${pct(p.twoYearChangePct)} vs. 2022`;
         }),
         recommendation: `Pivot ${regionLabels[state]} strategy from new construction to service contracts and equipment replacement. The 50% rule: if single repair cost exceeds 50% of replacement value, recommend replacement. This builds advisory trust and captures higher-margin installation work.`,
         page: "customer-intel",

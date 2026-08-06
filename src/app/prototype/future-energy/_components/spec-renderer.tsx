@@ -1,5 +1,7 @@
 "use client"
 
+import { activeLocaleTag, formatActivePercent, formatActiveUsd, localizeActiveCopy } from "../_i18n/legacy"
+
 import * as React from "react"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import {
@@ -19,11 +21,7 @@ import type { ModuleSummary, ModuleSeverity, KeyFigure } from "../_modules/types
 /* ----------------------------- helpers ---------------------------- */
 
 function fmtUsd(n: number): string {
-  const abs = Math.abs(n)
-  const sign = n < 0 ? "-" : ""
-  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`
-  if (abs >= 1_000) return `${sign}$${(abs / 1_000).toFixed(abs >= 10_000 ? 0 : 1)}k`
-  return `${sign}$${abs.toFixed(0)}`
+  return formatActiveUsd(n)
 }
 
 function formatValue(v: unknown, fmt: Fmt = "num"): string {
@@ -32,8 +30,8 @@ function formatValue(v: unknown, fmt: Fmt = "num"): string {
   const n = typeof v === "number" ? v : Number(v)
   if (Number.isNaN(n)) return String(v)
   if (fmt === "usd") return fmtUsd(n)
-  if (fmt === "pct") return `${(n * (Math.abs(n) <= 1 ? 100 : 1)).toFixed(1)}%`
-  return n.toLocaleString(undefined, { maximumFractionDigits: 1 })
+  if (fmt === "pct") return formatActivePercent(Math.abs(n) <= 1 ? n : n / 100)
+  return n.toLocaleString(activeLocaleTag(), { maximumFractionDigits: 1 })
 }
 
 /** Safe dot-path read into ComputedData (or a row). */
@@ -126,11 +124,11 @@ function ProvenanceBar({ sources }: { sources: SourceRef[] }) {
       {sources.map(s => (
         <span
           key={s.id}
-          title={s.provenance === "modeled" && s.method ? `Modeled: ${s.method}` : `${s.label}${s.confidence ? ` · ${s.confidence} confidence` : ""}`}
+          title={s.provenance === "modeled" && s.method ? `Modeled: ${s.method}` : `${localizeActiveCopy(s.label)}${s.confidence ? ` · ${s.confidence} confidence` : ""}`}
           className={`inline-flex items-center gap-1 rounded-[6px] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${PROV_CLS[s.provenance]}`}
         >
           {s.external && <SafeIcon name="Globe" className="h-2.5 w-2.5" />}
-          {s.label}
+          {localizeActiveCopy(s.label)}
           <span className="opacity-70">· {s.provenance}</span>
         </span>
       ))}
@@ -157,7 +155,7 @@ function KpiRow({ figures, data }: { figures: Figure[]; data: ComputedData }) {
       {resolved.map((f, i) => (
         <MetricTile
           key={f.index}
-          label={f.label}
+          label={localizeActiveCopy(f.label)}
           value={f.display}
           tone={f.tone}
           index={i}
@@ -183,7 +181,7 @@ function ChartBlock({ block, data }: { block: Extract<AppBlock, { type: "chart" 
   )
   return (
     <div>
-      {block.title && <p className="mb-2 text-xs font-medium text-muted-foreground">{block.title}</p>}
+      {block.title && <p className="mb-2 text-xs font-medium text-muted-foreground">{localizeActiveCopy(block.title)}</p>}
       <ResponsiveContainer width="100%" height={220}>
         {block.chart === "bar" ? (
           <BarChart data={rows} margin={{ top: 4, right: 8, left: -8, bottom: 4 }}>
@@ -212,12 +210,12 @@ function TableBlock({ block, data }: { block: Extract<AppBlock, { type: "table" 
   const visible = rows.slice(0, block.max ?? 8)
   return (
     <div>
-      {block.title && <p className="mb-2 text-xs font-medium text-muted-foreground">{block.title}</p>}
+      {block.title && <p className="mb-2 text-xs font-medium text-muted-foreground">{localizeActiveCopy(block.title)}</p>}
       <div className="overflow-x-auto rounded-[10px] border border-border bg-card">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/40 text-left text-[10px] uppercase tracking-wide text-muted-foreground">
-              {block.columns.map(c => <th key={c.field} className="px-3 py-2 font-medium">{c.label}</th>)}
+              {block.columns.map(c => <th key={c.field} className="px-3 py-2 font-medium">{localizeActiveCopy(c.label)}</th>)}
             </tr>
           </thead>
           <tbody>
@@ -238,13 +236,13 @@ function TableBlock({ block, data }: { block: Extract<AppBlock, { type: "table" 
 function Explainability({ narrative, drivers }: { narrative: string; drivers?: string[] }) {
   return (
     <div className="flex items-start gap-2 rounded-[10px] border border-border border-l-[3px] border-l-primary bg-tint-brand px-4 py-2">
-      <p className="min-w-0 flex-1 text-[12px] leading-relaxed text-muted-foreground">{narrative}</p>
+      <p className="min-w-0 flex-1 text-[12px] leading-relaxed text-muted-foreground">{localizeActiveCopy(narrative)}</p>
       <ReasoningTooltip
         reasoning={{
           summary: narrative,
           evidence: drivers,
         }}
-        label="Why this insight"
+        label={localizeActiveCopy("Why this insight")}
         className="mt-0.5 shrink-0"
       />
     </div>
@@ -254,15 +252,15 @@ function Explainability({ narrative, drivers }: { narrative: string; drivers?: s
 function MarketIntelligence({ actions }: { actions: { label: string; detail: string }[] }) {
   return (
     <div className="space-y-2">
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Assigned actions by role</span>
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{localizeActiveCopy("Assigned actions by role")}</span>
       <ol className="space-y-2">
         {actions.map((a, i) => (
           <li key={i} className="flex items-start gap-2.5 rounded-[10px] border border-border bg-card px-3 py-2.5 shadow-sm">
             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] bg-tint-brand text-[10px] font-bold text-brand-strong">{i + 1}</span>
             <div className="min-w-0">
               <p className="flex items-center gap-1 text-[13px] font-medium text-foreground">
-                {a.label}
-                <ReasoningTooltip reasoning={a.detail ? { summary: a.detail } : undefined} label={`Why ${a.label}`} />
+                {localizeActiveCopy(a.label)}
+                <ReasoningTooltip reasoning={a.detail ? { summary: a.detail } : undefined} label={`Why ${localizeActiveCopy(a.label)}`} />
               </p>
             </div>
           </li>
@@ -304,7 +302,7 @@ function FigureStats({ figures, data }: { figures?: Figure[]; data: ComputedData
         <Stat
           key={t.index}
           value={t.value}
-          label={t.label}
+          label={localizeActiveCopy(t.label)}
           tone={t.tone}
           index={i}
           prominence={i === 0 ? "primary" : "secondary"}
@@ -325,7 +323,7 @@ function PredictTable({ stages, data }: { stages: StripaStages; data: ComputedDa
       <table className="w-full text-[11px]">
         <thead>
           <tr className="border-b border-border bg-muted/40 text-left text-[9px] uppercase tracking-wide text-muted-foreground">
-            {p.columns.map(c => <th key={c.field} className="px-3 py-1.5 font-medium">{c.label}</th>)}
+            {p.columns.map(c => <th key={c.field} className="px-3 py-1.5 font-medium">{localizeActiveCopy(c.label)}</th>)}
           </tr>
         </thead>
         <tbody>
@@ -357,38 +355,38 @@ function DeclarativeStripa({ block, data }: { block: StripaBlock; data: Computed
       <div className="flex flex-wrap items-center gap-2">
         <SafeIcon name="Activity" className="h-3.5 w-3.5 text-brand-strong" />
         <h3 className="text-xs font-medium uppercase tracking-wider text-foreground">{block.title || "STRIPA Analysis"}</h3>
-        <span className="text-[9px] uppercase tracking-wider text-muted-foreground/50">Surface · TRend · Infer · Predict · Act</span>
+        <span className="text-[9px] uppercase tracking-wider text-muted-foreground/50">{localizeActiveCopy("Surface · TRend · Infer · Predict · Act")}</span>
         {block.confidence && <ConfidenceBadge confidence={block.confidence} />}
       </div>
       <StripaCard>
         <div className="grid gap-4 lg:grid-cols-2">
-          <StageBlock tag="S" label="Surface" topBorder={false}>
-            <Narrative text={s.surface.narrative} />
+          <StageBlock tag="S" label={localizeActiveCopy("Surface")} topBorder={false}>
+            <Narrative text={localizeActiveCopy(s.surface.narrative)} />
             <FigureStats figures={s.surface.figures} data={data} />
           </StageBlock>
-          <StageBlock tag="TR" label="Trend" topBorder={false}>
-            <Narrative text={s.trend.narrative} />
+          <StageBlock tag="TR" label={localizeActiveCopy("Trend")} topBorder={false}>
+            <Narrative text={localizeActiveCopy(s.trend.narrative)} />
             <FigureStats figures={s.trend.figures} data={data} />
           </StageBlock>
         </div>
-        <StageBlock tag="I" label="Infer">
-          <Narrative text={s.infer.narrative} />
+        <StageBlock tag="I" label={localizeActiveCopy("Infer")}>
+          <Narrative text={localizeActiveCopy(s.infer.narrative)} />
           <FigureStats figures={s.infer.figures} data={data} />
         </StageBlock>
-        <StageBlock tag="P" label="Predict">
-          <Narrative text={s.predict.narrative} />
+        <StageBlock tag="P" label={localizeActiveCopy("Predict")}>
+          <Narrative text={localizeActiveCopy(s.predict.narrative)} />
           <FigureStats figures={s.predict.figures} data={data} />
           <PredictTable stages={s} data={data} />
         </StageBlock>
-        <StageBlock tag="A" label="Act">
+        <StageBlock tag="A" label={localizeActiveCopy("Act")}>
           {s.act.actions.length > 0 ? (
             <ol className="space-y-2">
               {s.act.actions.map((a, i) => (
                 <li key={i} className="flex items-start gap-2.5 rounded-[10px] border border-border bg-card px-3 py-2.5 shadow-sm">
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] bg-tint-brand text-[10px] font-bold text-brand-strong">{i + 1}</span>
                   <div className="min-w-0">
-                    <p className="text-[13px] font-medium text-foreground">{a.label}</p>
-                    {a.detail && <p className="text-[11px] text-muted-foreground">{a.detail}</p>}
+                    <p className="text-[13px] font-medium text-foreground">{localizeActiveCopy(a.label)}</p>
+                    {a.detail && <p className="text-[11px] text-muted-foreground">{localizeActiveCopy(a.detail)}</p>}
                   </div>
                 </li>
               ))}
@@ -410,7 +408,7 @@ function renderBlock(block: AppBlock, data: ComputedData): React.ReactNode {
     case "stripa": return stripaEngine(block) === "weather"
       ? <WeatherStripaPanel />
       : <DeclarativeStripa block={block} data={data} />
-    case "explainability": return <Explainability narrative={block.narrative} drivers={block.drivers} />
+    case "explainability": return <Explainability narrative={localizeActiveCopy(block.narrative)} drivers={block.drivers} />
     case "playbook":
     case "marketIntelligence": return <MarketIntelligence actions={block.actions} />
     default: return null
@@ -430,7 +428,7 @@ export function SpecRenderer({ spec }: { spec: AppSpec }) {
     : spec.blocks.filter(b => !(b.type === "stripa" && stripaEngine(b) === "weather"))
   return (
     <div className="space-y-5">
-      {spec.rationale && <p className="text-[12px] leading-relaxed text-muted-foreground">{spec.rationale}</p>}
+      {spec.rationale && <p className="text-[12px] leading-relaxed text-muted-foreground">{localizeActiveCopy(spec.rationale)}</p>}
       <ProvenanceBar sources={spec.sources} />
       {blocks.map((b, i) => {
         const node = renderBlock(b, data)

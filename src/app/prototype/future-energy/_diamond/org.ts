@@ -1,3 +1,6 @@
+import type { Locale } from "../_i18n/types"
+import { localizeRole } from "../_i18n/domain"
+
 /* ------------------------------------------------------------------ */
 /*  Org directory — maps package roles to named people.                */
 /*  Used to show who (a human) is responsible for a given gate task.   */
@@ -22,6 +25,7 @@ const PEOPLE: Record<string, OrgPerson> = {
   "Project Director": { name: "Vanessa Cole", role: "Project Director" },
 }
 
-export function personForRole(role: string): OrgPerson {
-  return PEOPLE[role] ?? { name: "Unassigned Lead", role }
+export function personForRole(role: string, locale: Locale = "en"): OrgPerson {
+  const person = PEOPLE[role] ?? { name: locale === "fr" ? "Responsable non assigné" : "Unassigned Lead", role }
+  return { ...person, role: localizeRole(person.role, locale) }
 }

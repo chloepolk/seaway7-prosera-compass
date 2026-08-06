@@ -9,7 +9,10 @@ export async function POST(req: Request) {
   if (!hasAnyProvider()) return fallbackResponse()
 
   try {
-    const { orchestratorOutput, sourceData, drillState, verifiableBenchmarks } = await req.json()
+    const { orchestratorOutput, sourceData, drillState, verifiableBenchmarks, locale } = await req.json()
+    const language = locale === "fr"
+      ? "Rédigez tous les champs textuels en français ; conservez les noms, normes, identifiants et références inchangés.\n\n"
+      : ""
 
     if (!orchestratorOutput?.findings?.length) {
       return Response.json({
@@ -19,7 +22,7 @@ export async function POST(req: Request) {
           corrections: [],
           suppressions: [],
           annotations: [],
-          overallAssessment: "No findings to verify.",
+          overallAssessment: locale === "fr" ? "Aucun constat à vérifier." : "No findings to verify.",
         },
       })
     }
@@ -31,7 +34,7 @@ export async function POST(req: Request) {
         { role: "system", content: VERIFIER_PROMPT },
         {
           role: "user",
-          content: `Verify the following orchestrator output against the source data.
+          content: `${language}Verify the following orchestrator output against the source data.
 
 Navigation Context: ${JSON.stringify(drillState)}
 

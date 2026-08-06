@@ -1,6 +1,8 @@
 import type { ScenarioState, ScenarioProjection, LeverCategory } from "./types";
+import type { Locale } from "../_i18n";
+import { formatActiveUsd } from "../_i18n/legacy";
 
-const usd = (n: number) => (n >= 0 ? "$" : "-$") + Math.abs(Math.round(n)).toLocaleString();
+const usd = (n: number) => formatActiveUsd(n, false);
 const pts = (n: number) => (n >= 0 ? "+" : "") + n.toFixed(1) + " pts";
 const bps = (n: number) => (n >= 0 ? "+" : "") + Math.round(n) + " bps";
 
@@ -9,6 +11,7 @@ interface PromptInput {
   state: ScenarioState;
   projection: ScenarioProjection;
   portfolioContext: Record<string, unknown>;
+  locale: Locale;
 }
 
 function impactBlock(p: ScenarioProjection): string {
@@ -99,14 +102,23 @@ INSTRUCTIONS:
 }
 
 export function buildSandboxPrompt(input: PromptInput): string {
+  const language = input.locale === "fr"
+    ? "LANGUE OBLIGATOIRE : répondez exclusivement en français. Conservez inchangés les noms propres, marques, normes, identifiants et références.\n\n"
+    : "";
+  let prompt: string;
   switch (input.lever) {
     case "customer-mix":
-      return customerMixPrompt(input.state, input.projection, input.portfolioContext);
+      prompt = customerMixPrompt(input.state, input.projection, input.portfolioContext);
+      break;
     case "pricing":
-      return pricingPrompt(input.state, input.projection, input.portfolioContext);
+      prompt = pricingPrompt(input.state, input.projection, input.portfolioContext);
+      break;
     case "fuel":
-      return fuelPrompt(input.state, input.projection, input.portfolioContext);
+      prompt = fuelPrompt(input.state, input.projection, input.portfolioContext);
+      break;
     case "nte":
-      return ntePrompt(input.state, input.projection, input.portfolioContext);
+      prompt = ntePrompt(input.state, input.projection, input.portfolioContext);
+      break;
   }
+  return language + prompt;
 }

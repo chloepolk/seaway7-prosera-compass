@@ -5,8 +5,11 @@ import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { cn } from "@/lib/utils"
 import { ACTIVE_USER } from "./active-user"
 import { useT } from "../../_i18n/use-t"
+import { useStore } from "../../_store"
+import type { TranslateFn } from "../../_i18n"
+import { localizeRole } from "../../_i18n/domain"
 import { PROJECT } from "../../data/future-energy/_tenders"
-import { GATE_LABELS, type BidEvaluationResult } from "../../data/future-energy/_bid-scoring"
+import { gateLabels, type BidEvaluationResult } from "../../data/future-energy/_bid-scoring"
 
 type Outcome = "award" | "unsuccessful" | "disqualified"
 
@@ -28,58 +31,36 @@ const OUTCOME_META: Record<Outcome, { labelKey: "notify.award" | "notify.unsucce
   disqualified: { labelKey: "notify.disqualified", cls: "bg-[var(--color-tint-critical)] text-[var(--color-accent-critical-text)]" },
 }
 
-const SIGN_OFF = `Yours faithfully,
-${ACTIVE_USER.name}
-${ACTIVE_USER.role}
-Future Energy — Supply Chain Management`
-
-function subjectFor(outcome: Outcome, ittRef: string): string {
+function subjectFor(outcome: Outcome, ittRef: string, t: TranslateFn): string {
   return outcome === "award"
-    ? `Notification of Award — ${ittRef}`
-    : `Outcome of your tender — ${ittRef}`
+    ? t("notify.awardSubject", { ittRef })
+    : t("notify.outcomeSubject", { ittRef })
 }
 
 /** Formal, European-register correspondence — no casual openers. */
-function bodyFor(r: BidEvaluationResult, ittRef: string, packageTitle: string): string {
+function bodyFor(r: BidEvaluationResult, ittRef: string, packageTitle: string, t: TranslateFn, locale: "en" | "fr"): string {
   const outcome = outcomeFor(r)
   const s = r.supplier
+  const signOff = t("notify.signOff", {
+    name: ACTIVE_USER.name,
+    role: localizeRole(ACTIVE_USER.role, locale),
+  })
 
   if (outcome === "award") {
-    return `Dear ${s} Tender Team,
-
-Further to the evaluation of the returns received against ${ittRef} — ${packageTitle} — for the ${PROJECT.name}, I am pleased to confirm that Future Energy intends to award this package to ${s}.
-
-Your submission achieved the leading composite score under our published evaluation model (Price, Technical, QA/HSEQ and Legal) and satisfied each of the mandatory gating requirements.
-
-Our commercial team will make contact shortly to progress the purchase order and to confirm delivery arrangements on a DDP Rotterdam basis (Incoterms 2020).
-
-We thank you for the considerable effort invested in your proposal and look forward to working with you on this programme.
-
-${SIGN_OFF}`
+    return t("notify.awardBody", { supplier: s, ittRef, packageTitle, project: PROJECT.name, signOff })
   }
 
   if (outcome === "disqualified") {
-    const gates = r.gateFailures.map((g) => GATE_LABELS[g]).join(", ")
-    return `Dear ${s} Tender Team,
-
-Thank you for your submission in response to ${ittRef} — ${packageTitle} — for the ${PROJECT.name}.
-
-Following our compliance review, I must advise you that your tender could not be progressed to commercial evaluation, as it did not satisfy one or more of the mandatory requirements of the invitation to tender${gates ? ` (${gates})` : ""}.
-
-We would welcome a fully compliant submission from ${s} in future procurement exercises, and remain available should you wish to discuss this outcome.
-
-${SIGN_OFF}`
+    const gates = r.gateFailures.map((g) => gateLabels(locale)[g]).join(", ")
+    return t("notify.disqualifiedBody", {
+      supplier: s, ittRef, packageTitle, project: PROJECT.name,
+      gates: gates ? ` (${gates})` : "", signOff,
+    })
   }
 
-  return `Dear ${s} Tender Team,
-
-Thank you for your submission in response to ${ittRef} — ${packageTitle} — for the ${PROJECT.name}.
-
-Following a careful evaluation of all compliant returns against our published criteria (Price, Technical, QA/HSEQ and Legal), I regret to inform you that your tender has not been selected for award on this occasion.
-
-We greatly appreciate the time and effort invested in your proposal and would encourage you to participate in future tenders for the programme. Should you wish to receive feedback on your submission, please do not hesitate to contact us.
-
-${SIGN_OFF}`
+  return t("notify.unsuccessfulBody", {
+    supplier: s, ittRef, packageTitle, project: PROJECT.name, signOff,
+  })
 }
 
 type Draft = { to: string; subject: string; body: string }
@@ -96,6 +77,7 @@ export function BidderNotifyModal({
   onClose: () => void
 }) {
   const t = useT()
+  const { locale } = useStore()
   const ordered = React.useMemo(() => {
     const rank = (r: BidEvaluationResult) => {
       const o = outcomeFor(r)
@@ -114,12 +96,26 @@ export function BidderNotifyModal({
     for (const r of ordered) {
       map[r.bidId] = {
         to: supplierEmail(r.supplier),
-        subject: subjectFor(outcomeFor(r), ittRef),
-        body: bodyFor(r, ittRef, packageTitle),
+        subject: subjectFor(outcomeFor(r), ittRef, t),
+        body: bodyFor(r, ittRef, packageTitle, t, locale),
       }
     }
     return map
   })
+
+  React.useEffect(() => {
+    const map: Record<string, Draft> = {}
+    for (const r of ordered) {
+      map[r.bidId] = {
+        to: drafts[r.bidId]?.to ?? supplierEmail(r.supplier),
+        subject: subjectFor(outcomeFor(r), ittRef, t),
+        body: bodyFor(r, ittRef, packageTitle, t, locale),
+      }
+    }
+    setDrafts(map)
+    // Regenerate visible correspondence whenever the UI language changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locale])
 
   const [activeId, setActiveId] = React.useState<string | null>(ordered[0]?.bidId ?? null)
   const [sentIds, setSentIds] = React.useState<Set<string>>(new Set())
@@ -182,7 +178,7 @@ export function BidderNotifyModal({
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[11px] tabular-nums text-[var(--color-text-muted)]">
-              {sentCount} of {ordered.length} notified
+              {t("notify.notifiedCount", { sent: sentCount, total: ordered.length })}
             </span>
             {!allSent && (
               <button
@@ -191,7 +187,7 @@ export function BidderNotifyModal({
                 disabled={sendPhase !== "idle"}
                 className="rounded-md border border-[var(--color-border-default)] px-2.5 py-1.5 text-[12px] font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-canvas)] disabled:opacity-50"
               >
-                Send all remaining
+                {t("notify.sendRemaining")}
               </button>
             )}
             <button
@@ -260,17 +256,17 @@ export function BidderNotifyModal({
                   {activeSent ? t("common.sent") : sendPhase === "sending" ? t("common.sending") : t("common.send")}
                 </button>
                 <span className="text-[11px] text-[var(--color-text-muted)]">
-                  {t(OUTCOME_META[outcomeFor(active)].labelKey)} notification to {active.supplier}
+                  {t("notify.notificationTo", { outcome: t(OUTCOME_META[outcomeFor(active)].labelKey), supplier: active.supplier })}
                 </span>
               </div>
 
               <div className="min-h-0 flex-1 overflow-y-auto">
                 <div className={fieldRowClass}>
-                  <span className={fieldLabelClass}>From</span>
-                  <span className="text-[13px] text-[var(--color-text-secondary)]">You &lt;{ACTIVE_USER.email}&gt;</span>
+                  <span className={fieldLabelClass}>{t("modals.from")}</span>
+                  <span className="text-[13px] text-[var(--color-text-secondary)]">{t("common.you")} &lt;{ACTIVE_USER.email}&gt;</span>
                 </div>
                 <div className={fieldRowClass}>
-                  <label htmlFor="bidder-to" className={fieldLabelClass}>To</label>
+                  <label htmlFor="bidder-to" className={fieldLabelClass}>{t("modals.to")}</label>
                   <input
                     id="bidder-to"
                     type="email"
@@ -281,7 +277,7 @@ export function BidderNotifyModal({
                   />
                 </div>
                 <div className={fieldRowClass}>
-                  <label htmlFor="bidder-subject" className={fieldLabelClass}>Subject</label>
+                  <label htmlFor="bidder-subject" className={fieldLabelClass}>{t("modals.subject")}</label>
                   <input
                     id="bidder-subject"
                     type="text"

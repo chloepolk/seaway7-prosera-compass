@@ -201,7 +201,7 @@ export function MissionActionCard({
               ) : (
                 <>
                   <span className="font-medium text-[var(--color-text-primary)]">{displayOwner}</span>
-                  {" assigned"}
+                  {` ${t("missionCard.assigned")}`}
                 </>
               )}
             </span>
@@ -310,7 +310,7 @@ export function MissionActionCard({
                 className={cn(actionButtonClass, "gap-1 text-[var(--color-text-primary)]")}
               >
                 <SafeIcon name="UserPlus" className="h-3.5 w-3.5" />
-                Reassign
+                {t("missionCard.reassign")}
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -318,7 +318,7 @@ export function MissionActionCard({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    aria-label="More actions"
+                    aria-label={t("missionCard.moreActions")}
                     className={cn(actionButtonClass, "px-2")}
                   >
                     <SafeIcon name="MoreHorizontal" className="h-4 w-4" />
@@ -347,7 +347,7 @@ export function MissionActionCard({
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => setReasoningOpen((v) => !v)}>
                         <SafeIcon name="Sparkles" className="h-4 w-4" />
-                        {reasoningOpen ? "Hide" : "Show"} BluePilot reasoning
+                        {reasoningOpen ? t("missionCard.hideReasoning") : t("missionCard.showReasoning")}
                       </DropdownMenuItem>
                     </>
                   )}
@@ -433,13 +433,13 @@ export function MissionActionCard({
       <Sheet open={assignDrawerOpen} onOpenChange={setAssignDrawerOpen}>
         <SheetContent side="right" className="flex w-[400px] max-w-[400px] flex-col gap-0 p-0">
           <SheetHeader className="shrink-0 border-b border-[var(--color-border-default)] px-4 py-3">
-            <SheetTitle className="text-[15px] font-semibold">Reassign action</SheetTitle>
+            <SheetTitle className="text-[15px] font-semibold">{t("missionCard.reassignTitle")}</SheetTitle>
             <p className="truncate text-[12px] text-[var(--color-text-muted)]">{title}</p>
           </SheetHeader>
           <div className="flex-1 space-y-4 overflow-y-auto p-4">
             <div className="rounded-[12px] border border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] p-3">
               <p className="px-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-                Assign to
+                {t("missionCard.assignTo")}
               </p>
               <AssigneePicker
                 className="mt-2"
@@ -449,15 +449,15 @@ export function MissionActionCard({
               />
             </div>
             <div className="rounded-[12px] bg-[var(--color-bg-inverse)] p-4 text-[var(--color-text-inverse)]">
-              <p className="text-[14px] font-semibold">Notify assignee</p>
+              <p className="text-[14px] font-semibold">{t("missionCard.notifyAssignee")}</p>
               <p className="mt-3 text-[13px] leading-relaxed text-[var(--color-text-inverse)]/70">
                 {notifyTarget ? (
-                  <>
-                    An email will be sent to {displayName(notifyTarget.name)} ({notifyTarget.email}) with the
-                    action, target, and deadline.
-                  </>
+                  t("missionCard.notificationPreview", {
+                    name: displayName(notifyTarget.name),
+                    email: notifyTarget.email,
+                  })
                 ) : (
-                  <>Select an assignee to preview the notification.</>
+                  t("missionCard.selectAssignee")
                 )}
               </p>
               <div className="mt-4 flex flex-col gap-2">
@@ -470,21 +470,21 @@ export function MissionActionCard({
                   className="w-full rounded-[10px] bg-[#475569] text-[13px] font-semibold text-white hover:bg-[#334155]"
                 >
                   <EmailIcon size={14} />
-                  Send via Email
+                  {t("missionCard.sendEmail")}
                 </Button>
                 <Button
                   type="button"
                   className="w-full rounded-[10px] bg-[#611F69] text-[13px] font-semibold text-white hover:bg-[#4A154B]"
                 >
                   <SlackIcon size={14} />
-                  Send via Slack
+                  {t("missionCard.sendSlack")}
                 </Button>
                 <Button
                   type="button"
                   className="w-full rounded-[10px] bg-[#5059C9] text-[13px] font-semibold text-white hover:bg-[#464EB8]"
                 >
                   <TeamsIcon size={14} />
-                  Send via Teams
+                  {t("missionCard.sendTeams")}
                 </Button>
               </div>
             </div>

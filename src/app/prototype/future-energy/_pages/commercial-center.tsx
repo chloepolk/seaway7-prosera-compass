@@ -1,5 +1,7 @@
 "use client"
 
+import { activeLocaleTag, formatActivePercent, formatActiveUsd, localizeActiveCopy } from "../_i18n/legacy"
+
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { ControlButton } from "../_components/hub/control-button"
@@ -33,19 +35,15 @@ const DEFAULT_TILE_ORDER = [
 ]
 
 function fmtUsd(n: number): string {
-  const abs = Math.abs(n)
-  const sign = n < 0 ? "-" : ""
-  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`
-  if (abs >= 1_000) return `${sign}$${(abs / 1_000).toFixed(0)}k`
-  return `${sign}$${abs.toFixed(0)}`
+  return formatActiveUsd(n)
 }
 
 function fmtPct(n: number): string {
-  return `${(n * 100).toFixed(1)}%`
+  return formatActivePercent(n)
 }
 
 function fmtSignedPct(n: number, digits = 1): string {
-  return `${n >= 0 ? "+" : ""}${(n * 100).toFixed(digits)}%`
+  return `${n >= 0 ? "+" : ""}${formatActivePercent(Math.abs(n), digits)}`
 }
 
 export function CommercialCenterPage() {
@@ -59,6 +57,7 @@ export function CommercialCenterPage() {
     setModuleHidden,
     deleteCustomApp,
     restoreCustomApp,
+    locale,
   } = useStore()
 
   const [createOpen, setCreateOpen] = React.useState(false)
@@ -84,6 +83,7 @@ export function CommercialCenterPage() {
   const totalRepricingOpportunity = pricingBandInsights.reduce((s, pb) => s + pb.repricingOpportunityValue, 0)
   const untappedValue = Math.abs(exitLoss) + totalRepricingOpportunity
   const tam = buildTamRollup(customers)
+  const tamWhitespace = tam.whitespace
   const topPricing = pricingBandInsights[0]
 
   const scored = customers.filter((c) => c.customerScore)
@@ -103,7 +103,9 @@ export function CommercialCenterPage() {
         ).toFixed(1)}pt`
       : "—"
 
-  const computedHeroBody = `The top ${portfolioSummary.topMarginCustomerPct.toFixed(0)}% of customers bring in ${portfolioSummary.topMarginSharePct}% of your margin, while ${customers.filter((c) => c.tier === "Dogs").length} accounts cost you about ${fmtUsd(Math.abs(exitLoss))} a year. Two moves — protect the key accounts and re-price the unprofitable ones — hold your margin and open up ${fmtUsd(tam.whitespace)} in new revenue.`
+  const computedHeroBody = locale === "fr"
+    ? `Les ${portfolioSummary.topMarginCustomerPct.toFixed(0)} % de clients les plus rentables génèrent ${portfolioSummary.topMarginSharePct} % de votre marge, tandis que ${customers.filter((c) => c.tier === "Dogs").length} comptes vous coûtent environ ${fmtUsd(Math.abs(exitLoss))} par an. Deux actions — protéger les comptes clés et revoir le prix des comptes non rentables — préservent la marge et ouvrent ${fmtUsd(tam.whitespace)} de chiffre d’affaires supplémentaire.`
+    : `The top ${portfolioSummary.topMarginCustomerPct.toFixed(0)}% of customers bring in ${portfolioSummary.topMarginSharePct}% of your margin, while ${customers.filter((c) => c.tier === "Dogs").length} accounts cost you about ${fmtUsd(Math.abs(exitLoss))} a year. Two moves — protect the key accounts and re-price the unprofitable ones — hold your margin and open up ${fmtUsd(tam.whitespace)} in new revenue.`
 
   const goActionBoard = () => {
     setFocusMission(null)
@@ -115,7 +117,7 @@ export function CommercialCenterPage() {
       {
         id: "portfolio",
         label: "Customer Portfolio",
-        metric: portfolioSummary.totalCustomers.toLocaleString(),
+        metric: portfolioSummary.totalCustomers.toLocaleString(activeLocaleTag()),
         icon: "Users",
         onClick: () => setPage("customer-intel"),
       },
@@ -129,7 +131,7 @@ export function CommercialCenterPage() {
       {
         id: "untapped",
         label: "Untapped Revenue",
-        metric: fmtUsd(tam.whitespace),
+        metric: fmtUsd(tamWhitespace),
         icon: "TrendingUp",
         onClick: () => setPage("customer-intel"),
       },
@@ -186,7 +188,7 @@ export function CommercialCenterPage() {
     [
       portfolioSummary.totalCustomers,
       avgScore,
-      tam.whitespace,
+      tamWhitespace,
       topPricing,
       data.quoteAnalysis.atRiskQuotes.length,
       data.salesPerformance.overallWinRate,
@@ -342,7 +344,7 @@ export function CommercialCenterPage() {
           },
           {
             label: "Customers",
-            value: portfolioSummary.totalCustomers.toLocaleString(),
+            value: portfolioSummary.totalCustomers.toLocaleString(activeLocaleTag()),
             reasoning: KPI_REASONING.customers(portfolioSummary.totalCustomers),
           },
           {
@@ -356,7 +358,7 @@ export function CommercialCenterPage() {
       <div className="grid gap-3 lg:grid-cols-3">
         <PriorityCard
           index={0}
-          title="Margin Concentration"
+          title={localizeActiveCopy("Margin Concentration")}
           tag="Watch"
           tagTone="watch"
           headline={`${portfolioSummary.topMarginSharePct}%`}
@@ -375,7 +377,7 @@ export function CommercialCenterPage() {
         />
         <PriorityCard
           index={1}
-          title="Untapped Revenue"
+          title={localizeActiveCopy("Untapped Revenue")}
           tag="Growth"
           tagTone="growth"
           headline={fmtUsd(tam.whitespace)}
@@ -394,7 +396,7 @@ export function CommercialCenterPage() {
         />
         <PriorityCard
           index={2}
-          title="Pricing Sweet-Spot"
+          title={localizeActiveCopy("Pricing Sweet-Spot")}
           tag="Pricing"
           tagTone="pricing"
           headline={topPricing ? `${Math.round(topPricing.sweetSpotWinRate * 100)}%` : "—"}
@@ -423,7 +425,7 @@ export function CommercialCenterPage() {
 
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-[18px] font-semibold text-[var(--color-text-primary)]">All apps</h2>
+          <h2 className="text-[18px] font-semibold text-[var(--color-text-primary)]">{localizeActiveCopy("All apps")}</h2>
           <div className="flex gap-2">
             <ControlButton onClick={() => setCreateOpen(true)}>
               Create app
@@ -476,7 +478,7 @@ export function CommercialCenterPage() {
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" role="dialog" aria-modal="true">
           <button
             type="button"
-            aria-label="Close"
+            aria-label={localizeActiveCopy("Close")}
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setOpenCustomSpecId(null)}
           />

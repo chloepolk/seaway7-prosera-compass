@@ -11,6 +11,8 @@ import { enterMotion, pcmButton, pcmCard, pcmJiggle } from "./motion"
 import { ControlButton } from "./hub/control-button"
 import type { IntelModule, ModuleSeverity, KeyFigure } from "../_modules/types"
 import type { AppSpec } from "../_modules/spec"
+import { useT } from "../_i18n/use-t"
+import { localizeLegacyCopy } from "../_i18n/legacy"
 
 const SEV_DOT: Record<ModuleSeverity, string> = {
   critical: "bg-accent-critical",
@@ -101,7 +103,8 @@ function ModuleTile({
   onDrop: () => void
   onDragEnd: () => void
 }) {
-  const { data } = useStore()
+  const { data, locale } = useStore()
+  const t = useT()
   const summary = React.useMemo(() => module.summary(data), [module, data])
   const enter = enterMotion(index)
   const accent = CATEGORY_ACCENT[module.category]
@@ -132,9 +135,9 @@ function ModuleTile({
             <SafeIcon name={module.icon} className="h-4 w-4" />
           </span>
           <div className="min-w-0">
-            <p className="truncate text-[13px] font-semibold leading-tight text-foreground">{module.title}</p>
+            <p className="truncate text-[13px] font-semibold leading-tight text-foreground">{localizeLegacyCopy(module.title, locale)}</p>
             <span className={cn("mt-1 inline-flex rounded-[5px] px-1.5 py-px text-[8px] font-bold uppercase tracking-wider", accent.badge)}>
-              {module.category}
+              {t(`board.category${module.category[0].toUpperCase()}${module.category.slice(1)}`)}
             </span>
           </div>
         </div>
@@ -151,8 +154,8 @@ function ModuleTile({
                   "flex h-5 w-5 items-center justify-center rounded-full",
                   isHero ? "bg-tint-brand text-brand-strong shadow-sm" : "bg-card/80 text-muted-foreground hover:bg-tint-brand hover:text-brand-strong",
                 )}
-                aria-label={isHero ? `Unpin ${module.title} from hero` : `Set ${module.title} as hero`}
-                title={isHero ? "Unpin from hero" : "Set as hero (primary section)"}
+                aria-label={isHero ? t("board.unpinNamed", { name: module.title }) : t("board.setHeroNamed", { name: module.title })}
+                title={isHero ? t("board.unpinHero") : t("board.setHero")}
               >
                 <SafeIcon name="Star" className="h-3 w-3" />
               </button>
@@ -163,7 +166,7 @@ function ModuleTile({
                   pcmButton,
                   "flex h-5 w-5 items-center justify-center rounded-full bg-card/80 text-muted-foreground hover:bg-tint-critical hover:text-accent-critical-text",
                 )}
-                aria-label={`Remove ${module.title}`}
+                aria-label={t("common.removeNamed", { name: module.title })}
               >
                 <SafeIcon name="X" className="h-3 w-3" />
               </button>
@@ -174,13 +177,13 @@ function ModuleTile({
 
       {/* body */}
       <div className="flex flex-1 flex-col gap-3 px-4 pb-4 pt-3">
-        <p className="text-[12px] leading-relaxed text-muted-foreground line-clamp-2">{summary.headline}</p>
+        <p className="text-[12px] leading-relaxed text-muted-foreground line-clamp-2">{localizeLegacyCopy(summary.headline, locale)}</p>
 
         {heroFigure && (
           <div className="flex items-end justify-between gap-3">
             <div className="min-w-0 space-y-0.5">
               <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                {heroFigure.label}
+                {localizeLegacyCopy(heroFigure.label, locale)}
               </div>
               <div className={cn("truncate text-[28px] font-bold tabular-nums leading-none tracking-tight", TONE_CLS[heroFigure.tone ?? "neutral"])}>
                 {heroFigure.value}
@@ -194,7 +197,7 @@ function ModuleTile({
           <div className="mt-auto grid grid-cols-2 gap-x-4 gap-y-2 border-t border-border/70 pt-3">
             {secondaryFigures.map((f, i) => (
               <div key={i} className="min-w-0 space-y-0.5">
-                <div className="truncate text-[9px] font-medium uppercase tracking-wide text-muted-foreground/60">{f.label}</div>
+                <div className="truncate text-[9px] font-medium uppercase tracking-wide text-muted-foreground/60">{localizeLegacyCopy(f.label, locale)}</div>
                 <div className={cn("truncate text-[14px] font-medium tabular-nums leading-none text-muted-foreground", f.tone === "good" && "text-accent-positive-text/80", f.tone === "bad" && "text-accent-critical-text/80")}>
                   {f.value}
                 </div>
@@ -206,7 +209,7 @@ function ModuleTile({
 
       {!editing && (
         <span className="pointer-events-none absolute bottom-3.5 right-4 text-[10px] font-medium text-brand-strong opacity-0 transition-opacity group-hover:opacity-100">
-          Open →
+          {t("board.open")}
         </span>
       )}
     </Card>
@@ -228,15 +231,16 @@ function AppLibrary({
   onRestore: (specId: string) => void
   onClose: () => void
 }) {
-  const { data } = useStore()
+  const { data, locale } = useStore()
+  const t = useT()
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true">
-      <button type="button" aria-label="Close" className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <button type="button" aria-label={t("common.close")} className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-[16px] border border-border bg-card shadow-2xl">
         <div className="flex items-center justify-between border-b border-border px-5 py-3">
           <div className="flex items-center gap-2">
             <SafeIcon name="LayoutGrid" className="h-4 w-4 text-brand-strong" />
-            <h3 className="text-sm font-semibold">App Library</h3>
+            <h3 className="text-sm font-semibold">{t("board.appLibrary")}</h3>
           </div>
           <button type="button" onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-muted">
             <SafeIcon name="X" className="h-4 w-4" />
@@ -244,7 +248,7 @@ function AppLibrary({
         </div>
         <div className="max-h-[60vh] overflow-y-auto p-3">
           {available.length === 0 ? (
-            <p className="px-2 py-6 text-center text-[12px] text-muted-foreground">Every app is already on your board. Save a What-If scenario to add it here.</p>
+            <p className="px-2 py-6 text-center text-[12px] text-muted-foreground">{t("board.libraryEmpty")}</p>
           ) : (
             <ul className="space-y-1.5">
               {available.map(m => {
@@ -260,8 +264,8 @@ function AppLibrary({
                         <SafeIcon name={m.icon} className="h-4 w-4" />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[13px] font-medium text-foreground">{m.title}</span>
-                        <span className="block truncate text-[11px] text-muted-foreground">{s.headline}</span>
+                        <span className="block truncate text-[13px] font-medium text-foreground">{localizeLegacyCopy(m.title, locale)}</span>
+                        <span className="block truncate text-[11px] text-muted-foreground">{localizeLegacyCopy(s.headline, locale)}</span>
                       </span>
                       <SafeIcon name="Plus" className="h-4 w-4 shrink-0 text-brand-strong" />
                     </button>
@@ -275,7 +279,7 @@ function AppLibrary({
             <div className="mt-3 border-t border-border pt-3">
               <div className="mb-1.5 flex items-center gap-1.5 px-1">
                 <SafeIcon name="Trash2" className="h-3 w-3 text-muted-foreground" />
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Recently deleted</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("board.recentlyDeleted")}</span>
               </div>
               <ul className="space-y-1.5">
                 {deleted.map(spec => (
@@ -290,10 +294,10 @@ function AppLibrary({
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[13px] font-medium text-foreground">{spec.title}</span>
-                        <span className="block truncate text-[11px] text-muted-foreground">{spec.summary?.headline ?? "Agent-built app"}</span>
+                        <span className="block truncate text-[11px] text-muted-foreground">{spec.summary?.headline ?? t("board.agentBuiltApp")}</span>
                       </span>
                       <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-brand-strong">
-                        <SafeIcon name="Undo2" className="h-3.5 w-3.5" /> Restore
+                        <SafeIcon name="Undo2" className="h-3.5 w-3.5" /> {t("board.restore")}
                       </span>
                     </button>
                   </li>
@@ -311,6 +315,8 @@ function AppLibrary({
 
 function DetailOverlay({ module, onClose }: { module: IntelModule; onClose: () => void }) {
   const Detail = module.Detail
+  const t = useT()
+  const { locale } = useStore()
 
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose() }
@@ -320,14 +326,14 @@ function DetailOverlay({ module, onClose }: { module: IntelModule; onClose: () =
 
   return (
     <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto p-4 sm:p-8" role="dialog" aria-modal="true">
-      <button type="button" aria-label="Close" className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <button type="button" aria-label={t("common.close")} className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 my-auto w-full max-w-5xl overflow-hidden rounded-[16px] border border-border bg-card shadow-2xl">
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border bg-card/95 px-5 py-3 backdrop-blur">
           <div className="flex items-center gap-2 min-w-0">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] bg-tint-brand text-brand-strong">
               <SafeIcon name={module.icon} className="h-3.5 w-3.5" />
             </span>
-            <h2 className="truncate text-sm font-semibold">{module.title}</h2>
+            <h2 className="truncate text-sm font-semibold">{localizeLegacyCopy(module.title, locale)}</h2>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <button type="button" onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-muted">
@@ -347,6 +353,8 @@ function DetailOverlay({ module, onClose }: { module: IntelModule; onClose: () =
 
 function HeroSection({ module, editing, onUnpin, onOpen }: { module: IntelModule; editing: boolean; onUnpin: () => void; onOpen: () => void }) {
   const Detail = module.Detail
+  const t = useT()
+  const { locale } = useStore()
   const enter = enterMotion(0)
   return (
     <Card
@@ -358,14 +366,14 @@ function HeroSection({ module, editing, onUnpin, onOpen }: { module: IntelModule
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] bg-tint-brand text-brand-strong">
             <SafeIcon name={module.icon} className="h-3.5 w-3.5" />
           </span>
-          <h2 className="truncate text-sm font-semibold">{module.title}</h2>
-          <span className="rounded-[6px] bg-tint-brand px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-brand-strong">Hero</span>
+          <h2 className="truncate text-sm font-semibold">{localizeLegacyCopy(module.title, locale)}</h2>
+          <span className="rounded-[6px] bg-tint-brand px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-brand-strong">{t("board.hero")}</span>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          <button type="button" onClick={onOpen} className={cn(pcmButton, "rounded-[10px] border border-border bg-card px-2 py-1 text-[11px] font-medium text-foreground hover:bg-muted/50")}>Expand</button>
+          <button type="button" onClick={onOpen} className={cn(pcmButton, "rounded-[10px] border border-border bg-card px-2 py-1 text-[11px] font-medium text-foreground hover:bg-muted/50")}>{t("board.expand")}</button>
           {editing && (
             <button type="button" onClick={onUnpin} className={cn(pcmButton, "inline-flex items-center gap-1 rounded-[10px] border border-border bg-card px-2 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted/50")}>
-              <SafeIcon name="StarOff" className="h-3 w-3" /> Unpin
+              <SafeIcon name="StarOff" className="h-3 w-3" /> {t("board.unpin")}
             </button>
           )}
         </div>
@@ -382,7 +390,7 @@ function HeroSection({ module, editing, onUnpin, onOpen }: { module: IntelModule
 export function IntelBoard({
   modules,
   boardId,
-  title = "Apps",
+  title,
   allowCreate = false,
 }: {
   modules: IntelModule[]
@@ -391,10 +399,11 @@ export function IntelBoard({
   allowCreate?: boolean
 }) {
   const {
-    getBoard, openModuleId,
+    getBoard, openModuleId, locale,
     setBoardOrder, setModuleHidden, openModule, closeModule, setBoardHero,
     deleteCustomApp, deletedCustomApps, restoreCustomApp,
   } = useStore()
+  const t = useT()
 
   const board = getBoard(boardId)
   const pricingBoardOrder = board.order
@@ -507,18 +516,18 @@ export function IntelBoard({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <SafeIcon name="LayoutGrid" className="h-3.5 w-3.5 text-muted-foreground" />
-            <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{title}</h3>
-            <span className="text-[10px] text-muted-foreground/50">{visibleModules.length} on board</span>
+            <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{localizeLegacyCopy(title ?? t("board.apps"), locale)}</h3>
+            <span className="text-[10px] text-muted-foreground/50">{t("board.onBoard", { count: visibleModules.length })}</span>
           </div>
           <div className="flex items-center gap-2">
             {allowCreate && (
               <ControlButton icon="Sparkles" onClick={() => setCreateOpen(true)} className="bg-primary font-semibold text-primary-foreground hover:bg-primary/90">
-                New app
+                {t("board.newApp")}
               </ControlButton>
             )}
             {editing && (
               <ControlButton icon="Plus" onClick={() => setLibraryOpen(true)}>
-                Add app
+                {t("common.addApp")}
               </ControlButton>
             )}
             <ControlButton
@@ -526,7 +535,7 @@ export function IntelBoard({
               icon={editing ? "Check" : "LayoutGrid"}
               onClick={() => setEditing(v => !v)}
             >
-              {editing ? "Done" : "Edit board"}
+              {editing ? t("board.done") : t("board.editBoard")}
             </ControlButton>
           </div>
         </div>
@@ -552,7 +561,7 @@ export function IntelBoard({
         </div>
 
         {editing && (
-          <p className="text-[10px] text-muted-foreground/60">Drag to reorder · ★ set as hero · × remove · layout saves automatically.</p>
+          <p className="text-[10px] text-muted-foreground/60">{t("board.editHelp")}</p>
         )}
       </section>
 
@@ -580,14 +589,14 @@ export function IntelBoard({
         <div className="fixed bottom-5 left-1/2 z-[80] flex -translate-x-1/2 items-center gap-3 rounded-full border border-border bg-card px-4 py-2.5 shadow-2xl">
           <SafeIcon name="Trash2" className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="text-[12px] text-foreground">
-            Removed <span className="font-medium">{undoState.title}</span>
+            {t("board.removed")} <span className="font-medium">{undoState.title}</span>
           </span>
           <button
             type="button"
             onClick={() => { undoState.fn(); setUndoState(null) }}
             className="inline-flex items-center gap-1 rounded-[10px] px-2 py-1 text-[12px] font-semibold text-brand-strong hover:bg-tint-brand"
           >
-            <SafeIcon name="Undo2" className="h-3.5 w-3.5" /> Undo
+            <SafeIcon name="Undo2" className="h-3.5 w-3.5" /> {t("board.undo")}
           </button>
         </div>
       )}
@@ -617,12 +626,13 @@ function ConfirmRemoveDialog({
   onConfirm: () => void
   onCancel: () => void
 }) {
+  const t = useT()
   const isCustom = pending.category === "custom"
   const message = isCustom
-    ? "This deletes the app from your board. You can recover it from “Recently deleted” in the App Library."
+    ? t("board.deleteHelp")
     : pending.category === "scenario"
-      ? "This removes the scenario from your board. You can re-add it anytime from the App Library."
-      : "This hides the app from your board. You can re-add it anytime from the App Library."
+      ? t("board.scenarioHelp")
+      : t("board.hideHelp")
 
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onCancel() }
@@ -632,7 +642,7 @@ function ConfirmRemoveDialog({
 
   return (
     <div className="fixed inset-0 z-[75] flex items-center justify-center p-4" role="dialog" aria-modal="true">
-      <button type="button" aria-label="Cancel" className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onCancel} />
+      <button type="button" aria-label={t("common.cancel")} className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onCancel} />
       <div className="relative z-10 w-full max-w-sm overflow-hidden rounded-[16px] border border-border bg-card shadow-2xl">
         <div className="flex items-start gap-3 p-5">
           <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-tint-critical text-accent-critical-text">
@@ -640,7 +650,7 @@ function ConfirmRemoveDialog({
           </span>
           <div className="min-w-0">
             <h3 className="text-sm font-semibold text-foreground">
-              {isCustom ? "Delete" : "Remove"} “{pending.title}”?
+              {t("board.removeQuestion", { action: isCustom ? t("board.delete") : t("board.remove"), name: pending.title })}
             </h3>
             <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">{message}</p>
           </div>
@@ -651,7 +661,7 @@ function ConfirmRemoveDialog({
             onClick={onCancel}
             className="rounded-[10px] border border-border bg-card px-3 py-1.5 text-[12px] font-medium text-foreground hover:bg-muted/50"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="button"
@@ -660,7 +670,7 @@ function ConfirmRemoveDialog({
             className="inline-flex items-center gap-1.5 rounded-[10px] bg-accent-critical px-3 py-1.5 text-[12px] font-semibold text-primary-foreground transition-opacity hover:opacity-90"
           >
             <SafeIcon name="Trash2" className="h-3.5 w-3.5" />
-            {isCustom ? "Delete app" : "Remove"}
+            {isCustom ? t("board.deleteApp") : t("board.remove")}
           </button>
         </div>
       </div>

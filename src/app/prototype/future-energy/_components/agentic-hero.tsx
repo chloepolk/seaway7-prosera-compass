@@ -6,6 +6,7 @@ import { useT } from "../_i18n/use-t"
 import { BluePilotSkeleton } from "./bluepilot-summary"
 import { FocusHero, type FocusHeroProps } from "./hub/focus-hero"
 import type { ReasoningContent } from "./reasoning-disclosure"
+import { localizeLegacyCopy } from "../_i18n/legacy"
 
 export type AgenticFocusHeroProps = Omit<FocusHeroProps, "headline" | "body" | "reasoning"> & {
   staticHeadline: string
@@ -27,7 +28,7 @@ export function AgenticFocusHero({
   agentReasoningSummary = "BluePilot synthesized analysis for this view.",
   ...heroProps
 }: AgenticFocusHeroProps) {
-  const { isAgentLoading, useStaticFallback, bpHeadline, bpReasoning, agentPhase } = useStore()
+  const { isAgentLoading, useStaticFallback, bpHeadline, bpReasoning, agentPhase, locale } = useStore()
   const t = useT()
 
   if (isAgentLoading) {
@@ -52,8 +53,8 @@ export function AgenticFocusHero({
   return (
     <FocusHero
       {...heroProps}
-      headline={headline}
-      body={body}
+      headline={localizeLegacyCopy(headline, locale)}
+      body={localizeLegacyCopy(body, locale)}
       reasoning={reasoning}
     />
   )

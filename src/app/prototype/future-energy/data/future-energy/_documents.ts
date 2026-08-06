@@ -1,3 +1,4 @@
+import { activeLocaleTag } from "../../_i18n/legacy"
 /* ------------------------------------------------------------------ */
 /*  Future Energy SCM document repository                                     */
 /*                                                                     */
@@ -369,11 +370,11 @@ export const DOCUMENTS: S7Document[] = [
     classification: "Confidential — Commercial",
     fileName: "/future-energy/supplytime-2026-charter.pdf",
     pages: 2,
-    summary: `Time charter for ${CHARTER.vessel} (${CHARTER.vesselType}) — ${CHARTER.charterPeriod} at USD $${CHARTER.hireRate.toLocaleString()}/day, knock-for-knock liabilities, SOLAS/MARPOL warranty, English law and London arbitration.`,
+    summary: `Time charter for ${CHARTER.vessel} (${CHARTER.vesselType}) — ${CHARTER.charterPeriod} at USD $${CHARTER.hireRate.toLocaleString(activeLocaleTag())}/day, knock-for-knock liabilities, SOLAS/MARPOL warranty, English law and London arbitration.`,
     fullText: [
       "STANDARD TIME CHARTER PARTY FOR OFFSHORE SERVICE VESSELS (SUPPLYTIME 2026)",
       `Owners: ${CHARTER.owners}. Charterers: Future Energy. Vessel: ${CHARTER.vessel} — ${CHARTER.vesselType}.`,
-      `Charter period: ${CHARTER.charterPeriod}. Delivery: ${CHARTER.deliveryPort}. Hire: USD $${CHARTER.hireRate.toLocaleString()}/day. Mobilisation: USD $${CHARTER.mobilisationFee.toLocaleString()} lump sum.`,
+      `Charter period: ${CHARTER.charterPeriod}. Delivery: ${CHARTER.deliveryPort}. Hire: USD $${CHARTER.hireRate.toLocaleString(activeLocaleTag())}/day. Mobilisation: USD $${CHARTER.mobilisationFee.toLocaleString(activeLocaleTag())} lump sum.`,
       `Clause 2.2 Marine warranty: ${CHARTER.marineWarranty}`,
       `Clause 4.1 Charterers' Group (knock-for-knock): ${CHARTER.knockForKnock.charterers}`,
       `Clause 4.2 Owners' Group (knock-for-knock): ${CHARTER.knockForKnock.owners}`,

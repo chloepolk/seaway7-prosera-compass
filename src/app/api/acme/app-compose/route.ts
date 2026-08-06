@@ -14,7 +14,7 @@ export async function POST(req: Request) {
   const model = gemini ? MODELS.gemini : MODELS.openai
 
   try {
-    const { idea, features } = await req.json()
+    const { idea, features, locale } = await req.json()
     if (!idea) return errorResponse(new Error("No idea provided to composer"))
 
     const userContent = [
@@ -22,6 +22,9 @@ export async function POST(req: Request) {
       `\nEnabled features: ${JSON.stringify(features ?? {})}`,
       `\n${buildCatalogPromptContext()}`,
       `\nCompose the AppSpec JSON now. Output ONLY the JSON object.`,
+      locale === "fr"
+        ? "\nWrite every user-visible title, label, narrative, recommendation, chart legend, table heading, tooltip and empty state in French. Preserve IDs, selectors, source names, standards and brands."
+        : "\nWrite all user-visible copy in English.",
     ].join("\n")
 
     const response = await callWithRetry(

@@ -2,11 +2,19 @@
 /*  Tender drafting pipeline — system prompts                          */
 /* ------------------------------------------------------------------ */
 
+import type { Locale } from "../_i18n/types"
+
 const SHARED_RULES = `RULES (non-negotiable):
 - Ground every statement in the supplied source documents. NEVER invent parameters, standards, clause numbers, rates or dates.
 - Cite document references exactly as supplied (e.g. TS-CBL-66KV-001, QA-MAN-2026-EPCI, S7-SCM-TC-2026-v1.0, SUPPLYTIME 2026).
 - British English spelling throughout (mobilisation, galvanised, authorised, programme).
 - Formal tender-document register: precise, contractual, no marketing language and no meta-commentary about how this document was produced.`
+
+export function tenderLanguageInstruction(locale: Locale): string {
+  return locale === "fr"
+    ? `OUTPUT LANGUAGE (mandatory): Return every human-readable field in formal French. Translate component names, prose, headings, agent names, tasks, audit claims, notes, units and descriptions. Preserve standards, controlled-document references, company/person names, legal identifiers and source citations exactly. Use French number and unit conventions. This instruction overrides the British English rule above.`
+    : "OUTPUT LANGUAGE (mandatory): Return every human-readable field in British English."
+}
 
 export const TENDER_SCOPE_PROMPT = `You are the SCM Domain Agent inside Future Energy's Tender Studio. A procurement officer has asked for an Invitation to Tender to be drafted. You frame the package before the specialist agents begin extraction.
 

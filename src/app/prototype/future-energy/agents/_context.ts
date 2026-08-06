@@ -28,6 +28,7 @@ import {
   QA_MAX,
   LEGAL_MAX,
   GATE_LABELS,
+  gateLabels,
   STANDARD_WARRANTY_MONTHS,
   WARRANTY_RISK_THRESHOLD_MONTHS,
   FAT_STANDARD_DAYS,
@@ -36,6 +37,8 @@ import {
   WARRANTY_SHORTFALL_PENALTY,
   type BidEvaluationResult,
 } from "../data/future-energy/_bid-scoring"
+import type { Locale } from "../_i18n"
+import { localizedTenderPackages } from "../_i18n/domain"
 
 /* ------------------------------------------------------------------ */
 /*  Shared serializers                                                 */
@@ -138,12 +141,14 @@ function explainBidCalculation(bid: BidInput, result: BidEvaluationResult, pMin:
 }
 
 /** Full bid-evaluation payload for chat / specialists / orchestrator. */
-export function buildBidEvaluationContext(): Record<string, unknown> {
+export function buildBidEvaluationContext(locale: Locale = "en"): Record<string, unknown> {
   const model = scoringModelSummary()
+  const localizedPackages = localizedTenderPackages(locale)
+  const labels = gateLabels(locale)
   const packages = packagesWithBids().map((packageId) => {
-    const pkg = tenderById(packageId)
-    const bids = bidsForPackage(packageId)
-    const results = sortEvaluationForDisplay(evaluateBids(bids))
+    const pkg = localizedPackages.find((p) => p.id === packageId) ?? tenderById(packageId)
+    const bids = bidsForPackage(packageId, locale)
+    const results = sortEvaluationForDisplay(evaluateBids(bids, locale))
     const eligible = results.filter((r) => r.gatingStatus === "Pass")
     const pMin = eligible.length > 0 ? Math.min(...eligible.map((r) => r.totalPrice)) : null
     return {
@@ -162,7 +167,7 @@ export function buildBidEvaluationContext(): Record<string, unknown> {
           ittRef: bid.ittRef,
           totalPriceUsd: r.totalPrice,
           gatingStatus: r.gatingStatus,
-          gateFailures: r.gateFailures.map((g) => GATE_LABELS[g]),
+          gateFailures: r.gateFailures.map((g) => labels[g]),
           priceScore: r.priceScore,
           techScore: r.techScore,
           qaScore: r.qaScore,
@@ -181,7 +186,7 @@ export function buildBidEvaluationContext(): Record<string, unknown> {
     }
   })
 
-  const packagesWithoutReturns = TENDER_PACKAGES
+  const packagesWithoutReturns = localizedPackages
     .filter((p) => p.stage !== "outcome_roi" && !packagesWithBids().includes(p.id))
     .map((p) => ({
       packageId: p.id,
@@ -190,12 +195,12 @@ export function buildBidEvaluationContext(): Record<string, unknown> {
       stage: p.stage,
       status:
         p.stage === "execute"
-          ? "ITT issued — awaiting tabulated returns"
-          : "Not yet issued — no bid evaluation available",
+          ? (locale === "fr" ? "AO émis — en attente de réponses dépouillées" : "ITT issued — awaiting tabulated returns")
+          : (locale === "fr" ? "Pas encore émis — aucune évaluation disponible" : "Not yet issued — no bid evaluation available"),
     }))
 
   return {
-    workspaceTab: "Bid Evaluation",
+    workspaceTab: locale === "fr" ? "Évaluation des offres" : "Bid Evaluation",
     scoringModel: model,
     packagesWithScoredReturns: packages,
     packagesWithoutReturns,

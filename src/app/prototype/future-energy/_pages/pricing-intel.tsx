@@ -1,5 +1,7 @@
 "use client"
 
+import { activeLocaleTag, formatActivePercent, formatActiveUsd, localizeActiveCopy } from "../_i18n/legacy"
+
 import * as React from "react"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/prosera/card"
@@ -33,15 +35,11 @@ import {
 /* ------------------------------------------------------------------ */
 
 function fmtUsd(n: number): string {
-  const abs = Math.abs(n)
-  const sign = n < 0 ? "-" : ""
-  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`
-  if (abs >= 1_000) return `${sign}$${(abs / 1_000).toFixed(abs >= 10_000 ? 0 : 1)}k`
-  return `${sign}$${abs.toFixed(0)}`
+  return formatActiveUsd(n)
 }
 
 function fmtPct(n: number): string {
-  return `${(n * 100).toFixed(1)}%`
+  return formatActivePercent(n)
 }
 
 /* ------------------------------------------------------------------ */
@@ -87,7 +85,7 @@ function PriceBandTooltip({ active, payload }: { active?: boolean; payload?: { p
   return (
     <div style={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 10, padding: "10px 14px", fontSize: 12, boxShadow: "0 4px 12px rgba(0,0,0,0.08)", minWidth: 180 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
-        <span style={{ fontFamily: "var(--font-mono, monospace)", fontWeight: 600, fontSize: 13 }}>{d.label}</span>
+        <span style={{ fontFamily: "var(--font-mono, monospace)", fontWeight: 600, fontSize: 13 }}>{localizeActiveCopy(d.label)}</span>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 500, color: zoneColor, background: `${zoneColor}15`, padding: "2px 6px", borderRadius: 4 }}>
           <span style={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", background: zoneColor }} />
           {zoneLabel}
@@ -96,20 +94,20 @@ function PriceBandTooltip({ active, payload }: { active?: boolean; payload?: { p
       <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 6 }}>
         <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: winColor, flexShrink: 0, marginTop: 2 }} />
         <span style={{ fontFamily: "var(--font-mono, monospace)", fontWeight: 700, fontSize: 18, color: winColor }}>{d.winRate}%</span>
-        <span style={{ color: "var(--color-muted-foreground)", fontSize: 11 }}>win rate</span>
+        <span style={{ color: "var(--color-muted-foreground)", fontSize: 11 }}>{localizeActiveCopy("win rate")}</span>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 4, marginBottom: 6 }}>
         <div style={{ textAlign: "center", padding: "3px 0" }}>
           <div style={{ fontFamily: "var(--font-mono, monospace)", fontWeight: 600, color: "#22c55e" }}>{d.wins}</div>
-          <div style={{ fontSize: 9, color: "var(--color-muted-foreground)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Won</div>
+          <div style={{ fontSize: 9, color: "var(--color-muted-foreground)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{localizeActiveCopy("Won")}</div>
         </div>
         <div style={{ textAlign: "center", padding: "3px 0" }}>
           <div style={{ fontFamily: "var(--font-mono, monospace)", fontWeight: 600, color: "#ef4444" }}>{d.losses}</div>
-          <div style={{ fontSize: 9, color: "var(--color-muted-foreground)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Lost</div>
+          <div style={{ fontSize: 9, color: "var(--color-muted-foreground)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{localizeActiveCopy("Lost")}</div>
         </div>
         <div style={{ textAlign: "center", padding: "3px 0" }}>
           <div style={{ fontFamily: "var(--font-mono, monospace)", fontWeight: 600, color: "var(--color-muted-foreground)" }}>{d.pending}</div>
-          <div style={{ fontSize: 9, color: "var(--color-muted-foreground)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Pending</div>
+          <div style={{ fontSize: 9, color: "var(--color-muted-foreground)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{localizeActiveCopy("Pending")}</div>
         </div>
       </div>
       <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: 5, fontSize: 10, color: "var(--color-muted-foreground)" }}>
@@ -133,7 +131,7 @@ function ZoneRuler({ bands, sweetSpot, ceilingAmount }: { bands: PriceBand[]; sw
   const zones: { zone: "sweet-spot" | "caution" | "above-ceiling"; span: number }[] = []
   for (const b of bands) {
     let z: "sweet-spot" | "caution" | "above-ceiling" = "caution"
-    if (sweetSpot && b.min >= sweetSpot.min && b.max <= sweetSpot.max) z = "sweet-spot"
+    if (sweetSpot && b.min >= sweetSpot.min && b.max<= sweetSpot.max) z = "sweet-spot"
     if (ceilingAmount && b.min >= ceilingAmount) z = "above-ceiling"
     const last = zones[zones.length - 1]
     if (last && last.zone === z) {
@@ -143,7 +141,6 @@ function ZoneRuler({ bands, sweetSpot, ceilingAmount }: { bands: PriceBand[]; sw
     }
   }
 
-  const totalBands = bands.length
   const zoneColor = { "sweet-spot": "#22c55e", caution: "#eab308", "above-ceiling": "#ef4444" }
   const zoneBg = { "sweet-spot": "rgba(34,197,94,0.18)", caution: "rgba(234,179,8,0.12)", "above-ceiling": "rgba(239,68,68,0.15)" }
   const zoneLabel = { "sweet-spot": "Sweet Spot", caution: "", "above-ceiling": "Ceiling" }
@@ -180,18 +177,18 @@ function WinRateChart({ bands, ceilingAmount, sweetSpot, jobType }: { bands: Pri
   const gradientId = `wr-grad-${jobType.replace(/\s+/g, "-")}`
 
   const ceilingBandLabel = ceilingAmount
-    ? bands.find(b => b.min <= ceilingAmount && b.max > ceilingAmount)?.label ?? bands.find(b => b.min === ceilingAmount)?.label
+    ? bands.find(b =>b.min<= ceilingAmount && b.max > ceilingAmount)?.label ?? bands.find(b => b.min === ceilingAmount)?.label
     : null
 
-  const sweetSpotStartLabel = sweetSpot ? bands.find(b => b.min >= sweetSpot.min && b.min <= sweetSpot.max)?.label : null
-  const sweetSpotEndLabel = sweetSpot ? [...bands].reverse().find(b => b.min >= sweetSpot.min && b.min <= sweetSpot.max)?.label ?? sweetSpotStartLabel : null
+  const sweetSpotStartLabel = sweetSpot ? bands.find(b => b.min >= sweetSpot.min && b.min<= sweetSpot.max)?.label : null
+  const sweetSpotEndLabel = sweetSpot ? [...bands].reverse().find(b => b.min >= sweetSpot.min && b.min<= sweetSpot.max)?.label ?? sweetSpotStartLabel : null
   const lastBandLabel = bands.length > 0 ? bands[bands.length - 1].label : null
 
   const totalAllQuotes = bands.reduce((s, b) => s + b.totalQuotes, 0)
 
   const chartData: BandDataPoint[] = bands.map(b => {
     let zone: BandDataPoint["zone"] = "caution"
-    if (sweetSpot && b.min >= sweetSpot.min && b.max <= sweetSpot.max) zone = "sweet-spot"
+    if (sweetSpot && b.min >= sweetSpot.min && b.max<= sweetSpot.max) zone = "sweet-spot"
     if (ceilingAmount && b.min >= ceilingAmount) zone = "above-ceiling"
     return {
       label: b.label,
@@ -331,17 +328,17 @@ function PricingBandInsightCard({ insight }: { insight: { jobType: string; sweet
             <div className="flex items-center gap-3 mb-1.5 flex-wrap">
               <div className="flex items-center gap-1.5">
                 <span className="text-emerald-600 dark:text-emerald-400 font-mono font-semibold">{Math.round(insight.sweetSpotWinRate * 100)}%</span>
-                <span className="text-muted-foreground">sweet spot</span>
+                <span className="text-muted-foreground">{localizeActiveCopy("sweet spot")}</span>
               </div>
               <span className="text-muted-foreground">→</span>
               <div className="flex items-center gap-1.5">
                 <span className="text-red-500 font-mono font-semibold">{Math.round(insight.aboveCeilingWinRate * 100)}%</span>
-                <span className="text-muted-foreground">above ceiling</span>
+                <span className="text-muted-foreground">{localizeActiveCopy("above ceiling")}</span>
               </div>
-              <Badge variant="outline" className="text-[10px] border-red-300 text-red-500">-{Math.round(insight.winRateDropPts)}pts</Badge>
+              <Badge variant="outline" className="text-[10px] border-red-300 text-red-500">−{Math.round(insight.winRateDropPts)} {localizeActiveCopy("pts")}</Badge>
             </div>
           )}
-          <p className="text-muted-foreground leading-relaxed">{insight.recommendation}</p>
+          <p className="text-muted-foreground leading-relaxed">{localizeActiveCopy(insight.recommendation)}</p>
         </div>
       </div>
     </div>
@@ -371,12 +368,12 @@ function WinRateSection() {
   return (
     <section>
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-medium text-muted-foreground">Win Rate by Price Band</h3>
+        <h3 className="text-sm font-medium text-muted-foreground">{localizeActiveCopy("Win Rate by Price Band")}</h3>
         {totalPendingAboveCeiling > 0 && (
           <div className="flex items-center gap-3 text-xs">
-            <span className="text-muted-foreground">{totalPendingAboveCeiling} above ceiling</span>
-            <span className="font-mono text-red-500">{fmtUsd(totalValueAtRisk)} at risk</span>
-            <span className="font-mono text-emerald-600 dark:text-emerald-400">{fmtUsd(totalRepricingOpportunity)} projected uplift</span>
+            <span className="text-muted-foreground">{totalPendingAboveCeiling} {localizeActiveCopy("above ceiling")}</span>
+            <span className="font-mono text-red-500">{fmtUsd(totalValueAtRisk)} {localizeActiveCopy("at risk")}</span>
+            <span className="font-mono text-emerald-600 dark:text-emerald-400">{fmtUsd(totalRepricingOpportunity)} {localizeActiveCopy("projected uplift")}</span>
           </div>
         )}
       </div>
@@ -393,16 +390,16 @@ function WinRateSection() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm">{jt.jobType}</CardTitle>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs text-muted-foreground">{jt.totalQuotes} quotes</span>
-                    <Badge variant="secondary" className="text-xs">{fmtPct(jt.overallWinRate)} win</Badge>
+                    <span className="font-mono text-xs text-muted-foreground">{jt.totalQuotes} {localizeActiveCopy("quotes")}</span>
+                    <Badge variant="secondary" className="text-xs">{fmtPct(jt.overallWinRate)} {localizeActiveCopy("win")}</Badge>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <WinRateChart bands={jt.priceBands} ceilingAmount={jt.ceilingAmount} sweetSpot={jt.sweetSpot} jobType={jt.jobType} />
                 <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-                  {jt.sweetSpot && <span>Sweet spot: <span className="font-mono text-foreground">{fmtUsd(jt.sweetSpot.min)}–{fmtUsd(jt.sweetSpot.max)}</span></span>}
-                  {jt.ceilingAmount && <span>Ceiling: <span className="font-mono text-foreground">{fmtUsd(jt.ceilingAmount)}</span></span>}
+                  {jt.sweetSpot && <span>{localizeActiveCopy("Sweet spot:")} <span className="font-mono text-foreground">{fmtUsd(jt.sweetSpot.min)}–{fmtUsd(jt.sweetSpot.max)}</span></span>}
+                  {jt.ceilingAmount && <span>{localizeActiveCopy("Ceiling:")} <span className="font-mono text-foreground">{fmtUsd(jt.ceilingAmount)}</span></span>}
                 </div>
                 {insight && <PricingBandInsightCard insight={insight} />}
               </CardContent>
@@ -426,13 +423,13 @@ function AtRiskSection() {
   const visible = showAll ? atRiskQuotes.slice(0, 25) : atRiskQuotes.slice(0, PREVIEW_ROWS)
 
   if (atRiskQuotes.length === 0) {
-    return <p className="text-sm text-muted-foreground">No at-risk quotes in the current pipeline.</p>
+    return <p className="text-sm text-muted-foreground">{localizeActiveCopy("No at-risk quotes in the current pipeline.")}</p>
   }
 
   return (
     <section>
       <div className="flex items-center gap-3 mb-4">
-        <h3 className="text-sm font-medium text-muted-foreground">At-Risk Quotes</h3>
+        <h3 className="text-sm font-medium text-muted-foreground">{localizeActiveCopy("At-Risk Quotes")}</h3>
         <Badge variant="destructive" className="text-xs">{atRiskQuotes.length}</Badge>
       </div>
       <Card><CardContent className="p-0">
@@ -440,14 +437,14 @@ function AtRiskSection() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left text-xs text-muted-foreground">
-                <th className="px-4 py-3 font-medium">Job #</th>
-                <th className="px-4 py-3 font-medium">Customer</th>
-                <th className="px-4 py-3 font-medium">Type</th>
-                <th className="px-4 py-3 font-medium">Region</th>
-                <th className="px-4 py-3 font-medium text-right">Amount</th>
-                <th className="px-4 py-3 font-medium text-right">NTE</th>
-                <th className="px-4 py-3 font-medium text-right">Age</th>
-                <th className="px-4 py-3 font-medium text-center">Risk</th>
+                <th className="px-4 py-3 font-medium">{localizeActiveCopy("Job #")}</th>
+                <th className="px-4 py-3 font-medium">{localizeActiveCopy("Customer")}</th>
+                <th className="px-4 py-3 font-medium">{localizeActiveCopy("Type")}</th>
+                <th className="px-4 py-3 font-medium">{localizeActiveCopy("Region")}</th>
+                <th className="px-4 py-3 font-medium text-right">{localizeActiveCopy("Amount")}</th>
+                <th className="px-4 py-3 font-medium text-right">{localizeActiveCopy("NTE")}</th>
+                <th className="px-4 py-3 font-medium text-right">{localizeActiveCopy("Age")}</th>
+                <th className="px-4 py-3 font-medium text-center">{localizeActiveCopy("Risk")}</th>
               </tr>
             </thead>
             <tbody>
@@ -460,9 +457,9 @@ function AtRiskSection() {
                   <td className={`px-4 py-2.5 text-right font-mono text-xs ${q.aboveCeiling ? "text-red-500" : ""}`}>{fmtUsd(q.totalAmountQuoted)}</td>
                   <td className="px-4 py-2.5 text-right font-mono text-xs">
                     {q.amountNTE ? fmtUsd(q.amountNTE) : "—"}
-                    {q.exceedsNteAuth && <Badge variant="outline" className="ml-1.5 text-[10px] border-amber-400 text-amber-500">Requires Auth</Badge>}
+                    {q.exceedsNteAuth && <Badge variant="outline" className="ml-1.5 text-[10px] border-amber-400 text-amber-500">{localizeActiveCopy("Requires Auth")}</Badge>}
                   </td>
-                  <td className="px-4 py-2.5 text-right font-mono text-xs">{q.quoteAgeDays}d</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-xs">{q.quoteAgeDays} {localizeActiveCopy("days short")}</td>
                   <td className="px-4 py-2.5 text-center"><RiskDot score={q.riskScore} /></td>
                 </tr>
               ))}
@@ -495,13 +492,13 @@ function NteSection() {
   const visible = showAll ? highNte.slice(0, 25) : highNte.slice(0, PREVIEW_ROWS)
 
   if (highNte.length === 0) {
-    return <p className="text-sm text-muted-foreground">No jobs are running near their customer-set NTE cap.</p>
+    return <p className="text-sm text-muted-foreground">{localizeActiveCopy("No jobs are running near their customer-set NTE cap.")}</p>
   }
 
   return (
     <section>
       <Card>
-        <CardHeader><CardTitle className="text-sm">NTE Escalation Friction</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm">{localizeActiveCopy("NTE Escalation Friction")}</CardTitle></CardHeader>
         <CardContent className="p-0 pb-2">
           <p className="px-4 pb-3 text-[11px] text-muted-foreground">
             NTE is a cap the customer sets before dispatch — ACME cannot change it. Overages aren&apos;t lost margin; they trigger extra trips and approval loops between tech, dispatch, approver, and customer. The cost is wasted cycle time, not revenue.
@@ -510,14 +507,14 @@ function NteSection() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left text-xs text-muted-foreground">
-                  <th className="px-4 py-3 font-medium">Job #</th>
-                  <th className="px-4 py-3 font-medium">Customer</th>
-                  <th className="px-4 py-3 font-medium">Type</th>
-                  <th className="px-4 py-3 font-medium text-right">Billed</th>
-                  <th className="px-4 py-3 font-medium text-right">Customer NTE</th>
-                  <th className="px-4 py-3 font-medium text-right">Revenue / NTE</th>
-                  <th className="px-4 py-3 font-medium text-center">Visits</th>
-                  <th className="px-4 py-3 font-medium">Workflow</th>
+                  <th className="px-4 py-3 font-medium">{localizeActiveCopy("Job #")}</th>
+                  <th className="px-4 py-3 font-medium">{localizeActiveCopy("Customer")}</th>
+                  <th className="px-4 py-3 font-medium">{localizeActiveCopy("Type")}</th>
+                  <th className="px-4 py-3 font-medium text-right">{localizeActiveCopy("Billed")}</th>
+                  <th className="px-4 py-3 font-medium text-right">{localizeActiveCopy("Customer NTE")}</th>
+                  <th className="px-4 py-3 font-medium text-right">{localizeActiveCopy("Revenue / NTE")}</th>
+                  <th className="px-4 py-3 font-medium text-center">{localizeActiveCopy("Visits")}</th>
+                  <th className="px-4 py-3 font-medium">{localizeActiveCopy("Workflow")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -564,7 +561,7 @@ function ScenarioDetail({ scenario, onOpenSandbox }: { scenario: SavedScenario; 
   const stat = (label: string, value: string, tone?: "good" | "bad") => (
     <div className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2.5">
       <div className={`text-lg font-semibold tabular-nums ${tone === "good" ? "text-emerald-600 dark:text-emerald-400" : tone === "bad" ? "text-red-600 dark:text-red-400" : "text-foreground"}`}>{value}</div>
-      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{localizeActiveCopy(label)}</div>
     </div>
   )
   return (
@@ -581,7 +578,7 @@ function ScenarioDetail({ scenario, onOpenSandbox }: { scenario: SavedScenario; 
         </div>
       )}
       <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-        <span>{p.affectedJobs} jobs · {p.affectedCustomers.length} customers affected · saved {new Date(scenario.timestamp).toLocaleDateString()}</span>
+        <span>{p.affectedJobs} jobs · {p.affectedCustomers.length} customers affected · saved {new Date(scenario.timestamp).toLocaleDateString(activeLocaleTag())}</span>
         <button
           type="button"
           onClick={onOpenSandbox}
@@ -819,7 +816,7 @@ function MacroView() {
   return (
     <div className="space-y-6">
       <BPHeadline title={headlineTitle} narrative={headlineNarrative} severity={totalPendingAboveCeiling > 0 ? "critical" : "high"} />
-      <IntelBoard modules={modules} boardId="pricing" title="Pricing Apps" allowCreate />
+      <IntelBoard modules={modules} boardId="pricing" title={localizeActiveCopy("Pricing Apps")} allowCreate />
     </div>
   )
 }
@@ -829,7 +826,7 @@ function MacroView() {
 /* ------------------------------------------------------------------ */
 
 function SalesPerformanceSection() {
-  const { data } = useStore()
+  const { data, locale } = useStore()
   const sp = data.salesPerformance
   const [showAll, setShowAll] = React.useState(false)
 
@@ -838,7 +835,7 @@ function SalesPerformanceSection() {
 
   const qualifiedReps = sp.repProfiles.filter(r => r.totalQuotes >= 3 && r.name !== "Unassigned")
   const bestRep = qualifiedReps.length > 0 ? qualifiedReps.reduce((a, b) => a.winRate > b.winRate ? a : b) : null
-  const worstRep = qualifiedReps.length > 1 ? qualifiedReps.reduce((a, b) => a.winRate < b.winRate ? a : b) : null
+  const worstRep = qualifiedReps.length > 1 ? qualifiedReps.reduce((a, b) =>a.winRate< b.winRate ? a : b) : null
 
   const avgQuoteValue = sp.totalConverted > 0
     ? data.portfolioSummary.totalRevenue / sp.totalConverted
@@ -852,8 +849,8 @@ function SalesPerformanceSection() {
   return (
     <section>
       <div className="flex items-center gap-3 mb-4">
-        <h3 className="text-sm font-medium text-muted-foreground">Sales Performance</h3>
-        <Badge variant="secondary" className="text-xs">{sp.totalQuotes} quotes</Badge>
+        <h3 className="text-sm font-medium text-muted-foreground">{localizeActiveCopy("Sales Performance")}</h3>
+        <Badge variant="secondary" className="text-xs">{sp.totalQuotes} {localizeActiveCopy("quotes")}</Badge>
       </div>
 
       <Card>
@@ -862,34 +859,34 @@ function SalesPerformanceSection() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="text-center p-3 rounded-lg bg-muted/40">
               <div className="font-mono text-2xl font-semibold">{sp.totalQuotes}</div>
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">Total Quotes</div>
+              <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">{localizeActiveCopy("Total Quotes")}</div>
             </div>
             <div className="text-center p-3 rounded-lg bg-muted/40">
               <div className={`font-mono text-2xl font-semibold ${sp.overallWinRate >= 0.6 ? "text-emerald-600 dark:text-emerald-400" : sp.overallWinRate >= 0.4 ? "text-amber-500" : "text-red-500"}`}>
                 {Math.round(sp.overallWinRate * 100)}%
               </div>
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">Win Rate</div>
+              <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">{localizeActiveCopy("Win Rate")}</div>
             </div>
             <div className="text-center p-3 rounded-lg bg-muted/40">
-              <div className="font-mono text-2xl font-semibold">{sp.medianDaysToConvert}d</div>
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">Median Close</div>
+              <div className="font-mono text-2xl font-semibold">{sp.medianDaysToConvert} {localizeActiveCopy("days short")}</div>
+              <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">{localizeActiveCopy("Median Close")}</div>
             </div>
             <div className="relative group text-center p-3 rounded-lg bg-muted/40">
               <div className="font-mono text-2xl font-semibold text-muted-foreground">{lostExpired}</div>
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">Lost / Expired</div>
+              <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">{localizeActiveCopy("Lost / Expired")}</div>
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
                 <div className="bg-popover border rounded-lg shadow-lg px-3 py-2 text-xs whitespace-nowrap">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="h-1.5 w-1.5 rounded-full bg-red-400 inline-block" />
-                    <span>Cancelled: {sp.conversionFunnel.cancelled}</span>
+                    <span>{localizeActiveCopy("Cancelled")}: {sp.conversionFunnel.cancelled}</span>
                   </div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="h-1.5 w-1.5 rounded-full bg-amber-400 inline-block" />
-                    <span>Rejected: {sp.conversionFunnel.rejected}</span>
+                    <span>{localizeActiveCopy("Rejected")}: {sp.conversionFunnel.rejected}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-zinc-400 inline-block" />
-                    <span>Expired: {sp.conversionFunnel.expired}</span>
+                    <span>{localizeActiveCopy("Expired")}: {sp.conversionFunnel.expired}</span>
                   </div>
                 </div>
               </div>
@@ -905,10 +902,10 @@ function SalesPerformanceSection() {
               <div className="bg-zinc-300 dark:bg-zinc-600 transition-all" style={{ width: `${(sp.conversionFunnel.expired / sp.totalQuotes) * 100}%` }} title={`Expired: ${sp.conversionFunnel.expired}`} />
             </div>
             <div className="flex items-center gap-4 mt-1.5 text-[10px] text-muted-foreground">
-              <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block" /> Converted ({sp.conversionFunnel.converted})</span>
-              <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-red-400 inline-block" /> Cancelled ({sp.conversionFunnel.cancelled})</span>
-              <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-amber-400 inline-block" /> Rejected ({sp.conversionFunnel.rejected})</span>
-              <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600 inline-block" /> Expired ({sp.conversionFunnel.expired})</span>
+              <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block" /> {localizeActiveCopy("Converted")} ({sp.conversionFunnel.converted})</span>
+              <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-red-400 inline-block" /> {localizeActiveCopy("Cancelled")} ({sp.conversionFunnel.cancelled})</span>
+              <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-amber-400 inline-block" /> {localizeActiveCopy("Rejected")} ({sp.conversionFunnel.rejected})</span>
+              <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600 inline-block" /> {localizeActiveCopy("Expired")} ({sp.conversionFunnel.expired})</span>
             </div>
           </div>
 
@@ -916,16 +913,16 @@ function SalesPerformanceSection() {
 
           {/* Rep Leaderboard */}
           <div>
-            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Rep Leaderboard</h4>
+            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">{localizeActiveCopy("Rep Leaderboard")}</h4>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b text-left text-xs text-muted-foreground">
-                    <th className="px-4 py-2.5 font-medium">Rep</th>
-                    <th className="px-4 py-2.5 font-medium text-right">Quotes</th>
-                    <th className="px-4 py-2.5 font-medium">Win Rate</th>
-                    <th className="px-4 py-2.5 font-medium text-right">Avg Days</th>
-                    <th className="px-4 py-2.5 font-medium">Top Customer</th>
+                    <th className="px-4 py-2.5 font-medium">{localizeActiveCopy("Rep")}</th>
+                    <th className="px-4 py-2.5 font-medium text-right">{localizeActiveCopy("Quotes")}</th>
+                    <th className="px-4 py-2.5 font-medium">{localizeActiveCopy("Win Rate")}</th>
+                    <th className="px-4 py-2.5 font-medium text-right">{localizeActiveCopy("Avg Days")}</th>
+                    <th className="px-4 py-2.5 font-medium">{localizeActiveCopy("Top Customer")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -969,12 +966,12 @@ function SalesPerformanceSection() {
                 <div className="flex items-start gap-2">
                   <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-amber-500 shrink-0" />
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    <span className="font-medium text-foreground">{bestRep.name}</span> converts{" "}
-                    <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">{Math.round(bestRep.winRate * 100)}%</span> of quotes
-                    vs. <span className="font-medium text-foreground">{worstRep.name}</span> at{" "}
+                    <span className="font-medium text-foreground">{bestRep.name}</span> {locale === "fr" ? "convertit" : "converts"}{" "}
+                    <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">{Math.round(bestRep.winRate * 100)}%</span>
+                    {locale === "fr" ? " des devis, contre " : " vs. "}<span className="font-medium text-foreground">{worstRep.name}</span> {locale === "fr" ? "à" : "at"}{" "}
                     <span className="font-mono font-semibold text-red-500">{Math.round(worstRep.winRate * 100)}%</span>.
-                    Closing the gap on {worstRep.name}&apos;s {worstRep.totalQuotes} quotes alone would recover{" "}
-                    <span className="font-mono font-semibold text-foreground">~{fmtUsd(marginGap)}</span> in annual revenue.
+                    {locale === "fr" ? ` Réduire l’écart sur les ${worstRep.totalQuotes} devis de ${worstRep.name} permettrait de récupérer environ ` : ` Closing the gap on ${worstRep.name}'s ${worstRep.totalQuotes} quotes alone would recover `}
+                    <span className="font-mono font-semibold text-foreground">~{fmtUsd(marginGap)}</span>{locale === "fr" ? " de chiffre d’affaires annuel." : " in annual revenue."}
                   </p>
                 </div>
               </div>
@@ -998,9 +995,9 @@ function JobTypeDrillView() {
     return (
       <div className="space-y-4">
         <button onClick={drillBack} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-          <SafeIcon name="ArrowLeft" className="h-4 w-4" /> Back
+          <SafeIcon name="ArrowLeft" className="h-4 w-4" /> {localizeActiveCopy("Back")}
         </button>
-        <p className="text-sm text-muted-foreground">No quote analysis available for this job type.</p>
+        <p className="text-sm text-muted-foreground">{localizeActiveCopy("No quote analysis available for this job type.")}</p>
       </div>
     )
   }
@@ -1010,43 +1007,43 @@ function JobTypeDrillView() {
   return (
     <div className="space-y-8">
       <button onClick={drillBack} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-        <SafeIcon name="ArrowLeft" className="h-4 w-4" /> Back to overview
+        <SafeIcon name="ArrowLeft" className="h-4 w-4" /> {localizeActiveCopy("Back to overview")}
       </button>
 
       <div>
         <h2 className="text-lg font-medium">{analysis.jobType}</h2>
         <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-          <span><span className="font-mono text-foreground">{analysis.totalQuotes}</span> quotes</span>
-          <span>Win rate: <span className="font-mono text-foreground">{fmtPct(analysis.overallWinRate)}</span></span>
-          {analysis.ceilingAmount && <span>Ceiling: <span className="font-mono text-foreground">{fmtUsd(analysis.ceilingAmount)}</span></span>}
-          {analysis.sweetSpot && <span>Sweet spot: <span className="font-mono text-foreground">{fmtUsd(analysis.sweetSpot.min)}–{fmtUsd(analysis.sweetSpot.max)}</span></span>}
+          <span><span className="font-mono text-foreground">{analysis.totalQuotes}</span> {localizeActiveCopy("quotes")}</span>
+          <span>{localizeActiveCopy("Win rate:")} <span className="font-mono text-foreground">{fmtPct(analysis.overallWinRate)}</span></span>
+          {analysis.ceilingAmount && <span>{localizeActiveCopy("Ceiling:")} <span className="font-mono text-foreground">{fmtUsd(analysis.ceilingAmount)}</span></span>}
+          {analysis.sweetSpot && <span>{localizeActiveCopy("Sweet spot:")} <span className="font-mono text-foreground">{fmtUsd(analysis.sweetSpot.min)}–{fmtUsd(analysis.sweetSpot.max)}</span></span>}
         </div>
-        <p className="mt-1.5 text-[11px] text-muted-foreground">Quoted work only — {fmtPct(data.quotingProfile.dispatchPct)} of portfolio enters via NTE dispatch.</p>
+        <p className="mt-1.5 text-[11px] text-muted-foreground">{localizeActiveCopy("Quoted work only")} — {fmtPct(data.quotingProfile.dispatchPct)} {localizeActiveCopy("of portfolio enters via NTE dispatch.")}</p>
       </div>
 
       <Card>
-        <CardHeader><CardTitle className="text-sm">Price Bands</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm">{localizeActiveCopy("Price Bands")}</CardTitle></CardHeader>
         <CardContent className="p-0 pb-2">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left text-xs text-muted-foreground">
-                  <th className="px-4 py-3 font-medium">Band</th>
-                  <th className="px-4 py-3 font-medium text-right">Quotes</th>
-                  <th className="px-4 py-3 font-medium text-right">Wins</th>
-                  <th className="px-4 py-3 font-medium text-right">Losses</th>
-                  <th className="px-4 py-3 font-medium text-right">Pending</th>
-                  <th className="px-4 py-3 font-medium">Win Rate</th>
+                  <th className="px-4 py-3 font-medium">{localizeActiveCopy("Band")}</th>
+                  <th className="px-4 py-3 font-medium text-right">{localizeActiveCopy("Quotes")}</th>
+                  <th className="px-4 py-3 font-medium text-right">{localizeActiveCopy("Wins")}</th>
+                  <th className="px-4 py-3 font-medium text-right">{localizeActiveCopy("Losses")}</th>
+                  <th className="px-4 py-3 font-medium text-right">{localizeActiveCopy("Pending")}</th>
+                  <th className="px-4 py-3 font-medium">{localizeActiveCopy("Win Rate")}</th>
                 </tr>
               </thead>
               <tbody>
                 {analysis.priceBands.map((band, i) => {
                   const isAboveCeiling = aboveCeilingIdx >= 0 && i >= aboveCeilingIdx
                   return (
-                    <tr key={band.label} className={`border-b last:border-0 transition-colors ${isAboveCeiling ? "bg-red-50 dark:bg-red-950/20" : "hover:bg-muted/30"}`}>
+                    <tr key={localizeActiveCopy(band.label)} className={`border-b last:border-0 transition-colors ${isAboveCeiling ? "bg-red-50 dark:bg-red-950/20" : "hover:bg-muted/30"}`}>
                       <td className="px-4 py-2.5 font-mono text-xs">
-                        {band.label}
-                        {isAboveCeiling && i === aboveCeilingIdx && <Badge variant="outline" className="ml-2 text-[10px] border-red-300 text-red-500">Above ceiling</Badge>}
+                        {localizeActiveCopy(band.label)}
+                        {isAboveCeiling && i === aboveCeilingIdx && <Badge variant="outline" className="ml-2 text-[10px] border-red-300 text-red-500">{localizeActiveCopy("Above ceiling")}</Badge>}
                       </td>
                       <td className="px-4 py-2.5 text-right font-mono text-xs">{band.totalQuotes}</td>
                       <td className="px-4 py-2.5 text-right font-mono text-xs">{band.wins}</td>
@@ -1071,26 +1068,26 @@ function JobTypeDrillView() {
                 <div className="flex items-start gap-3">
                   <span className={`mt-0.5 inline-block h-2 w-2 rounded-full shrink-0 ${insight.pendingAboveCeiling > 0 ? "bg-amber-500" : "bg-blue-500"}`} />
                   <div className="space-y-3 w-full">
-                    <p className="text-sm font-medium">BluePilot Analysis</p>
+                    <p className="text-sm font-medium">{localizeActiveCopy("BluePilot Analysis")}</p>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       <div className="text-center p-2 rounded-md bg-background/50">
                         <div className="font-mono text-lg font-semibold text-emerald-600 dark:text-emerald-400">{Math.round(insight.sweetSpotWinRate * 100)}%</div>
-                        <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Sweet spot win</div>
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{localizeActiveCopy("Sweet spot win")}</div>
                       </div>
                       <div className="text-center p-2 rounded-md bg-background/50">
                         <div className="font-mono text-lg font-semibold text-red-500">{Math.round(insight.aboveCeilingWinRate * 100)}%</div>
-                        <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Above ceiling win</div>
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{localizeActiveCopy("Above ceiling win")}</div>
                       </div>
                       <div className="text-center p-2 rounded-md bg-background/50">
                         <div className="font-mono text-lg font-semibold text-red-500">{fmtUsd(insight.expectedLossAboveCeiling)}</div>
-                        <div className="text-[10px] text-muted-foreground uppercase tracking-wide">At risk</div>
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{localizeActiveCopy("At risk")}</div>
                       </div>
                       <div className="text-center p-2 rounded-md bg-background/50">
                         <div className="font-mono text-lg font-semibold text-emerald-600 dark:text-emerald-400">{fmtUsd(insight.repricingOpportunityValue)}</div>
-                        <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Projected uplift</div>
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{localizeActiveCopy("Projected uplift")}</div>
                       </div>
                     </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{insight.recommendation}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{localizeActiveCopy(insight.recommendation)}</p>
                   </div>
                 </div>
               </CardContent>
@@ -1104,10 +1101,10 @@ function JobTypeDrillView() {
                 <div className="flex items-start gap-3">
                   <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-blue-500 shrink-0" />
                   <div>
-                    <p className="text-sm font-medium">BluePilot Recommendation</p>
+                    <p className="text-sm font-medium">{localizeActiveCopy("BluePilot Recommendation")}</p>
                     <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
-                      For {analysis.jobType}, your sweet spot is <span className="font-mono text-foreground">{fmtUsd(analysis.sweetSpot.min)}–{fmtUsd(analysis.sweetSpot.max)}</span>.
-                      {analysis.ceilingAmount && <> Above <span className="font-mono text-foreground">{fmtUsd(analysis.ceilingAmount)}</span>, win rate drops below 40%.</>}
+                      {localizeActiveCopy("For")} {analysis.jobType}, {localizeActiveCopy("your sweet spot is")} <span className="font-mono text-foreground">{fmtUsd(analysis.sweetSpot.min)}–{fmtUsd(analysis.sweetSpot.max)}</span>.
+                      {analysis.ceilingAmount && <>{localizeActiveCopy("Above")} <span className="font-mono text-foreground">{fmtUsd(analysis.ceilingAmount)}</span>{localizeActiveCopy(", win rate drops below 40%.")}</>}
                     </p>
                   </div>
                 </div>

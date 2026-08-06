@@ -6,6 +6,9 @@ import { enterMotion, pcmCard } from "../motion"
 import { FilterChipBar } from "./filter-chip-bar"
 import type { ExpansionStrategy } from "../../data/_expansion"
 import { ReasoningTooltip, type ReasoningContent } from "../reasoning-disclosure"
+import { useT } from "../../_i18n/use-t"
+import { localizeLegacyCopy } from "../../_i18n/legacy"
+import { useStore } from "../../_store"
 
 const STRATEGY_ACCENT: Record<ExpansionStrategy, string> = {
   invest: "bg-[var(--color-accent-positive)]",
@@ -13,14 +16,6 @@ const STRATEGY_ACCENT: Record<ExpansionStrategy, string> = {
   defend: "bg-[var(--color-accent-warning)]",
   harvest: "bg-muted-foreground",
   explore: "bg-[var(--color-brand-primary)]",
-}
-
-const STRATEGY_TAG: Record<ExpansionStrategy, string> = {
-  invest: "INVEST",
-  expand: "EXPAND",
-  defend: "DEFEND",
-  harvest: "HARVEST",
-  explore: "EXPLORE",
 }
 
 export interface RegionStrategyRowProps {
@@ -49,6 +44,8 @@ export function RegionStrategyRow({
   className,
   index = 0,
 }: RegionStrategyRowProps & { index?: number }) {
+  const t = useT()
+  const { locale } = useStore()
   const motion = enterMotion(index)
   return (
     <button
@@ -67,20 +64,20 @@ export function RegionStrategyRow({
         <div className="flex flex-wrap items-center gap-2">
           <span className="flex items-center gap-1 text-[15px] font-semibold text-[var(--color-text-primary)]">
             {name}
-            <ReasoningTooltip reasoning={reasoning} label={`Why ${name}`} />
+            <ReasoningTooltip reasoning={reasoning} label={t("common.whyNamed", { name })} />
           </span>
           <span className="rounded-[6px] bg-[var(--color-tint-neutral)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-            {STRATEGY_TAG[strategy]}
+            {t(`market.${strategy}`)}
           </span>
         </div>
-        <p className="mt-1 text-[13px] text-[var(--color-text-secondary)]">{narrative}</p>
+        <p className="mt-1 text-[13px] text-[var(--color-text-secondary)]">{localizeLegacyCopy(narrative, locale)}</p>
       </div>
       <div className="hidden shrink-0 items-center gap-6 text-center sm:flex">
         {[
-          { v: margin, l: "Margin" },
-          { v: String(jobs), l: "Jobs" },
-          { v: String(customers), l: "Customers" },
-          { v: String(score), l: "Score" },
+          { v: margin, l: t("market.margin") },
+          { v: String(jobs), l: t("market.jobs") },
+          { v: String(customers), l: t("market.customers") },
+          { v: String(score), l: t("market.score") },
         ].map((k) => (
           <div key={k.l} className="min-w-[44px]">
             <p className="text-[15px] font-semibold tabular-nums text-[var(--color-text-primary)]">{k.v}</p>
@@ -100,18 +97,19 @@ export function StrategyFilterBar({
   active: ExpansionStrategy | null
   onChange: (s: ExpansionStrategy | null) => void
 }) {
+  const t = useT()
   const items: { key: ExpansionStrategy; label: string }[] = [
-    { key: "invest", label: "Invest" },
-    { key: "defend", label: "Defend" },
-    { key: "harvest", label: "Harvest" },
-    { key: "explore", label: "Explore" },
+    { key: "invest", label: t("market.invest") },
+    { key: "defend", label: t("market.defend") },
+    { key: "harvest", label: t("market.harvest") },
+    { key: "explore", label: t("market.explore") },
   ]
 
   return (
     <FilterChipBar
       active={active}
       onChange={onChange}
-      options={[{ key: null, label: "All" }, ...items]}
+      options={[{ key: null, label: t("market.all") }, ...items]}
     />
   )
 }

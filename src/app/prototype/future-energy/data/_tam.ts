@@ -1,3 +1,4 @@
+import { activeLocaleTag } from "../_i18n/legacy"
 /* ------------------------------------------------------------------ */
 /*  Customer TAM / Whitespace Intelligence                             */
 /*                                                                     */
@@ -163,7 +164,7 @@ function buildIntelPackage(
   signals.push({
     source: "osint",
     label: "Facility profile",
-    detail: `${profileLabel}, ~${sqFt.toLocaleString()} sq ft. Supports ${ADDRESSABLE_BY_PROFILE[profileLabel]?.length ?? 5} service lines for a fully-penetrated account.`,
+    detail: `${profileLabel}, ~${sqFt.toLocaleString(activeLocaleTag())} sq ft. Supports ${ADDRESSABLE_BY_PROFILE[profileLabel]?.length ?? 5} service lines for a fully-penetrated account.`,
     confidence: "medium",
   })
 

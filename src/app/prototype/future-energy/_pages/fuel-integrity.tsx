@@ -1,5 +1,7 @@
 "use client"
 
+import { activeLocaleTag, formatActivePercent, formatActiveUsd, localizeActiveCopy } from "../_i18n/legacy"
+
 import * as React from "react"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { Card, CardContent } from "@/components/ui/prosera/card"
@@ -29,19 +31,15 @@ import {
 const SERVICE_VAN_MPG_LABEL = 15
 
 function fmtUsd(n: number): string {
-  const abs = Math.abs(n)
-  const sign = n < 0 ? "-" : ""
-  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`
-  if (abs >= 1_000) return `${sign}$${(abs / 1_000).toFixed(abs >= 10_000 ? 0 : 1)}k`
-  return `${sign}$${abs.toFixed(0)}`
+  return formatActiveUsd(n)
 }
 
 function fmtUsdExact(n: number): string {
-  return `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return formatActiveUsd(n, false)
 }
 
 function fmtPct(n: number): string {
-  return `${(n * 100).toFixed(1)}%`
+  return formatActivePercent(n)
 }
 
 const DIVISION_COLORS: Record<string, string> = {
@@ -72,7 +70,7 @@ function KpiCard({ label, value, sublabel, severity }: {
   return (
     <Card className={cn("border-l-4", accent)}>
       <CardContent className="p-4">
-        <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+        <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{localizeActiveCopy(label)}</p>
         <p className={cn("text-2xl font-bold font-mono mt-1", textColor)}>{value}</p>
         {sublabel && <p className="text-[11px] text-muted-foreground mt-0.5">{sublabel}</p>}
       </CardContent>
@@ -100,7 +98,7 @@ function FleetSpendChart({ data, spikeMonth }: { data: CombinedFuelMonth[]; spik
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h3 className="text-sm font-semibold">Monthly Fleet Fuel Spend</h3>
+            <h3 className="text-sm font-semibold">{localizeActiveCopy("Monthly Fleet Fuel Spend")}</h3>
             <p className="text-[11px] text-muted-foreground mt-0.5">
               Fleet card transactions — 15-month series with unleaded $/gal overlay
             </p>
@@ -150,16 +148,16 @@ function FleetSpendChart({ data, spikeMonth }: { data: CombinedFuelMonth[]; spik
                   <div className="rounded-lg border bg-background px-3 py-2 shadow-md text-[11px] space-y-1">
                     <p className="font-medium text-foreground">{d?.fullLabel}</p>
                     <div className="flex items-center justify-between gap-4">
-                      <span className="text-muted-foreground">Total spend</span>
+                      <span className="text-muted-foreground">{localizeActiveCopy("Total spend")}</span>
                       <span className="font-mono font-medium">{fmtUsdExact(d?.totalSpend ?? 0)}</span>
                     </div>
                     <div className="flex items-center justify-between gap-4">
-                      <span className="text-muted-foreground">Unleaded $/gal</span>
+                      <span className="text-muted-foreground">{localizeActiveCopy("Unleaded $/gal")}</span>
                       <span className="font-mono font-medium">${(d?.unleadedPPG ?? 0).toFixed(2)}</span>
                     </div>
                     {(d?.spikeImpact ?? 0) !== 0 && (
                       <div className="flex items-center justify-between gap-4">
-                        <span className="text-muted-foreground">Price impact vs prior</span>
+                        <span className="text-muted-foreground">{localizeActiveCopy("Price impact vs prior")}</span>
                         <span className={cn("font-mono font-medium", (d?.spikeImpact ?? 0) > 0 ? "text-red-600" : "text-emerald-600")}>
                           {(d?.spikeImpact ?? 0) > 0 ? "+" : ""}{fmtUsd(d?.spikeImpact ?? 0)}
                         </span>
@@ -179,7 +177,7 @@ function FleetSpendChart({ data, spikeMonth }: { data: CombinedFuelMonth[]; spik
         </ResponsiveContainer>
 
         <div className="flex items-center gap-2 mt-2">
-          <Badge variant="outline" className="text-[8px]">Source: Fleet Card Transactions</Badge>
+          <Badge variant="outline" className="text-[8px]">{localizeActiveCopy("Source: Fleet Card Transactions")}</Badge>
         </div>
       </CardContent>
     </Card>
@@ -201,13 +199,13 @@ function EiaReferenceChart({ data, spikeWeek }: { data: PortfolioFuelExposure["w
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h3 className="text-xs font-semibold text-muted-foreground">EIA Fuel Price Reference (PADD Regions)</h3>
-            <p className="text-[10px] text-muted-foreground mt-0.5">Macro energy cost benchmark — fleet is 97% unleaded gasoline per fleet card actuals</p>
+            <h3 className="text-xs font-semibold text-muted-foreground">{localizeActiveCopy("EIA Fuel Price Reference (PADD Regions)")}</h3>
+            <p className="text-[10px] text-muted-foreground mt-0.5">{localizeActiveCopy("Macro energy cost benchmark — fleet is 97% unleaded gasoline per fleet card actuals")}</p>
           </div>
           <div className="flex items-center gap-3 text-[9px] text-muted-foreground">
-            <span className="flex items-center gap-1"><span className="inline-block h-1.5 w-4 rounded-sm" style={{ background: PADD_COLORS.gulfCoast }} /> Gulf Coast</span>
-            <span className="flex items-center gap-1"><span className="inline-block h-1.5 w-4 rounded-sm" style={{ background: PADD_COLORS.rockyMountain }} /> Rocky Mtn</span>
-            <span className="flex items-center gap-1"><span className="inline-block h-1.5 w-4 rounded-sm" style={{ background: PADD_COLORS.westCoast }} /> West Coast</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-1.5 w-4 rounded-sm" style={{ background: PADD_COLORS.gulfCoast }} />{localizeActiveCopy("Gulf Coast")}</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-1.5 w-4 rounded-sm" style={{ background: PADD_COLORS.rockyMountain }} />{localizeActiveCopy("Rocky Mtn")}</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-1.5 w-4 rounded-sm" style={{ background: PADD_COLORS.westCoast }} />{localizeActiveCopy("West Coast")}</span>
           </div>
         </div>
 
@@ -221,7 +219,7 @@ function EiaReferenceChart({ data, spikeWeek }: { data: PortfolioFuelExposure["w
             <Area type="monotone" dataKey="westCoast" stroke={PADD_COLORS.westCoast} fill="transparent" strokeWidth={1.5} dot={false} />
           </AreaChart>
         </ResponsiveContainer>
-        <Badge variant="outline" className="text-[8px] mt-2">Source: EIA Weekly Retail Fuel Prices (PADD benchmark)</Badge>
+        <Badge variant="outline" className="text-[8px] mt-2">{localizeActiveCopy("Source: EIA Weekly Retail Fuel Prices (PADD benchmark)")}</Badge>
       </CardContent>
     </Card>
   )
@@ -244,7 +242,7 @@ function DivisionCard({ div }: { div: DivisionFuelSummary }) {
               <span className="inline-block h-3 w-1 rounded-full" style={{ background: color }} />
               <div>
                 <h4 className="text-sm font-semibold">{div.division}</h4>
-                <p className="text-[10px] text-muted-foreground">{div.label}</p>
+                <p className="text-[10px] text-muted-foreground">{localizeActiveCopy(div.label)}</p>
               </div>
             </div>
             <div className="text-right">
@@ -257,19 +255,19 @@ function DivisionCard({ div }: { div: DivisionFuelSummary }) {
 
         <div className="px-4 pb-3 grid grid-cols-2 gap-x-4 gap-y-2">
           <div>
-            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Annual spend</p>
+            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">{localizeActiveCopy("Annual spend")}</p>
             <p className="font-mono text-xs font-medium">{fmtUsd(div.totalAnnualSpend)}</p>
           </div>
           <div>
-            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Monthly avg</p>
+            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">{localizeActiveCopy("Monthly avg")}</p>
             <p className="font-mono text-xs font-medium">{fmtUsd(div.avgMonthlySpend)}</p>
           </div>
           <div>
-            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Total gallons</p>
-            <p className="font-mono text-xs font-medium">{Math.round(div.totalAnnualGallons).toLocaleString()}</p>
+            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">{localizeActiveCopy("Total gallons")}</p>
+            <p className="font-mono text-xs font-medium">{Math.round(div.totalAnnualGallons).toLocaleString(activeLocaleTag())}</p>
           </div>
           <div>
-            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Unleaded $/gal trend</p>
+            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">{localizeActiveCopy("Unleaded $/gal trend")}</p>
             <p className="font-mono text-xs font-medium">
               ${div.baselineAvgPricePerGal.toFixed(2)} → <span className={div.priceDeltaPct > 0 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}>
                 ${div.currentAvgPricePerGal.toFixed(2)}
@@ -303,39 +301,39 @@ function FuelSensitivityCard({ sensitivity }: { sensitivity: FuelSensitivityAnal
     <Card>
       <CardContent className="p-4">
         <div className="mb-4">
-          <h3 className="text-sm font-semibold">Fuel Price Sensitivity</h3>
+          <h3 className="text-sm font-semibold">{localizeActiveCopy("Fuel Price Sensitivity")}</h3>
           <p className="text-[11px] text-muted-foreground mt-0.5">
-            Fleet burns {Math.round(sensitivity.annualGallons).toLocaleString()} gal/yr — every $0.10/gal move = {fmtUsd(sensitivity.impactPerDime)}/yr impact
+            {localizeActiveCopy("Fleet burns")} {Math.round(sensitivity.annualGallons).toLocaleString(activeLocaleTag())} {localizeActiveCopy("gal/yr")} — {localizeActiveCopy("every $0.10/gal move")} = {fmtUsd(sensitivity.impactPerDime)}/{localizeActiveCopy("yr impact")}
           </p>
         </div>
 
         <div className="rounded-xl border bg-gradient-to-r from-amber-50/30 to-red-50/30 dark:from-amber-950/10 dark:to-red-950/10 p-4 mb-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium">Key sensitivity metric</span>
-            <Badge variant="outline" className="text-[9px] border-amber-500/40 text-amber-700 dark:text-amber-400">Fleet Card Data</Badge>
+            <span className="text-xs font-medium">{localizeActiveCopy("Key sensitivity metric")}</span>
+            <Badge variant="outline" className="text-[9px] border-amber-500/40 text-amber-700 dark:text-amber-400">{localizeActiveCopy("Fleet Card Data")}</Badge>
           </div>
           <div className="text-center">
             <p className="font-mono text-2xl font-bold text-foreground">{fmtUsd(sensitivity.impactPerDime)}</p>
-            <p className="text-[10px] text-muted-foreground mt-1">annual fleet cost impact per $0.10/gal price move</p>
+            <p className="text-[10px] text-muted-foreground mt-1">{localizeActiveCopy("annual fleet cost impact per $0.10/gal price move")}</p>
           </div>
           <div className="flex items-center justify-between mt-3 text-[10px] text-muted-foreground">
-            <span>{Math.round(sensitivity.annualGallons).toLocaleString()} gal/yr</span>
-            <span>${sensitivity.baselinePricePerGal.toFixed(2)} baseline → ${sensitivity.currentPricePerGal.toFixed(2)} current</span>
+            <span>{Math.round(sensitivity.annualGallons).toLocaleString(activeLocaleTag())} {localizeActiveCopy("gal/yr")}</span>
+            <span>${sensitivity.baselinePricePerGal.toFixed(2)} {localizeActiveCopy("baseline")} → ${sensitivity.currentPricePerGal.toFixed(2)} {localizeActiveCopy("current")}</span>
           </div>
         </div>
 
         <div className="grid grid-cols-4 gap-3">
           {sensitivity.scenarios.map(s => (
             <div key={s.name} className={cn("rounded-xl border p-3 space-y-2", scenarioStyle(s))}>
-              <p className="text-[10px] font-medium leading-tight">{s.label}</p>
+              <p className="text-[10px] font-medium leading-tight">{localizeActiveCopy(s.label)}</p>
               <div>
-                <p className="font-mono text-sm font-bold">{fmtUsd(s.annualFleetCost)}/yr</p>
+                <p className="font-mono text-sm font-bold">{fmtUsd(s.annualFleetCost)}/{localizeActiveCopy("yr")}</p>
                 <p className={cn("font-mono text-xs font-medium", deltaColor(s.deltaVsBaseline))}>
                   {s.deltaVsBaseline === 0 ? "—" : `${s.deltaVsBaseline > 0 ? "+" : ""}${fmtUsd(s.deltaVsBaseline)} vs. baseline`}
                 </p>
               </div>
               {s.deltaPct !== 0 && (
-                <p className="text-[9px] text-muted-foreground">+{(s.deltaPct * 100).toFixed(0)}% from baseline</p>
+                <p className="text-[9px] text-muted-foreground">+{(s.deltaPct * 100).toFixed(0)} % {localizeActiveCopy("from baseline")}</p>
               )}
             </div>
           ))}
@@ -345,7 +343,7 @@ function FuelSensitivityCard({ sensitivity }: { sensitivity: FuelSensitivityAnal
           <div className="flex items-start gap-3">
             <SafeIcon name="FileText" className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
             <div>
-              <p className="text-xs font-semibold text-blue-800 dark:text-blue-300">Contract fuel clause recommendation</p>
+              <p className="text-xs font-semibold text-blue-800 dark:text-blue-300">{localizeActiveCopy("Contract fuel clause recommendation")}</p>
               <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
                 Embed fuel escalation clauses in all new and renewing service contracts, pegged to fleet card actuals.
                 Current exposure: {fmtUsd(sensitivity.currentVsBaselineDelta)}/yr above baseline.
@@ -389,8 +387,8 @@ function MarginErosionWaterfall({ factors, totalRevenue, currentMarginPct }: {
     <Card>
       <CardContent className="p-4">
         <div className="mb-3">
-          <h3 className="text-sm font-semibold">Margin Erosion Attribution</h3>
-          <p className="text-[11px] text-muted-foreground mt-0.5">How fuel, labor, and materials are compressing portfolio margin from baseline</p>
+          <h3 className="text-sm font-semibold">{localizeActiveCopy("Margin Erosion Attribution")}</h3>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{localizeActiveCopy("How fuel, labor, and materials are compressing portfolio margin from baseline")}</p>
         </div>
 
         <div className={cn("grid gap-3 mb-4", waterfallData.length <= 4 ? "grid-cols-3" : "grid-cols-4")}>
@@ -430,9 +428,9 @@ function MarginErosionWaterfall({ factors, totalRevenue, currentMarginPct }: {
           ))}
         </div>
         <div className="flex items-center gap-4 mt-2 text-[9px] text-muted-foreground">
-          <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-blue-500/80" /> Baseline</span>
-          <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-red-500/70" /> Erosion</span>
-          <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-amber-500/80" /> Current</span>
+          <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-blue-500/80" />{localizeActiveCopy("Baseline")}</span>
+          <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-red-500/70" />{localizeActiveCopy("Erosion")}</span>
+          <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-amber-500/80" />{localizeActiveCopy("Current")}</span>
         </div>
       </CardContent>
     </Card>
@@ -450,7 +448,7 @@ export function FuelIntegritySection() {
   if (!fuel) {
     return (
       <div className="flex items-center justify-center px-6 py-16">
-        <p className="text-sm text-muted-foreground">Loading fuel analysis…</p>
+        <p className="text-sm text-muted-foreground">{localizeActiveCopy("Loading fuel analysis…")}</p>
       </div>
     )
   }
@@ -461,7 +459,7 @@ export function FuelIntegritySection() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-2">
         <SafeIcon name="Fuel" className="h-4 w-4 text-red-600 dark:text-red-400" />
-        <h3 className="text-sm font-semibold">Fuel &amp; Fleet Cost Intelligence</h3>
+        <h3 className="text-sm font-semibold">{localizeActiveCopy("Fuel &amp; Fleet Cost Intelligence")}</h3>
         <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
           {fmtUsd(act.totalAnnualSpend)} annual fleet fuel · {(act.unleadedPctOfVolume * 100).toFixed(0)}% unleaded · every $0.10/gal = {fmtUsd(fuel.sensitivity.impactPerDime)}/yr
         </span>
@@ -470,25 +468,25 @@ export function FuelIntegritySection() {
       {/* Section 1: KPI Header */}
       <div className="grid grid-cols-4 gap-3">
         <KpiCard
-          label="Total Fleet Fuel"
+          label={localizeActiveCopy("Total Fleet Fuel")}
           value={fmtUsd(act.totalAnnualSpend)}
           sublabel="15-month fleet card total"
           severity="info"
         />
         <KpiCard
-          label="Monthly Burn Rate"
+          label={localizeActiveCopy("Monthly Burn Rate")}
           value={fmtUsd(act.latestMonthSpend)}
           sublabel={act.latestMonthLabel}
           severity="warning"
         />
         <KpiCard
-          label="Spike Impact"
+          label={localizeActiveCopy("Spike Impact")}
           value={`+${fmtUsd(act.spikeImpactDollars)}`}
           sublabel={`${act.spikeMonthLabel} incremental vs. prior month price`}
           severity="critical"
         />
         <KpiCard
-          label="Fleet Fuel Mix"
+          label={localizeActiveCopy("Fleet Fuel Mix")}
           value={`${(act.unleadedPctOfVolume * 100).toFixed(0)}% unleaded`}
           sublabel={`${(100 - act.unleadedPctOfVolume * 100).toFixed(0)}% other (incl. diesel) · ${SERVICE_VAN_MPG_LABEL} MPG avg`}
           severity="info"
@@ -503,8 +501,8 @@ export function FuelIntegritySection() {
 
       {/* Section 3: Division Breakdown */}
       <div>
-        <h3 className="text-sm font-semibold mb-2">Division Fuel Breakdown</h3>
-        <p className="text-[11px] text-muted-foreground mb-3">Three service-line divisions — volume, spend, and price trends from fleet card data</p>
+        <h3 className="text-sm font-semibold mb-2">{localizeActiveCopy("Division Fuel Breakdown")}</h3>
+        <p className="text-[11px] text-muted-foreground mb-3">{localizeActiveCopy("Three service-line divisions — volume, spend, and price trends from fleet card data")}</p>
         <div className="grid grid-cols-3 gap-3">
           {fuel.divisionSummaries.map(d => <DivisionCard key={d.division} div={d} />)}
         </div>

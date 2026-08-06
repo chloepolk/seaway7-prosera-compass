@@ -5,8 +5,10 @@ import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { cn } from "@/lib/utils"
 import { useStore } from "../_store"
 import { useT } from "../_i18n/use-t"
+import { localeTag, type Locale } from "../_i18n"
+import { localizedTenderPackages } from "../_i18n/domain"
 import { enterMotion, listItemMotion, pcmCard } from "../_components/motion"
-import { formatCurrency, STAGE_META, type MissionStage } from "../_diamond/stages"
+import { formatCurrency, type MissionStage } from "../_diamond/stages"
 import { EVAL_PACKAGE_ID, bidsForPackage } from "../data/future-energy/_bids"
 import {
   evaluateBids,
@@ -19,7 +21,6 @@ import {
   type GateId,
 } from "../data/future-energy/_bid-scoring"
 import {
-  TENDER_PACKAGES,
   tenderById,
   PROJECT,
   type TenderPackage,
@@ -55,8 +56,8 @@ const STATUS_CLS: Record<EvalStatus, string> = {
   awarded: "bg-[var(--color-tint-neutral)] text-[var(--color-text-secondary)]",
 }
 
-function formatPriceFull(n: number): string {
-  return new Intl.NumberFormat("en-US", {
+function formatPriceFull(n: number, locale: Locale): string {
+  return new Intl.NumberFormat(localeTag(locale), {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: 0,
@@ -128,11 +129,13 @@ function BidBaseballCard({
   selected,
   onSelect,
   index,
+  locale,
 }: {
   result: BidEvaluationResult
   selected: boolean
   onSelect: () => void
   index: number
+  locale: Locale
 }) {
   const t = useT()
   const motion = listItemMotion(index)
@@ -162,10 +165,10 @@ function BidBaseballCard({
                 {result.supplier}
               </h3>
               <p className="text-[12px] tabular-nums text-[var(--color-text-muted)]">
-                {formatPriceFull(result.totalPrice)}
+                {formatPriceFull(result.totalPrice, locale)}
                 {result.compositeScore != null && (
                   <span className="ml-2 text-[var(--color-text-secondary)]">
-                    · Composite {result.compositeScore.toFixed(1)}
+                    · {t("bidEval.compositeLabel")} {result.compositeScore.toFixed(1)}
                   </span>
                 )}
               </p>
@@ -179,7 +182,7 @@ function BidBaseballCard({
                 className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border-default)] px-2 py-1 text-[11px] font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-subtle)]"
               >
                 <SafeIcon name="FileText" className="size-3" />
-                Response PDF
+                {t("bidEval.responsePdf")}
               </a>
             )}
           </div>
@@ -208,7 +211,7 @@ function BidBaseballCard({
 
           <div className="rounded-md bg-[var(--color-bg-subtle)] px-3 py-2">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-              Insight / recommendation
+              {t("bidEval.insightRecommendation")}
             </p>
             <p className="mt-1 text-[12px] leading-relaxed text-[var(--color-text-secondary)]">
               {result.recommendation}
@@ -244,14 +247,14 @@ interface PackageEvalRow {
   dqCount: number
 }
 
-function buildPackageRows(tenderStages: Record<string, MissionStage>): PackageEvalRow[] {
-  return TENDER_PACKAGES
-    .filter((p) => p.stage !== "outcome_roi" || bidsForPackage(p.id).length > 0)
+function buildPackageRows(tenderStages: Record<string, MissionStage>, locale: Locale): PackageEvalRow[] {
+  return localizedTenderPackages(locale)
+    .filter((p) => p.stage !== "outcome_roi" || bidsForPackage(p.id, locale).length > 0)
     .map((pkg) => {
       const stage = tenderStages[pkg.id] ?? pkg.stage
       const effective = { ...pkg, stage }
-      const bids = bidsForPackage(pkg.id)
-      const results = bids.length > 0 ? evaluateBids(bids) : []
+      const bids = bidsForPackage(pkg.id, locale)
+      const results = bids.length > 0 ? evaluateBids(bids, locale) : []
       const status = evalStatusFor(effective, bids.length)
       const ranked = results.filter((r) => r.finalRank != null)
       const top = ranked.find((r) => r.finalRank === 1) ?? null
@@ -281,10 +284,10 @@ function EmptyPackageState({ status, pkg }: { status: EvalStatus; pkg: TenderPac
   const t = useT()
   const copy =
     status === "awaiting_returns"
-      ? "ITT is issued but no returns have been tabulated yet. Scoring unlocks when bids arrive."
+      ? t("bidEval.awaitingCopy")
       : status === "awarded"
-        ? "This package is already awarded — evaluation history is closed."
-        : `Still at ${STAGE_META[pkg.stage].title}. Issue the ITT and collect returns before scoring.`
+        ? t("bidEval.awardedCopy")
+        : t("bidEval.upstreamCopy", { stage: t(`stages.${pkg.stage}.title`) })
 
   return (
     <div className="flex flex-col items-center justify-center rounded-[16px] border border-dashed border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] px-6 py-16 text-center">
@@ -299,8 +302,8 @@ function EmptyPackageState({ status, pkg }: { status: EvalStatus; pkg: TenderPac
 
 export function BidEvaluationPage() {
   const t = useT()
-  const { focusEvalPackageId, tenderStages, openBidEvaluation } = useStore()
-  const rows = React.useMemo(() => buildPackageRows(tenderStages), [tenderStages])
+  const { focusEvalPackageId, tenderStages, openBidEvaluation, locale } = useStore()
+  const rows = React.useMemo(() => buildPackageRows(tenderStages, locale), [tenderStages, locale])
 
   const defaultId =
     focusEvalPackageId && rows.some((r) => r.pkg.id === focusEvalPackageId)
@@ -320,12 +323,12 @@ export function BidEvaluationPage() {
   const activeRow = rows.find((r) => r.pkg.id === activePackageId) ?? rows[0]
   const pkg = activeRow?.pkg ?? tenderById(activePackageId)
   const bids = React.useMemo(
-    () => (activePackageId ? bidsForPackage(activePackageId) : []),
-    [activePackageId],
+    () => (activePackageId ? bidsForPackage(activePackageId, locale) : []),
+    [activePackageId, locale],
   )
   const results = React.useMemo(
-    () => (bids.length > 0 ? sortEvaluationForDisplay(evaluateBids(bids)) : []),
-    [bids],
+    () => (bids.length > 0 ? sortEvaluationForDisplay(evaluateBids(bids, locale)) : []),
+    [bids, locale],
   )
 
   const [notifyOpen, setNotifyOpen] = React.useState(false)
@@ -394,7 +397,7 @@ export function BidEvaluationPage() {
               {t("bidEval.packages")}
             </h2>
             <p className="text-[10px] text-[var(--color-text-muted)]">
-              Issued ITTs and upstream packages
+              {t("bidEval.issuedAndUpstream")}
             </p>
           </div>
           <ul className="max-h-[70vh] overflow-y-auto p-1.5">
@@ -434,13 +437,13 @@ export function BidEvaluationPage() {
                       <span className="tabular-nums">{row.bidCount} {t("bidEval.returns")}</span>
                       {row.topScore != null && (
                         <span className="tabular-nums">
-                          Top {row.topScore.toFixed(1)}
+                          {t("bidEval.top")} {row.topScore.toFixed(1)}
                           {row.topSupplier ? ` · ${row.topSupplier}` : ""}
                         </span>
                       )}
                       {row.riskCount > 0 && (
                         <span className="text-[var(--color-accent-warning-text)]">
-                          {row.riskCount} risk
+                          {row.riskCount} {t("bidEval.risk")}
                         </span>
                       )}
                       {row.dqCount > 0 && (
@@ -468,7 +471,7 @@ export function BidEvaluationPage() {
                   {pkg.title}
                 </h2>
                 <p className="mt-1 max-w-2xl text-[12px] text-[var(--color-text-secondary)]">
-                  {pkg.quantity} · budget {formatCurrency(pkg.budget)} · closes{" "}
+                  {pkg.quantity} · {t("bidEval.budget")} {formatCurrency(pkg.budget)} · {t("bidEval.closes")}{" "}
                   {pkg.submissionDeadline}
                 </p>
               </div>
@@ -494,10 +497,10 @@ export function BidEvaluationPage() {
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--color-border-default)] px-4 py-3">
                   <div>
                     <h3 className="text-[13px] font-semibold text-[var(--color-text-primary)]">
-                      Evaluation matrix
+                      {t("bidEval.evaluationMatrix")}
                     </h3>
                     <p className="text-[11px] text-[var(--color-text-muted)]">
-                      Composite = Price + Tech + QA + Legal among gate-passing suppliers only.
+                      {t("bidEval.matrixExplain")}
                     </p>
                   </div>
                   {results.some((r) => r.finalRank === 1) && (
@@ -516,15 +519,15 @@ export function BidEvaluationPage() {
                     <thead>
                       <tr className="border-b border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
                         <th className="px-3 py-2.5">{t("bidEval.supplier")}</th>
-                        <th className="px-3 py-2.5">Total bid price</th>
+                        <th className="px-3 py-2.5">{t("bidEval.totalBidPrice")}</th>
                         <th className="px-3 py-2.5">{t("bidEval.price")}</th>
                         <th className="px-3 py-2.5">{t("bidEval.technical")}</th>
                         <th className="px-3 py-2.5">{t("bidEval.qaHseq")}</th>
                         <th className="px-3 py-2.5">{t("bidEval.legal")}</th>
-                        <th className="px-3 py-2.5">Gating</th>
+                        <th className="px-3 py-2.5">{t("bidEval.gating")}</th>
                         <th className="px-3 py-2.5">{t("bidEval.composite")}</th>
                         <th className="px-3 py-2.5">{t("bidEval.rank")}</th>
-                        <th className="px-3 py-2.5">Risk</th>
+                        <th className="px-3 py-2.5">{t("missionCard.risk")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -542,7 +545,7 @@ export function BidEvaluationPage() {
                             )}
                           >
                             <MatrixCell className="font-medium">{r.supplier}</MatrixCell>
-                            <MatrixCell>{formatPriceFull(r.totalPrice)}</MatrixCell>
+                            <MatrixCell>{formatPriceFull(r.totalPrice, locale)}</MatrixCell>
                             <MatrixCell>{r.priceScore?.toFixed(1) ?? "—"}</MatrixCell>
                             <MatrixCell>{r.techScore?.toFixed(1) ?? "—"}</MatrixCell>
                             <MatrixCell>{r.qaScore?.toFixed(1) ?? "—"}</MatrixCell>
@@ -568,7 +571,7 @@ export function BidEvaluationPage() {
                             <MatrixCell>
                               {r.highCommercialRisk ? (
                                 <span className="rounded bg-[var(--color-tint-warning)] px-1.5 py-0.5 text-[10px] font-semibold uppercase text-[var(--color-accent-warning-text)]">
-                                  High
+                                  {t("bidEval.high")}
                                 </span>
                               ) : (
                                 <span className="text-[var(--color-text-muted)]">—</span>
@@ -585,11 +588,11 @@ export function BidEvaluationPage() {
               <section className="space-y-3">
                 <div>
                   <h3 className="text-[13px] font-semibold text-[var(--color-text-primary)]">
-                    Bid cards
+                    {t("bidEval.bidCards")}
                   </h3>
                   <p className="text-[11px] text-[var(--color-text-muted)]">
-                    Rank, score breakdown, and award insight per return
-                    {pkg ? ` · budget baseline ${formatCurrency(pkg.budget)}` : ""}.
+                    {t("bidEval.bidCardsExplain")}
+                    {pkg ? ` · ${t("bidEval.budgetBaseline")} ${formatCurrency(pkg.budget)}` : ""}.
                   </p>
                 </div>
                 <div className="grid gap-3 lg:grid-cols-2">
@@ -598,6 +601,7 @@ export function BidEvaluationPage() {
                       key={r.bidId}
                       result={r}
                       index={i}
+                      locale={locale}
                       selected={selectedBidId === r.bidId}
                       onSelect={() => setSelectedBidId(r.bidId)}
                     />

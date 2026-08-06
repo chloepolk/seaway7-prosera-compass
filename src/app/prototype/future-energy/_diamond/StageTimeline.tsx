@@ -3,13 +3,18 @@
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { cn } from "@/lib/utils"
 import type { DiamondMission } from "./types"
-import { STAGE_META, STAGE_ORDER, stageIndex } from "./stages"
+import { STAGE_ORDER, stageIndex } from "./stages"
+import { useT } from "../_i18n/use-t"
+import { useStore } from "../_store"
+import { localeTag } from "../_i18n"
 
 function daysBetween(a: string, b: string): number {
   return Math.max(0, Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86_400_000))
 }
 
 export function StageTimeline({ mission }: { mission: DiamondMission }) {
+  const t = useT()
+  const { locale } = useStore()
   const idx = stageIndex(mission.stage)
 
   return (
@@ -17,7 +22,7 @@ export function StageTimeline({ mission }: { mission: DiamondMission }) {
       <div className="mb-3 flex items-center gap-2">
         <SafeIcon name="GitCommitHorizontal" className="h-4 w-4 text-muted-foreground" />
         <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-          Gate timeline
+          {t("diamond.gateTimeline")}
         </span>
       </div>
       <div className="flex items-start">
@@ -64,10 +69,10 @@ export function StageTimeline({ mission }: { mission: DiamondMission }) {
                     isCurrent ? "text-brand-strong" : done ? "text-foreground" : "text-muted-foreground",
                   )}
                 >
-                  {STAGE_META[s].title}
+                  {t(`stages.${s}.title`)}
                 </div>
                 <div className="text-[9px] leading-tight text-muted-foreground">
-                  {entered ?? "pending"}
+                  {entered ? new Date(entered).toLocaleDateString(localeTag(locale)) : t("diamond.pending")}
                 </div>
                 {gap !== null ? (
                   <div className="text-[9px] font-medium leading-tight text-muted-foreground">+{gap}d</div>

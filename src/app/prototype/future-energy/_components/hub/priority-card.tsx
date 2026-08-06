@@ -5,6 +5,9 @@ import { cn } from "@/lib/utils"
 import { enterMotion, pcmCard } from "../motion"
 import { MiniVisual } from "../spec-renderer"
 import { ReasoningTooltip, type ReasoningContent } from "../reasoning-disclosure"
+import { useT } from "../../_i18n/use-t"
+import { localizeLegacyCopy } from "../../_i18n/legacy"
+import { useStore } from "../../_store"
 
 export interface PriorityCardProps {
   title: string
@@ -44,6 +47,9 @@ export function PriorityCard({
   className,
   index = 0,
 }: PriorityCardProps & { index?: number }) {
+  const t = useT()
+  const { locale } = useStore()
+  const localizedTitle = localizeLegacyCopy(title, locale)
   const motion = enterMotion(index)
   return (
     <article
@@ -61,19 +67,19 @@ export function PriorityCard({
           type="button"
           onClick={onRemove}
           className="absolute -left-2 -top-2 flex size-[22px] items-center justify-center rounded-full border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] text-[var(--color-text-muted)] shadow-sm hover:bg-[var(--color-tint-critical)] hover:text-[var(--color-accent-critical)]"
-          aria-label={`Remove ${title}`}
+          aria-label={t("common.removeNamed", { name: localizedTitle })}
         >
           −
         </button>
       )}
       <div className="flex items-start justify-between gap-2">
         <h3 className="flex items-center gap-1 text-[14px] font-semibold text-[var(--color-text-primary)]">
-          {title}
-          <ReasoningTooltip reasoning={reasoning} label={`Why ${title}`} />
+          {localizedTitle}
+          <ReasoningTooltip reasoning={reasoning} label={t("common.whyNamed", { name: localizedTitle })} />
         </h3>
         {tag && (
           <span className={cn("shrink-0 rounded-[6px] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", TAG_CLS[tagTone])}>
-            {tag}
+            {localizeLegacyCopy(tag, locale)}
           </span>
         )}
       </div>
@@ -85,15 +91,16 @@ export function PriorityCard({
         )}
         <div className="min-w-0">
           <p className="text-[26px] font-semibold tabular-nums leading-none text-[var(--color-text-primary)]">{headline}</p>
-          {headlineSub && <p className="mt-1 text-[13px] text-[var(--color-text-muted)]">{headlineSub}</p>}
+          {headlineSub && <p className="mt-1 text-[13px] text-[var(--color-text-muted)]">{localizeLegacyCopy(headlineSub, locale)}</p>}
         </div>
       </div>
-      <p className="mt-4 flex-1 text-[13px] leading-relaxed text-[var(--color-text-secondary)]">{detail}</p>
+      <p className="mt-4 flex-1 text-[13px] leading-relaxed text-[var(--color-text-secondary)]">{localizeLegacyCopy(detail, locale)}</p>
     </article>
   )
 }
 
 export function AddTile({ onClick, className }: { onClick?: () => void; className?: string }) {
+  const t = useT()
   return (
     <button
       type="button"
@@ -104,7 +111,7 @@ export function AddTile({ onClick, className }: { onClick?: () => void; classNam
       )}
     >
       <span className="text-[32px] font-light leading-none">+</span>
-      <span className="mt-2 text-[13px] font-medium">Add tile</span>
+      <span className="mt-2 text-[13px] font-medium">{t("common.addTile")}</span>
     </button>
   )
 }

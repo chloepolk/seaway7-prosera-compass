@@ -5,12 +5,10 @@ import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { cn } from "@/lib/utils"
 import { formatCurrency } from "./stages"
 import type { PortfolioRoi } from "./adapter"
-
-function compactUsd(n: number): string {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`
-  if (n >= 1_000) return `$${Math.round(n / 1_000)}k`
-  return `$${n}`
-}
+import { useT } from "../_i18n/use-t"
+import { useStore } from "../_store"
+import { localeTag } from "../_i18n"
+import { localizeRole } from "../_i18n/domain"
 
 function Sparkline({ values }: { values: number[] }) {
   if (values.length < 2) return null
@@ -58,6 +56,8 @@ function Metric({
 }
 
 export function AccumulatedRoiStrip({ roi }: { roi: PortfolioRoi }) {
+  const t = useT()
+  const { locale } = useStore()
   const [open, setOpen] = React.useState(false)
   const avgMultiple = roi.ledger.length > 0
     ? roi.ledger.reduce((s, e) => s + e.roiMultiple, 0) / roi.ledger.length
@@ -71,15 +71,15 @@ export function AccumulatedRoiStrip({ roi }: { roi: PortfolioRoi }) {
             <SafeIcon name="TrendingUp" className="h-4 w-4 text-[var(--color-accent-positive-text)]" />
           </div>
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-accent-positive-text)]">Portfolio value created</div>
-            <div className="text-[10px] text-muted-foreground">Realized across {roi.missionsClosed} closed missions</div>
+            <div className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-accent-positive-text)]">{t("diamond.portfolioValue")}</div>
+            <div className="text-[10px] text-muted-foreground">{t("diamond.realizedAcross", { count: roi.missionsClosed })}</div>
           </div>
         </div>
 
-        <Metric label="Realized to date" value={compactUsd(roi.realizedToDate)} tone="green" sub={`on ${compactUsd(roi.totalInvested)} invested`} />
-        <Metric label="Blended ROI" value={`${roi.blendedRoi.toFixed(1)}x`} tone="green" sub="portfolio return" />
-        <Metric label="In-flight pipeline" value={compactUsd(roi.inFlightProjected)} tone="blue" sub={`${roi.inFlightCount} active missions`} />
-        <Metric label="Avg multiple" value={`${avgMultiple.toFixed(1)}x`} tone="gold" sub="per closed mission" />
+        <Metric label={t("ledger.realized")} value={formatCurrency(roi.realizedToDate, locale)} tone="green" sub={t("diamond.investedSub", { amount: formatCurrency(roi.totalInvested, locale) })} />
+        <Metric label={t("ledger.blendedRoi")} value={`${roi.blendedRoi.toLocaleString(localeTag(locale), { maximumFractionDigits: 1 })}x`} tone="green" sub={t("diamond.portfolioReturn")} />
+        <Metric label={t("diamond.inFlightPipeline")} value={formatCurrency(roi.inFlightProjected, locale)} tone="blue" sub={t("diamond.activeMissions", { count: roi.inFlightCount })} />
+        <Metric label={t("ledger.avgMultiple")} value={`${avgMultiple.toLocaleString(localeTag(locale), { maximumFractionDigits: 1 })}x`} tone="gold" sub={t("diamond.perClosedMission")} />
 
         <div className="ml-auto flex items-center gap-3">
           <div className="hidden sm:block">
@@ -91,7 +91,7 @@ export function AccumulatedRoiStrip({ roi }: { roi: PortfolioRoi }) {
             className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold text-foreground transition-colors hover:bg-muted"
           >
             <SafeIcon name="ReceiptText" className="h-3.5 w-3.5" />
-            Ledger
+            {t("diamond.ledger")}
             <SafeIcon name={open ? "ChevronUp" : "ChevronDown"} className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -100,23 +100,23 @@ export function AccumulatedRoiStrip({ roi }: { roi: PortfolioRoi }) {
       {open ? (
         <div className="border-t px-4 py-3">
           <div className="mb-2 grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-3 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
-            <span>Statement of Record</span>
-            <span className="text-right">Invested</span>
-            <span className="text-right">Realized</span>
-            <span className="text-right">ROI</span>
-            <span className="text-right">Closed</span>
+            <span>{t("diamond.statement")}</span>
+            <span className="text-right">{t("diamond.invested")}</span>
+            <span className="text-right">{t("diamond.realized")}</span>
+            <span className="text-right">{t("diamond.roi")}</span>
+            <span className="text-right">{t("diamond.closed")}</span>
           </div>
           <div className="space-y-1">
             {roi.ledger.map((e) => (
               <div key={e.id} className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-x-3 rounded-md px-1.5 py-1.5 text-[12px] hover:bg-muted/60">
                 <div className="min-w-0">
                   <div className="truncate font-medium text-foreground">{e.name}</div>
-                  <div className="truncate text-[10px] text-muted-foreground">{e.id} - {e.decisionMaker}</div>
+                  <div className="truncate text-[10px] text-muted-foreground">{e.id} - {localizeRole(e.decisionMaker, locale)}</div>
                 </div>
-                <span className="text-right tabular-nums text-muted-foreground">{compactUsd(e.cost)}</span>
-                <span className="text-right font-medium tabular-nums text-[var(--color-accent-positive-text)]">{formatCurrency(e.realizedValue)}</span>
-                <span className="text-right font-semibold tabular-nums text-[var(--color-accent-positive-text)]">{e.roiMultiple.toFixed(1)}x</span>
-                <span className="text-right tabular-nums text-muted-foreground">{e.completionDate}</span>
+                <span className="text-right tabular-nums text-muted-foreground">{formatCurrency(e.cost, locale)}</span>
+                <span className="text-right font-medium tabular-nums text-[var(--color-accent-positive-text)]">{formatCurrency(e.realizedValue, locale)}</span>
+                <span className="text-right font-semibold tabular-nums text-[var(--color-accent-positive-text)]">{e.roiMultiple.toLocaleString(localeTag(locale), { maximumFractionDigits: 1 })}x</span>
+                <span className="text-right tabular-nums text-muted-foreground">{new Date(e.completionDate).toLocaleDateString(localeTag(locale))}</span>
               </div>
             ))}
           </div>

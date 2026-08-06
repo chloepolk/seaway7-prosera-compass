@@ -26,7 +26,9 @@ import {
 } from "@/components/ui/prosera/sheet"
 import { useStore, type Page, type IntelRailSection, type ChatMessage } from "./_store"
 import { useT } from "./_i18n/use-t"
-import type { Locale } from "./_i18n"
+import { localeTag, type Locale } from "./_i18n"
+import { localizedClosedPackages, localizedTenderPackages } from "./_i18n/domain"
+import { localizeLegacyCopy } from "./_i18n/legacy"
 import { SandboxDrawer } from "./_sandbox/SandboxDrawer"
 import { BiDashboardDrawer } from "./_bi/BiDashboardDrawer"
 import { DOCUMENTS, CATEGORY_LABELS, CHARTER, type DocumentCategory } from "./data/future-energy/_documents"
@@ -177,7 +179,7 @@ function DataScopeBadge() {
       <PopoverContent align="end" className="w-80 p-0">
         <div className="px-4 pt-3 pb-2 border-b">
           <p className="text-sm font-semibold">{PROJECT.name}</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">{PROJECT.scope}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{t("scope.projectDescription")}</p>
         </div>
         <div className="px-4 py-3 space-y-2.5 text-xs">
           <div className="flex justify-between">
@@ -186,7 +188,7 @@ function DataScopeBadge() {
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">{t("scope.mobilisationPort")}</span>
-            <span className="font-medium">{PROJECT.mobilisationPort}</span>
+            <span className="font-medium">{t("scope.portValue")}</span>
           </div>
           <div className="h-px bg-border" />
           <div className="flex justify-between">
@@ -437,7 +439,19 @@ const categoryLabelKeys: Record<string, string> = {
 
 function FindingCard({ finding, index }: { finding: BPFinding; index: number }) {
   const t = useT()
+  const { locale } = useStore()
   const motion = findingMotion(index)
+  const localizedTitle = localizeLegacyCopy(finding.title, locale)
+  const localizedNarrative = localizeLegacyCopy(finding.narrative, locale)
+  const rawReasoning = reasoningFromFinding(finding)
+  const reasoning = {
+    ...rawReasoning,
+    summary: rawReasoning.summary ? localizeLegacyCopy(rawReasoning.summary, locale) : undefined,
+    steps: rawReasoning.steps?.map((step) => localizeLegacyCopy(step, locale)),
+    evidence: rawReasoning.evidence?.map((item) => localizeLegacyCopy(item, locale)),
+    conclusion: rawReasoning.conclusion ? localizeLegacyCopy(rawReasoning.conclusion, locale) : undefined,
+    sources: rawReasoning.sources?.map((source) => localizeLegacyCopy(source, locale)),
+  }
 
   return (
     <article
@@ -456,11 +470,11 @@ function FindingCard({ finding, index }: { finding: BPFinding; index: number }) 
         </span>
       </div>
       <p className="flex items-center gap-1 text-xs font-semibold leading-snug">
-        {finding.title}
-        <ReasoningTooltip reasoning={reasoningFromFinding(finding)} label={`Why ${finding.title}`} />
+        {localizedTitle}
+        <ReasoningTooltip reasoning={reasoning} label={t("intel.whyPrefix", { title: localizedTitle })} />
       </p>
       <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-3">
-        {finding.narrative}
+        {localizedNarrative}
       </p>
     </article>
   )
@@ -471,7 +485,7 @@ function FindingCard({ finding, index }: { finding: BPFinding; index: number }) 
 /* ------------------------------------------------------------------ */
 
 function FindingsPanel() {
-  const { contextFindings, bpFindings, isThinking, isAgentLoading, useStaticFallback, agentPhase, verifierResult } = useStore()
+  const { contextFindings, bpFindings, isThinking, isAgentLoading, useStaticFallback, agentPhase, verifierResult, locale } = useStore()
   const t = useT()
 
   const annotationsMap = React.useMemo(() => {
@@ -519,13 +533,13 @@ function FindingsPanel() {
 
   const validAgentFindings = bpFindings.filter(f => f.title && f.title.trim().length > 0)
   const hasAgent = validAgentFindings.length > 0
-  const hasStatic = useStaticFallback && contextFindings.length > 0
+  const hasStatic = locale === "en" && useStaticFallback && contextFindings.length > 0
 
   if (!hasAgent && !hasStatic) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
         <SafeIcon name="SearchCheck" className="h-6 w-6 text-muted-foreground/40" />
-        <p className="text-xs text-muted-foreground/60">No findings for current view</p>
+        <p className="text-xs text-muted-foreground/60">{t("intel.noFindingsCurrent")}</p>
       </div>
     )
   }
@@ -552,7 +566,7 @@ function FindingsPanel() {
 /* ------------------------------------------------------------------ */
 
 function ReasoningPanel() {
-  const { activePage, bpReasoning, isThinking, isAgentLoading, useStaticFallback, agentPhase, verifierResult, isVerified } = useStore()
+  const { activePage, bpReasoning, isThinking, isAgentLoading, useStaticFallback, agentPhase, verifierResult, isVerified, locale } = useStore()
   const t = useT()
   const specialistLabels: Record<SpecialistId, string> = {
     portfolio: t("agent.specialistPipeline"),
@@ -563,6 +577,41 @@ function ReasoningPanel() {
   const hasAgentReasoning = bpReasoning.length > 0
 
   const staticReasoning = React.useMemo(() => {
+    const packages = localizedTenderPackages(locale)
+    const closed = localizedClosedPackages(locale)
+    if (locale === "fr") {
+      if (activePage === "tender-studio") {
+        return {
+          chain: [
+            "Résolution du lot vers sa spécification technique contrôlée et sa quantité",
+            "Récupération des obligations DNV / NORSOK / ISO applicables depuis QA-MAN-2026-EPCI",
+            "Assemblage des conditions commerciales et juridiques de S7-SCM-TC-2026, avec obligations issues de la charte pour les opérations maritimes",
+            "Composition des sections de l’AO et préparation de l’audit contradictoire de chaque source citée",
+          ],
+          sources: [`${DOCUMENTS.length} documents contrôlés au registre projet`, `${packages.length} lots actifs sur le pipeline ${PROJECT.shortName}`, "Particularités de la charte SUPPLYTIME 2026"],
+        }
+      }
+      if (activePage === "bid-evaluation") {
+        return {
+          chain: [
+            "Application des portes éliminatoires : ISO 9001, knock-for-knock mutuel, DDP Rotterdam",
+            "Normalisation des prix éligibles par rapport à l’offre conforme la plus basse (Prix 35)",
+            "Notation Technique 25, QA/HSEQ 20 et Juridique 20 — signalement des réductions de garantie supérieures à 25 %",
+            "Classement des réponses conformes dans une matrice de recommandation d’attribution",
+          ],
+          sources: ["Quatre réponses à ITT-MER-SCM-2101", "S7-SCM-TC-2026 §4.1 — Incoterms et garantie de référence", "QA-MAN-2026-EPCI — alignement des préavis FAT / ITP"],
+        }
+      }
+      return {
+        chain: [
+          "Chargement du registre des appels d’offres et application de l’avancement de session à chaque lot",
+          "Calcul des jours restants pour chaque fenêtre d’appel d’offres de 21 jours",
+          "Rattachement des lots aux documents contrôlés, normes et interfaces de charte",
+          "Classement par date limite de soumission, objectif d’économies et chemin critique d’installation",
+        ],
+        sources: [`${packages.length} lots actifs sur le pipeline ${PROJECT.shortName}`, `${closed.length} lots attribués dans le registre des économies`, `${DOCUMENTS.length} documents contrôlés au registre projet`],
+      }
+    }
     if (activePage === "tender-studio") {
       return {
         chain: [
@@ -606,7 +655,7 @@ function ReasoningPanel() {
         `${DOCUMENTS.length} controlled documents in the project register`,
       ],
     }
-  }, [activePage])
+  }, [activePage, locale])
 
   const activeSpecialists = React.useMemo(() => {
     if (!hasAgentReasoning) return []
@@ -624,19 +673,19 @@ function ReasoningPanel() {
         <div className="rounded-lg bg-blue-50/50 dark:bg-blue-950/20 px-3 py-2.5 text-[11px] text-muted-foreground">
           <div className="flex items-center gap-1.5 mb-1">
             <SafeIcon name="Workflow" className="h-3 w-3 text-blue-500" />
-            <span className="font-medium text-foreground">Synthesis</span>
+            <span className="font-medium text-foreground">{t("intel.synthesis")}</span>
           </div>
-          BluePilot synthesized{" "}
+          {locale === "fr" ? "BluePilot a synthétisé les analyses " : "BluePilot synthesized "}
           {activeSpecialists.map((sid, i) => (
             <React.Fragment key={sid}>
-              {i > 0 && (i === activeSpecialists.length - 1 ? " and " : ", ")}
+              {i > 0 && (i === activeSpecialists.length - 1 ? ` ${t("intel.and")} ` : ", ")}
               <span className="inline-flex items-center gap-0.5">
                 <span className={cn("inline-block h-1.5 w-1.5 rotate-45", specialistMeta[sid].color)} />
                 {specialistLabels[sid]}
               </span>
             </React.Fragment>
           ))}{" "}
-          analysis for this view.
+          {locale === "fr" ? " pour cette vue." : " analysis for this view."}
         </div>
       )}
 
@@ -644,7 +693,7 @@ function ReasoningPanel() {
       <div className="space-y-2">
         <div className="flex items-center gap-1.5">
           <SafeIcon name="Link" className="h-3 w-3 text-muted-foreground" />
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Chain of Thought</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("intel.chainOfThought")}</p>
         </div>
         {isAgentLoading || (isThinking && !hasAgentReasoning) ? (
           <div className="space-y-2">
@@ -671,7 +720,7 @@ function ReasoningPanel() {
                 {step.sourceSpecialist && (
                   <span className="inline-flex items-center gap-1 mt-0.5 text-[9px] text-muted-foreground/50">
                     <SafeIcon name={specialistMeta[step.sourceSpecialist].icon} className="h-2.5 w-2.5" />
-                    {step.sourceSpecialist}
+                    {specialistLabels[step.sourceSpecialist]}
                   </span>
                 )}
               </div>
@@ -685,7 +734,7 @@ function ReasoningPanel() {
             </div>
           ))
         ) : (
-          <p className="text-[11px] text-muted-foreground/60">Reasoning will appear after BluePilot analysis.</p>
+          <p className="text-[11px] text-muted-foreground/60">{t("intel.reasoningPending")}</p>
         )}
       </div>
 
@@ -693,7 +742,7 @@ function ReasoningPanel() {
       <div className="space-y-2">
         <div className="flex items-center gap-1.5">
           <SafeIcon name="Database" className="h-3 w-3 text-muted-foreground" />
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Data Sources</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("intel.dataSources")}</p>
         </div>
         {staticReasoning.sources.map((s, i) => (
           <div key={i} className="flex items-center gap-2 text-[11px] text-muted-foreground">
@@ -707,12 +756,12 @@ function ReasoningPanel() {
       <div className="space-y-1">
         <div className="flex items-center gap-1.5">
           <SafeIcon name="ShieldCheck" className="h-3 w-3 text-muted-foreground" />
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Verification</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("intel.verification")}</p>
         </div>
         {agentPhase === "verifying" ? (
           <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-            <span style={{ backgroundImage: "linear-gradient(90deg, var(--color-muted-foreground) 25%, var(--color-foreground) 50%, var(--color-muted-foreground) 75%)", backgroundSize: "200% 100%", animation: "shimmer 2s ease-in-out infinite", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Verifying claims against source data…</span>
+            <span style={{ backgroundImage: "linear-gradient(90deg, var(--color-muted-foreground) 25%, var(--color-foreground) 50%, var(--color-muted-foreground) 75%)", backgroundSize: "200% 100%", animation: "shimmer 2s ease-in-out infinite", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{t("agent.verifyingClaims")}</span>
           </div>
         ) : verifierResult ? (
           <div className="space-y-1.5">
@@ -720,12 +769,12 @@ function ReasoningPanel() {
               {isVerified ? (
                 <>
                   <SafeIcon name="CheckCircle2" className="h-3.5 w-3.5 text-emerald-500" />
-                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">Verified against source data</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("intel.verified")}</span>
                 </>
               ) : (
                 <>
                   <SafeIcon name="AlertCircle" className="h-3.5 w-3.5 text-amber-500" />
-                  <span className="text-amber-600 dark:text-amber-400 font-medium">Corrections applied</span>
+                  <span className="text-amber-600 dark:text-amber-400 font-medium">{t("intel.correctionsApplied")}</span>
                 </>
               )}
             </div>
@@ -734,19 +783,19 @@ function ReasoningPanel() {
             )}
             {verifierResult.corrections.length > 0 && (
               <div className="text-[10px] text-amber-600/70 dark:text-amber-400/70">
-                {verifierResult.corrections.length} correction{verifierResult.corrections.length !== 1 ? "s" : ""} applied
+                {t("intel.correctionCount", { count: verifierResult.corrections.length })}
               </div>
             )}
           </div>
         ) : hasAgentReasoning ? (
           <div className="flex items-center gap-2 text-[11px] text-muted-foreground/50">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-muted" />
-            Awaiting verification
+            {t("intel.awaitingVerification")}
           </div>
         ) : (
           <div className="flex items-center gap-2 text-[11px] text-muted-foreground/50">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-muted" />
-            Static analysis — verification not applicable
+            {t("intel.staticVerification")}
           </div>
         )}
       </div>
@@ -759,18 +808,22 @@ function ReasoningPanel() {
 /* ------------------------------------------------------------------ */
 
 function ContextPanel() {
+  const { locale } = useStore()
+  const t = useT()
+  const localizedPackages = React.useMemo(() => localizedTenderPackages(locale), [locale])
+  const localizedClosed = React.useMemo(() => localizedClosedPackages(locale), [locale])
   const daysTo = React.useCallback((iso: string) => {
     return Math.round((new Date(iso).getTime() - new Date(TODAY).getTime()) / (1000 * 60 * 60 * 24))
   }, [])
 
   const upcoming = React.useMemo(
-    () => [...TENDER_PACKAGES].sort((a, b) => a.submissionDeadline.localeCompare(b.submissionDeadline)).slice(0, 4),
-    [],
+    () => [...localizedPackages].sort((a, b) => a.submissionDeadline.localeCompare(b.submissionDeadline)).slice(0, 4),
+    [localizedPackages],
   )
 
   const realisedTotal = React.useMemo(
-    () => CLOSED_PACKAGES.reduce((s, c) => s + c.realisedSavings, 0),
-    [],
+    () => localizedClosed.reduce((s, c) => s + c.realisedSavings, 0),
+    [localizedClosed],
   )
 
   return (
@@ -778,7 +831,7 @@ function ContextPanel() {
       <div className="space-y-2">
         <div className="flex items-center gap-1.5">
           <SafeIcon name="CalendarClock" className="h-3 w-3 text-muted-foreground" />
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Submission Deadlines</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("intel.submissionDeadlines")}</p>
         </div>
         <div className="rounded-lg border bg-background p-3 space-y-2">
           {upcoming.map(t => {
@@ -787,7 +840,7 @@ function ContextPanel() {
               <div key={t.id} className="flex items-center justify-between gap-2 text-[11px]">
                 <span className="min-w-0 truncate text-muted-foreground">{t.title}</span>
                 <span className={cn("shrink-0 font-mono font-medium", d <= 21 ? "text-amber-600 dark:text-amber-400" : "text-foreground")}>
-                  {d}d
+                  {d}{locale === "fr" ? " j" : "d"}
                 </span>
               </div>
             )
@@ -798,27 +851,27 @@ function ContextPanel() {
       <div className="space-y-2">
         <div className="flex items-center gap-1.5">
           <SafeIcon name="Ship" className="h-3 w-3 text-muted-foreground" />
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Vessel Charter</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("intel.vesselCharter")}</p>
         </div>
         <div className="rounded-lg border bg-background p-3 space-y-1.5">
           <div className="flex items-center justify-between gap-2 text-[11px]">
-            <span className="shrink-0 text-muted-foreground">Vessel</span>
+            <span className="shrink-0 text-muted-foreground">{t("intel.vessel")}</span>
             <span className="min-w-0 truncate font-medium">{CHARTER.vessel}</span>
           </div>
           <div className="flex items-center justify-between text-[11px]">
-            <span className="text-muted-foreground">Form</span>
+            <span className="text-muted-foreground">{t("intel.form")}</span>
             <span className="font-medium">{CHARTER.codeName}</span>
           </div>
           <div className="flex items-center justify-between text-[11px]">
-            <span className="text-muted-foreground">Hire rate</span>
-            <span className="font-mono font-medium">${CHARTER.hireRate.toLocaleString()}/day</span>
+            <span className="text-muted-foreground">{t("intel.hireRate")}</span>
+            <span className="font-mono font-medium">{new Intl.NumberFormat(localeTag(locale), { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(CHARTER.hireRate)}{t("intel.perDay")}</span>
           </div>
           <div className="flex items-center justify-between text-[11px]">
-            <span className="text-muted-foreground">Period</span>
-            <span className="font-medium">{CHARTER.charterPeriod}</span>
+            <span className="text-muted-foreground">{t("intel.period")}</span>
+            <span className="font-medium">{locale === "fr" ? "180 jours fermes, plus 30 jours en option" : CHARTER.charterPeriod}</span>
           </div>
           <p className="text-[10px] text-muted-foreground pt-1 border-t border-border/50">
-            Knock-for-knock liability flows down to every supplier working over the vessel side.
+            {t("intel.charterFlowdown")}
           </p>
         </div>
       </div>
@@ -826,17 +879,17 @@ function ContextPanel() {
       <div className="space-y-2">
         <div className="flex items-center gap-1.5">
           <SafeIcon name="PiggyBank" className="h-3 w-3 text-muted-foreground" />
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Savings Ledger</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("intel.savingsLedger")}</p>
         </div>
         <div className="rounded-lg border bg-background p-3 space-y-1">
           <p className="text-[11px] text-muted-foreground">
-            {CLOSED_PACKAGES.length} packages awarded to date on {PROJECT.shortName}.
+            {t("intel.awardedPackages", { count: localizedClosed.length, project: PROJECT.shortName })}
           </p>
           <p className="text-[11px] text-muted-foreground">
-            ${(realisedTotal / 1_000_000).toFixed(1)}M in negotiated savings booked against budget baselines.
+            {t("intel.savingsBooked", { amount: `$${(realisedTotal / 1_000_000).toFixed(1)}M` })}
           </p>
           <p className="text-[11px] text-muted-foreground">
-            {TENDER_PACKAGES.length} live packages currently moving through the procurement loop.
+            {t("intel.livePackagesLoop", { count: localizedPackages.length })}
           </p>
         </div>
       </div>
@@ -932,7 +985,7 @@ function AgentStatusStrip() {
           <>
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
             <span className="text-[10px] text-white/70 font-medium">
-              {bpFindings.length} finding{bpFindings.length !== 1 ? "s" : ""}
+              {t("intel.findingsCount", { count: bpFindings.length })}
             </span>
           </>
         )}
@@ -947,6 +1000,7 @@ function AgentStatusStrip() {
 
 function AgentFindingCard({ finding, annotations, index }: { finding: OrchestratorFinding; annotations?: string[]; index: number }) {
   const t = useT()
+  const { locale } = useStore()
   const specialistLabels: Record<SpecialistId, string> = {
     portfolio: t("agent.specialistPipeline"),
     pricing: t("agent.specialistCommercial"),
@@ -955,14 +1009,24 @@ function AgentFindingCard({ finding, annotations, index }: { finding: Orchestrat
   const motion = findingMotion(index)
   const reasoning = React.useMemo(() => {
     const base = reasoningFromFinding(finding)
+    const localized = {
+      ...base,
+      summary: base.summary ? localizeLegacyCopy(base.summary, locale) : undefined,
+      steps: base.steps?.map((step) => localizeLegacyCopy(step, locale)),
+      evidence: base.evidence?.map((item) => localizeLegacyCopy(item, locale)),
+      conclusion: base.conclusion ? localizeLegacyCopy(base.conclusion, locale) : undefined,
+      sources: base.sources?.map((source) => localizeLegacyCopy(source, locale)),
+    }
     if (annotations?.length) {
       return {
-        ...base,
-        evidence: [...(base.evidence ?? []), ...annotations.map((n) => `Verifier: ${n}`)],
+        ...localized,
+        evidence: [...(localized.evidence ?? []), ...annotations.map((n) => `${t("intel.verifierPrefix")}: ${localizeLegacyCopy(n, locale)}`)],
       }
     }
-    return base
-  }, [finding, annotations])
+    return localized
+  }, [finding, annotations, locale, t])
+  const localizedTitle = localizeLegacyCopy(finding.title, locale)
+  const localizedNarrative = localizeLegacyCopy(finding.narrative, locale)
 
   return (
     <article
@@ -981,17 +1045,17 @@ function AgentFindingCard({ finding, annotations, index }: { finding: Orchestrat
         </span>
       </div>
       <p className="flex items-center gap-1 text-xs font-semibold leading-snug">
-        {finding.title}
-        <ReasoningTooltip reasoning={reasoning} label={`Why ${finding.title}`} />
+        {localizedTitle}
+        <ReasoningTooltip reasoning={reasoning} label={t("intel.whyPrefix", { title: localizedTitle })} />
       </p>
       <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-3">
-        {finding.narrative}
+        {localizedNarrative}
       </p>
       {/* Attribution row: specialists + data sources */}
       <div className="flex items-center gap-1.5 pt-0.5 flex-wrap">
         {finding.sourceSpecialists && finding.sourceSpecialists.length > 0 && (
           <>
-            <span className="text-[9px] text-muted-foreground/60">via</span>
+            <span className="text-[9px] text-muted-foreground/60">{t("intel.via")}</span>
             {finding.sourceSpecialists.map(sid => (
               <span key={sid} className="flex items-center gap-1 text-[9px] text-muted-foreground/60">
                 <SafeIcon name={specialistMeta[sid].icon} className="h-3 w-3" />
@@ -1013,7 +1077,7 @@ function AgentFindingCard({ finding, annotations, index }: { finding: Orchestrat
                 src === "Terms" && "bg-amber-500/10 text-amber-600 dark:text-amber-400",
                 src === "Charter" && "bg-sky-500/10 text-sky-600 dark:text-sky-400",
               )}>
-                {src}
+                {t(`sourceType.${src}`)}
               </span>
             ))}
           </>
@@ -1082,7 +1146,7 @@ function ChatPanel() {
     <div className="flex flex-col h-full -m-3">
       {chatMessages.length > 0 && (
         <div className="shrink-0 flex items-center justify-between px-3 pt-2 pb-1">
-          <span className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/50">Conversation</span>
+          <span className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/50">{t("intel.conversation")}</span>
           <button
             type="button"
             onClick={clearChat}
@@ -1099,7 +1163,7 @@ function ChatPanel() {
           <div className="space-y-3">
             <div className="text-center py-4">
               <SafeIcon name="MessageCircle" className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
-              <p className="text-xs text-[var(--color-text-muted)]">Ask about what you see in this view</p>
+              <p className="text-xs text-[var(--color-text-muted)]">{t("intel.emptyPrompt")}</p>
             </div>
             <div className="space-y-1.5">
               {prompts.map((p) => (
@@ -1329,7 +1393,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
           <img src={FE_LOGO_FOR_DARK_UI} alt="Future Energy" className="h-11 w-auto drop-shadow-lg" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />
           <div className="text-center">
             <h1 className="text-2xl font-bold text-white tracking-tight">Future Energy Compass</h1>
-            <p className="mt-1.5 text-sm text-white/50">Supply Chain Command</p>
+            <p className="mt-1.5 text-sm text-white/50">{t("login.subtitle")}</p>
           </div>
         </div>
         <form onSubmit={handleSubmit} className="rounded-2xl border border-white/10 bg-white/[0.06] p-8 shadow-2xl backdrop-blur-xl">
@@ -1347,13 +1411,13 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" /><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
-                  Refreshing BluePilot intelligence…
+                  {t("login.loading")}
                 </span>
               ) : t("common.signIn")}
             </button>
           </div>
         </form>
-        <p className="mt-6 text-center text-[11px] text-white/30">Powered by Future Energy</p>
+        <p className="mt-6 text-center text-[11px] text-white/30">{t("login.footer")}</p>
       </div>
     </div>
   )

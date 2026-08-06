@@ -1,5 +1,7 @@
 "use client"
 
+import { localizeActiveCopy } from "../_i18n/legacy"
+
 import * as React from "react"
 import { Card, CardContent } from "@/components/ui/prosera/card"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
@@ -33,13 +35,13 @@ function AlertRow({ a }: { a: UrgencyAlert }) {
           <span className="text-xs font-semibold text-foreground">{a.regionLabel}</span>
           <span className="text-[10px] font-mono text-muted-foreground">{a.window}</span>
           <span className="text-[11px] text-muted-foreground">{a.eventType}</span>
-          <span className={`rounded-sm px-1.5 py-0.5 text-[8px] font-semibold tracking-wide ${s.chip}`}>{s.label}</span>
+          <span className={`rounded-sm px-1.5 py-0.5 text-[8px] font-semibold tracking-wide ${s.chip}`}>{localizeActiveCopy(s.label)}</span>
         </div>
-        <p className="text-[11px] leading-snug text-muted-foreground">{a.rationale}</p>
+        <p className="text-[11px] leading-snug text-muted-foreground">{localizeActiveCopy(a.rationale)}</p>
 
         {a.marketIntelligence.length > 0 && (
           <div className="space-y-1.5 pt-0.5">
-            <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Assigned actions by role</p>
+            <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">{localizeActiveCopy("Assigned actions by role")}</p>
             <ol className="space-y-1.5">
               {a.marketIntelligence.map((step) => {
                 const person = personForRole(step.owner)
@@ -55,7 +57,7 @@ function AlertRow({ a }: { a: UrgencyAlert }) {
                           {person.name} · {person.role}
                         </span>
                         <span className="text-muted-foreground/40">|</span>
-                        <span className="text-emerald-600 dark:text-emerald-400">Complete when: {step.target}</span>
+                        <span className="text-emerald-600 dark:text-emerald-400">{localizeActiveCopy("Complete when:")} {localizeActiveCopy(step.target)}</span>
                       </div>
                     </div>
                   </li>
@@ -67,7 +69,7 @@ function AlertRow({ a }: { a: UrgencyAlert }) {
       </div>
       <div className="flex shrink-0 flex-col items-end gap-0.5">
         <span className="font-mono text-xs font-semibold text-foreground">+{Math.round(a.demandSpikePct * 100)}%</span>
-        <span className="text-[9px] uppercase tracking-wider text-muted-foreground">demand</span>
+        <span className="text-[9px] uppercase tracking-wider text-muted-foreground">{localizeActiveCopy("demand")}</span>
       </div>
     </div>
   )
@@ -81,7 +83,7 @@ function AlertRow({ a }: { a: UrgencyAlert }) {
 export function WeatherMarketIntelligenceList({ alerts, max = 2 }: { alerts: UrgencyAlert[]; max?: number }) {
   const [showAll, setShowAll] = React.useState(false)
   if (alerts.length === 0) {
-    return <p className="text-[11px] text-muted-foreground">No forecast urgency windows in the current horizon.</p>
+    return <p className="text-[11px] text-muted-foreground">{localizeActiveCopy("No forecast urgency windows in the current horizon.")}</p>
   }
   const visible = showAll ? alerts : alerts.slice(0, max)
   return (
@@ -147,9 +149,9 @@ export function WeatherDemandStrip({
         <h3 className={`text-xs font-medium uppercase tracking-wider ${featured ? "text-foreground" : "text-muted-foreground"}`}>
           Weather Demand &amp; Pricing Power
         </h3>
-        <span className="text-[9px] uppercase tracking-wider text-muted-foreground/50">NOAA · EIA</span>
+        <span className="text-[9px] uppercase tracking-wider text-muted-foreground/50">{localizeActiveCopy("NOAA · EIA")}</span>
         {featured && (
-          <span className="rounded-sm bg-[var(--color-tint-brand)] px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-[var(--color-brand-strong)]">Live external signal</span>
+          <span className="rounded-sm bg-[var(--color-tint-brand)] px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-[var(--color-brand-strong)]">{localizeActiveCopy("Live external signal")}</span>
         )}
         {highCount > 0 && (
           <span className="rounded-sm bg-red-500/15 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-red-700 dark:text-red-400">
@@ -164,7 +166,7 @@ export function WeatherDemandStrip({
           {visible.length > 0 ? (
             visible.map((a, i) => <AlertRow key={`${a.region}-${a.window}-${i}`} a={a} />)
           ) : (
-            <p className="text-[11px] text-muted-foreground">No forecast urgency windows in the current horizon.</p>
+            <p className="text-[11px] text-muted-foreground">{localizeActiveCopy("No forecast urgency windows in the current horizon.")}</p>
           )}
         </div>
       </CardContent></Card>
@@ -192,9 +194,9 @@ export function WeatherCapacityCallout() {
       <SafeIcon name="CloudLightning" className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
       <div className="min-w-0 flex-1">
         <p className="text-[12px] leading-snug text-foreground">
-          <span className="font-semibold">{windowCount} forecast demand window{windowCount > 1 ? "s" : ""} ahead</span>
-          {highCount > 0 && <span className="text-muted-foreground"> ({highCount} high pricing-power)</span>}
-          <span className="text-muted-foreground"> — stage invoicing &amp; crew capacity ahead of the surge.</span>
+          <span className="font-semibold">{windowCount} {localizeActiveCopy(windowCount > 1 ? "forecast demand windows ahead" : "forecast demand window ahead")}</span>
+          {highCount > 0 && <span className="text-muted-foreground"> ({highCount} {localizeActiveCopy("high pricing-power")})</span>}
+          <span className="text-muted-foreground">{localizeActiveCopy("— stage invoicing &amp; crew capacity ahead of the surge.")}</span>
         </p>
       </div>
       <span className="shrink-0 text-[11px] font-medium text-[var(--color-brand-strong)] group-hover:underline">

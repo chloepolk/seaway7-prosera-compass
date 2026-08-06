@@ -9,20 +9,17 @@ import type { DiamondMission } from "../../_diamond/types"
 import { emailForPerson, type ActionTimelineEntry } from "./hub-types"
 import { ACTIVE_USER, NOTIFY_DELEGATE } from "./active-user"
 import { employeeForCurrentTimelineStep } from "./mission-timeline-helpers"
+import { useT } from "../../_i18n/use-t"
+import { useStore } from "../../_store"
+import { localeTag, type Locale, type TranslateFn } from "../../_i18n"
 
-function buildDefaultBody(mission: DiamondMission, narrative: string): string {
-  return `Dear colleague,
-
-I am writing with regard to ${mission.name}, currently active on the Action Centre.
-
-${narrative}
-
-The target is ${formatCurrency(mission.projectedValue)}, due by ${new Date(mission.targetCompletionAt).toLocaleDateString("en-GB")}.
-
-I should be grateful if you could review this and confirm the next steps at your earliest convenience. Please do not hesitate to contact me should you require any further information.
-
-Kind regards,
-[Your name]`
+function buildDefaultBody(mission: DiamondMission, narrative: string, locale: Locale, t: TranslateFn): string {
+  return t("modals.emailBody", {
+    name: mission.name,
+    narrative,
+    target: formatCurrency(mission.projectedValue, locale),
+    date: new Date(mission.targetCompletionAt).toLocaleDateString(localeTag(locale)),
+  })
 }
 
 type SendPhase = "idle" | "sending" | "sent"
@@ -38,6 +35,8 @@ export function EmailPreviewModal({
   timelineEntries: ActionTimelineEntry[]
   onClose: () => void
 }) {
+  const t = useT()
+  const { locale } = useStore()
   const [to, setTo] = React.useState(() => {
     const assignee = employeeForCurrentTimelineStep(timelineEntries)
     if (assignee) {
@@ -45,8 +44,8 @@ export function EmailPreviewModal({
     }
     return emailForPerson(personForRole(mission.owner).name)
   })
-  const [subject, setSubject] = React.useState(() => `Action needed: ${mission.name}`)
-  const [body, setBody] = React.useState(() => buildDefaultBody(mission, narrative))
+  const [subject, setSubject] = React.useState(() => t("modals.actionNeeded", { name: mission.name }))
+  const [body, setBody] = React.useState(() => buildDefaultBody(mission, narrative, locale, t))
   const [sendPhase, setSendPhase] = React.useState<SendPhase>("idle")
 
   const handleSend = () => {
@@ -65,7 +64,7 @@ export function EmailPreviewModal({
 
   return (
     <div className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto p-4 sm:p-8" role="dialog" aria-modal="true">
-      <button type="button" aria-label="Close" className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <button type="button" aria-label={t("modals.close")} className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 my-auto w-full max-w-2xl overflow-hidden rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] shadow-2xl">
         <div className="flex items-center justify-between border-b border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] px-4 py-2.5">
           <div className="flex items-center gap-2">
@@ -83,7 +82,7 @@ export function EmailPreviewModal({
               {sendPhase === "sending" && <SafeIcon name="Loader" className="h-3.5 w-3.5 animate-spin" />}
               {sendPhase === "sent" && <SafeIcon name="Check" className="h-3.5 w-3.5" />}
               {sendPhase === "idle" && <SafeIcon name="Send" className="h-3.5 w-3.5" />}
-              {sendPhase === "sending" ? "Sending…" : sendPhase === "sent" ? "Sent" : "Send"}
+              {sendPhase === "sending" ? t("common.sending") : sendPhase === "sent" ? t("common.sent") : t("common.send")}
             </button>
             <button
               type="button"
@@ -91,7 +90,7 @@ export function EmailPreviewModal({
               disabled={sendPhase === "sending"}
               className="rounded-md px-3 py-1.5 text-[12px] font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-canvas)] disabled:opacity-50"
             >
-              Discard
+              {t("modals.discard")}
             </button>
           </div>
           <button
@@ -106,12 +105,12 @@ export function EmailPreviewModal({
 
         <div className="max-h-[72vh] overflow-y-auto">
           <div className={fieldRowClass}>
-            <span className={fieldLabelClass}>From</span>
-            <span className="text-[13px] text-[var(--color-text-secondary)]">You &lt;{ACTIVE_USER.email}&gt;</span>
+            <span className={fieldLabelClass}>{t("modals.from")}</span>
+            <span className="text-[13px] text-[var(--color-text-secondary)]">{t("common.you")} &lt;{ACTIVE_USER.email}&gt;</span>
           </div>
 
           <div className={fieldRowClass}>
-            <label htmlFor="email-to" className={fieldLabelClass}>To</label>
+            <label htmlFor="email-to" className={fieldLabelClass}>{t("modals.to")}</label>
             <input
               id="email-to"
               type="email"
@@ -123,7 +122,7 @@ export function EmailPreviewModal({
           </div>
 
           <div className={fieldRowClass}>
-            <label htmlFor="email-subject" className={fieldLabelClass}>Subject</label>
+            <label htmlFor="email-subject" className={fieldLabelClass}>{t("modals.subject")}</label>
             <input
               id="email-subject"
               type="text"

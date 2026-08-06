@@ -12,8 +12,11 @@ import { STAGE_META, STAGE_ORDER, stageIndex, statusForStage } from "./stages"
 import type { ClosedRecord, DiamondMission, MissionHealth, MissionHorizon, MissionReasoningMeta, GateTask, GateTaskStatus } from "./types"
 import { personForRole } from "./org"
 import { agentFor, type MissionTheme } from "./agents"
-import { TENDER_PACKAGES, CLOSED_PACKAGES, TODAY, PROJECT, type TenderPackage } from "../data/future-energy/_tenders"
+import { TODAY, PROJECT, type TenderPackage } from "../data/future-energy/_tenders"
 import { componentById } from "../data/future-energy/_documents"
+import type { Locale } from "../_i18n/types"
+import { localizedClosedPackages, localizedTenderPackages } from "../_i18n/domain"
+import { createT, localeTag } from "../_i18n"
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -54,7 +57,48 @@ function statusFor(stageIdxForTask: number, missionStageIdx: number, isFirst: bo
 }
 
 /** Plain-language "how to do it" steps for a human-owned gate task. */
-function humanInstructions(stage: MissionStage, theme: MissionTheme, subject: string): string[] {
+function humanInstructions(stage: MissionStage, theme: MissionTheme, subject: string, locale: Locale): string[] {
+  if (locale === "fr") {
+    if (stage === "understand") {
+      return theme === "charter"
+        ? [
+            `Examinez les caractéristiques de la charte et la synthèse d’exposition préparées pour ${subject}.`,
+            "Confirmez le planning du navire par rapport au programme d’installation.",
+            "Signalez toute contrainte d’assurance maritime qui modifie le dossier commercial.",
+            "Validez le périmètre afin d’ouvrir la porte d’approbation.",
+          ]
+        : [
+            `Ouvrez le dossier d’exigences extrait pour ${subject} — paramètres, normes et conditions.`,
+            "Confirmez les paramètres techniques par rapport à la dernière révision contrôlée.",
+            "Vérifiez l’applicabilité des normes avec l’ingénieure qualité principale.",
+            "Validez la baseline des exigences afin de lancer la rédaction.",
+          ]
+    }
+    if (stage === "decide") return [
+      "Examinez le projet d’AO et le certificat d’audit par rapport aux documents sources.",
+      "Résolvez les écarts signalés par rapport aux conditions standard.",
+      "Enregistrez l’approbation et autorisez l’émission via le portail SCM.",
+    ]
+    if (stage === "execute") return theme === "charter"
+      ? [
+          `Signifiez l’avis d’option dans le délai contractuel pour ${subject}.`,
+          "Confirmez la location, la mobilisation et la livraison avec les Propriétaires.",
+          "Enregistrez l’avenant signé dans le dossier de charte.",
+        ]
+      : [
+          `Répondez aux clarifications des soumissionnaires pour ${subject} dans le délai de 7 jours.`,
+          "Examinez le dépouillement normalisé et les résultats de conformité technique.",
+          "Préparez la recommandation d’attribution pour approbation.",
+        ]
+    if (stage === "outcome_roi") return [
+      `Confirmez avec le responsable commercial les économies comptabilisées pour ${subject}.`,
+      "Informez la directrice SCM et clôturez le lot.",
+    ]
+    return [
+      `Confirmez l’objectif, la quantité et la baseline budgétaire du lot ${subject}.`,
+      "Nommez le responsable et l’approbateur.",
+    ]
+  }
   if (stage === "understand") {
     if (theme === "charter") return [
       `Review the charter particulars and exposure summary assembled for ${subject}.`,
@@ -98,7 +142,38 @@ function humanInstructions(stage: MissionStage, theme: MissionTheme, subject: st
 }
 
 /** Short "what the agent does" steps for an automated gate task. */
-function agentInstructions(stage: MissionStage, theme: MissionTheme, subject: string): string[] {
+function agentInstructions(stage: MissionStage, theme: MissionTheme, subject: string, locale: Locale): string[] {
+  if (locale === "fr") {
+    if (stage === "mission_created") return [
+      `Récupérer la baseline budgétaire et les documents contrôlés pour ${subject}.`,
+      "Rédiger la fiche du lot et le plan de recherche.",
+      "Planifier la fenêtre d’AO par rapport au programme d’installation.",
+    ]
+    if (stage === "understand") return theme === "charter"
+      ? [
+          "Récupérer les caractéristiques de la charte signée et les références tarifaires.",
+          "Quantifier l’exposition sur la fenêtre d’option.",
+          "Préparer le dossier commercial avec les clauses citées.",
+        ]
+      : [
+          "Récupérer la spécification technique contrôlée.",
+          "Cartographier les normes DNV / NORSOK / ISO applicables depuis le manuel QA.",
+          "Assembler les conditions commerciales et les clauses de charte, avec citations.",
+        ]
+    if (stage === "decide") return [
+      "Assembler le projet d’AO complet à partir des exigences extraites.",
+      "Exécuter l’audit contradictoire sur chaque document source.",
+      "Mettre le projet audité en attente d’approbation.",
+    ]
+    if (stage === "execute") return theme === "charter"
+      ? ["Préparer l’avis d’option et l’avenant.", "Suivre l’accusé de réception de la contrepartie.", "Classer les documents signés dans le dossier de charte."]
+      : ["Émettre le dossier d’AO via le portail SCM et enregistrer les accusés.", "Suivre les clarifications par rapport au délai de 7 jours.", "Normaliser les offres reçues dans le modèle de dépouillement."]
+    return [
+      `Rapprocher la valeur attribuée de la baseline budgétaire de ${subject}.`,
+      "Affecter les économies à ce lot.",
+      "Comptabiliser le résultat dans le ledger des économies.",
+    ]
+  }
   if (stage === "mission_created") return [
     `Pull the budget baseline and controlled documents for ${subject}.`,
     "Draft the package brief and retrieval plan.",
@@ -150,23 +225,25 @@ function buildTasksForMission(opts: {
   subject: string
   openedAt: string
   totalDays: number
+  locale: Locale
 }): Record<MissionStage, GateTask[]> {
-  const { missionId, theme, stage, humanRole, sponsorRole, subject, openedAt, totalDays } = opts
+  const { missionId, theme, stage, humanRole, sponsorRole, subject, openedAt, totalDays, locale } = opts
   const missionIdx = stageIndex(stage)
-  const human = personForRole(humanRole)
-  const sponsor = personForRole(sponsorRole)
+  const human = personForRole(humanRole, locale)
+  const sponsor = personForRole(sponsorRole, locale)
   const out = {} as Record<MissionStage, GateTask[]>
 
-  const understandLabel =
-    theme === "charter" ? `Assemble charter particulars & exposure case for ${subject}`
-      : `Extract spec parameters, standards & terms for ${subject}`
-  const executeLabel =
-    theme === "charter" ? `Prepare option notice and amendment for ${subject}`
-      : `Issue ITT via SCM Portal and tabulate bids for ${subject}`
+  const fr = locale === "fr"
+  const understandLabel = theme === "charter"
+    ? (fr ? `Assembler les caractéristiques de charte et l’exposition pour ${subject}` : `Assemble charter particulars & exposure case for ${subject}`)
+    : (fr ? `Extraire les paramètres, normes et conditions pour ${subject}` : `Extract spec parameters, standards & terms for ${subject}`)
+  const executeLabel = theme === "charter"
+    ? (fr ? `Préparer l’avis d’option et l’avenant pour ${subject}` : `Prepare option notice and amendment for ${subject}`)
+    : (fr ? `Émettre l’AO via le portail SCM et dépouiller les offres pour ${subject}` : `Issue ITT via SCM Portal and tabulate bids for ${subject}`)
 
   for (let i = 0; i < STAGE_ORDER.length; i++) {
     const s = STAGE_ORDER[i]
-    const agent = agentFor(s, theme)
+    const agent = agentFor(s, theme, locale)
     const tasks: GateTask[] = []
     // Stagger a due date per gate across the tender window.
     const gateDue = addDays(openedAt, Math.round(totalDays * ((i + 1) / STAGE_ORDER.length)))
@@ -182,7 +259,7 @@ function buildTasksForMission(opts: {
       status: statusFor(i, missionIdx, tasks.length === 0),
       why,
       doneWhen,
-      instructions: agentInstructions(s, theme, subject),
+      instructions: agentInstructions(s, theme, subject, locale),
       dueAt: gateDue,
       agentObjective: objective,
     })
@@ -196,47 +273,47 @@ function buildTasksForMission(opts: {
       status: statusFor(i, missionIdx, tasks.length === 0),
       why,
       doneWhen,
-      instructions: humanInstructions(s, theme, subject),
+      instructions: humanInstructions(s, theme, subject, locale),
       dueAt: gateDue,
     })
 
     if (s === "mission_created") {
       tasks.push(agentTask(
-        `Assemble package brief & retrieval plan for ${subject}`,
-        "Frame the package with the right controlled documents before drafting begins.",
-        "Brief approved and budget baseline captured.",
-        `Compile the package brief for ${subject}: budget baseline, controlled document set, and tender window.`,
+        fr ? `Assembler la fiche du lot et le plan de recherche pour ${subject}` : `Assemble package brief & retrieval plan for ${subject}`,
+        fr ? "Cadrer le lot avec les bons documents contrôlés avant le début de la rédaction." : "Frame the package with the right controlled documents before drafting begins.",
+        fr ? "Fiche approuvée et baseline budgétaire saisie." : "Brief approved and budget baseline captured.",
+        fr ? `Compiler la fiche du lot ${subject} : baseline budgétaire, documents contrôlés et fenêtre d’AO.` : `Compile the package brief for ${subject}: budget baseline, controlled document set, and tender window.`,
       ))
     } else if (s === "understand") {
       tasks.push(agentTask(
         understandLabel,
-        "Every requirement must trace to a controlled document before it enters the ITT.",
-        "Requirements extracted with document citations.",
-        `Extract the complete requirements baseline for ${subject}, citing every source document and revision.`,
+        fr ? "Chaque exigence doit renvoyer à un document contrôlé avant son intégration à l’AO." : "Every requirement must trace to a controlled document before it enters the ITT.",
+        fr ? "Exigences extraites avec citations documentaires." : "Requirements extracted with document citations.",
+        fr ? `Extraire la baseline complète des exigences pour ${subject}, en citant chaque document source et révision.` : `Extract the complete requirements baseline for ${subject}, citing every source document and revision.`,
       ))
-      tasks.push(humanTask(human, "Validate the requirements baseline", "Extraction is grounded, but scope judgement stays human.", "Owner signs off the requirements baseline."))
+      tasks.push(humanTask(human, fr ? "Valider la baseline des exigences" : "Validate the requirements baseline", fr ? "L’extraction est sourcée, mais le jugement sur le périmètre reste humain." : "Extraction is grounded, but scope judgement stays human.", fr ? "Le responsable valide la baseline des exigences." : "Owner signs off the requirements baseline."))
     } else if (s === "decide") {
       tasks.push(agentTask(
-        "Assemble the draft ITT and run the audit pass",
-        "The draft must survive adversarial verification before it reaches an approver.",
-        "Audited draft queued with a clean certificate.",
-        `Assemble the full ITT for ${subject} and verify every clause against the source documents.`,
+        fr ? "Assembler le projet d’AO et exécuter l’audit" : "Assemble the draft ITT and run the audit pass",
+        fr ? "Le projet doit réussir la vérification contradictoire avant d’être soumis à l’approbateur." : "The draft must survive adversarial verification before it reaches an approver.",
+        fr ? "Projet audité en attente avec certificat conforme." : "Audited draft queued with a clean certificate.",
+        fr ? `Assembler l’AO complet pour ${subject} et vérifier chaque clause par rapport aux documents sources.` : `Assemble the full ITT for ${subject} and verify every clause against the source documents.`,
       ))
-      tasks.push(humanTask(sponsor, "Approve the ITT and authorise issue", "Approval authority and deviation acceptance stay human.", "Approval recorded; issue authorised."))
+      tasks.push(humanTask(sponsor, fr ? "Approuver l’AO et autoriser son émission" : "Approve the ITT and authorise issue", fr ? "L’autorité d’approbation et l’acceptation des écarts restent humaines." : "Approval authority and deviation acceptance stay human.", fr ? "Approbation enregistrée ; émission autorisée." : "Approval recorded; issue authorised."))
     } else if (s === "execute") {
       tasks.push(agentTask(
         executeLabel,
-        "Turn the approved draft into a live tender with tracked returns.",
-        "Bids tabulated and conformity checked.",
-        `Run the live tender for ${subject}: issue, acknowledgements, clarifications and bid tabulation.`,
+        fr ? "Transformer le projet approuvé en AO actif avec suivi des offres." : "Turn the approved draft into a live tender with tracked returns.",
+        fr ? "Offres dépouillées et conformité vérifiée." : "Bids tabulated and conformity checked.",
+        fr ? `Gérer l’AO actif pour ${subject} : émission, accusés, clarifications et dépouillement.` : `Run the live tender for ${subject}: issue, acknowledgements, clarifications and bid tabulation.`,
       ))
-      tasks.push(humanTask(human, `Run clarifications and the award recommendation for ${subject}`, "Supplier negotiation and evaluation judgement stay human.", "Award recommendation submitted."))
+      tasks.push(humanTask(human, fr ? `Gérer les clarifications et la recommandation d’attribution pour ${subject}` : `Run clarifications and the award recommendation for ${subject}`, fr ? "La négociation fournisseur et le jugement d’évaluation restent humains." : "Supplier negotiation and evaluation judgement stay human.", fr ? "Recommandation d’attribution soumise." : "Award recommendation submitted."))
     } else {
       tasks.push(agentTask(
-        "Reconcile awarded value and book the savings",
-        "Prove the tender created value and attribute it to the package.",
-        "Savings booked to the ledger.",
-        `Reconcile awarded value against budget for ${subject} and post the savings attribution.`,
+        fr ? "Rapprocher la valeur attribuée et comptabiliser les économies" : "Reconcile awarded value and book the savings",
+        fr ? "Démontrer la valeur créée par l’AO et l’affecter au lot." : "Prove the tender created value and attribute it to the package.",
+        fr ? "Économies comptabilisées dans le ledger." : "Savings booked to the ledger.",
+        fr ? `Rapprocher la valeur attribuée du budget pour ${subject} et comptabiliser les économies.` : `Reconcile awarded value against budget for ${subject} and post the savings attribution.`,
       ))
     }
 
@@ -277,7 +354,9 @@ function buildGateProgress(stage: MissionStage): Record<MissionStage, { done: nu
 /*  Tender packages → missions                                         */
 /* ------------------------------------------------------------------ */
 
-function missionFromPackage(pkg: TenderPackage, stageOverride?: MissionStage): DiamondMission {
+function missionFromPackage(pkg: TenderPackage, locale: Locale, stageOverride?: MissionStage): DiamondMission {
+  const t = createT(locale)
+  const fr = locale === "fr"
   const stage = stageOverride ?? pkg.stage
   const idx = stageIndex(stage)
   const theme: MissionTheme = pkg.componentId ? "supply" : "charter"
@@ -299,11 +378,28 @@ function missionFromPackage(pkg: TenderPackage, stageOverride?: MissionStage): D
           : pkg.confidence >= 0.76 ? "at_risk"
             : "overdue"
 
-  const subject = spec?.shortName ?? pkg.title
+  const subject = locale === "fr" ? pkg.title : spec?.shortName ?? pkg.title
 
+  const number = (value: number) => value.toLocaleString(localeTag(locale))
+  const money = (value: number) => new Intl.NumberFormat(localeTag(locale), { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value)
+  const date = (value: string) => new Date(value).toLocaleDateString(localeTag(locale))
   const reasoningMeta: MissionReasoningMeta = {
     theme,
-    steps: theme === "charter"
+    steps: fr
+      ? theme === "charter"
+        ? [
+            "Récupération des caractéristiques de la charte signée (taux, période ferme, fenêtre d’option)",
+            "Comparaison du taux d’option au marché spot HLCV évalué",
+            "Quantification de l’exposition évitée sur la fenêtre d’option de 30 jours",
+            "Planification de l’avis d’option dans le délai contractuel",
+          ]
+        : [
+            `Récupération de la spécification contrôlée ${spec?.docRef ?? ""} et verrouillage de la baseline des paramètres`,
+            "Cartographie des normes applicables depuis la matrice QA-MAN-2026-EPCI",
+            "Ajout des conditions d’achat (S7-SCM-TC-2026) et des clauses de charte",
+            "Dimensionnement de l’objectif d’économies selon le budget et la concurrence",
+          ]
+      : theme === "charter"
       ? [
         "Pulled executed charter particulars (hire rate, firm period, option window)",
         "Benchmarked the option rate against the assessed spot HLCV market",
@@ -317,30 +413,32 @@ function missionFromPackage(pkg: TenderPackage, stageOverride?: MissionStage): D
         "Sized the savings target from the budget baseline and bidder competition",
       ],
     equations: [
-      `Budget baseline = $${pkg.budget.toLocaleString()} (${pkg.quantity})`,
+      fr ? `Baseline budgétaire = ${money(pkg.budget)} (${pkg.quantity})` : `Budget baseline = $${number(pkg.budget)} (${pkg.quantity})`,
       realizedValue
-        ? `Savings booked = $${realizedValue.toLocaleString()} vs. target $${pkg.targetSavings.toLocaleString()}`
-        : `Savings target = $${pkg.targetSavings.toLocaleString()} (${((pkg.targetSavings / pkg.budget) * 100).toFixed(1)}% of budget across ${pkg.bidders} bidders)`,
-      `Tender cost = $${pkg.tenderCost.toLocaleString()} — return ${(projectedValue / pkg.tenderCost).toFixed(1)}× if target holds`,
-      `Window: opened ${pkg.openedAt}, submissions close ${pkg.submissionDeadline} (${remaining > 0 ? `${remaining} days remaining` : "closed"})`,
+        ? (fr ? `Économies comptabilisées = ${money(realizedValue)} vs objectif ${money(pkg.targetSavings)}` : `Savings booked = $${number(realizedValue)} vs. target $${number(pkg.targetSavings)}`)
+        : (fr ? `Objectif d’économies = ${money(pkg.targetSavings)} (${number((pkg.targetSavings / pkg.budget) * 100)} % du budget, ${pkg.bidders} soumissionnaires)` : `Savings target = $${number(pkg.targetSavings)} (${((pkg.targetSavings / pkg.budget) * 100).toFixed(1)}% of budget across ${pkg.bidders} bidders)`),
+      fr ? `Coût de l’AO = ${money(pkg.tenderCost)} — retour ${(projectedValue / pkg.tenderCost).toLocaleString(localeTag(locale), { maximumFractionDigits: 1 })}× si l’objectif est atteint` : `Tender cost = $${number(pkg.tenderCost)} — return ${(projectedValue / pkg.tenderCost).toFixed(1)}× if target holds`,
+      fr ? `Fenêtre : ouverture ${date(pkg.openedAt)}, clôture des offres ${date(pkg.submissionDeadline)} (${remaining > 0 ? `${remaining} jours restants` : "clôturée"})` : `Window: opened ${date(pkg.openedAt)}, submissions close ${date(pkg.submissionDeadline)} (${remaining > 0 ? `${remaining} days remaining` : "closed"})`,
     ],
     sources: theme === "charter"
       ? [
-        "SUPPLYTIME 2026 — Executed charter party (Legal & Maritime)",
-        "S7-SCM-TC-2026-v1.0 — Standard procurement terms",
-        "Internal — Q3 2026 HLCV market assessment",
+        fr ? "SUPPLYTIME 2026 — Charte signée (Juridique & maritime)" : "SUPPLYTIME 2026 — Executed charter party (Legal & Maritime)",
+        fr ? "S7-SCM-TC-2026-v1.0 — Conditions d’achat standard" : "S7-SCM-TC-2026-v1.0 — Standard procurement terms",
+        fr ? "Interne — Évaluation du marché HLCV T3 2026" : "Internal — Q3 2026 HLCV market assessment",
       ]
       : [
-        `${spec?.docRef ?? "Engineering specification"} — ${spec?.name ?? pkg.title}`,
-        "QA-MAN-2026-EPCI — Corporate QA manual, standards matrix §3",
-        "S7-SCM-TC-2026-v1.0 — Standard procurement terms",
-        ...(pkg.involvesVessel ? ["SUPPLYTIME 2026 — Charter flow-down clauses"] : []),
+        fr
+          ? `${spec?.docRef ?? "Spécification technique"} — Spécification technique contrôlée : ${pkg.title}`
+          : `${spec?.docRef ?? "Engineering specification"} — ${spec?.name ?? pkg.title}`,
+        fr ? "QA-MAN-2026-EPCI — Manuel QA, matrice des normes §3" : "QA-MAN-2026-EPCI — Corporate QA manual, standards matrix §3",
+        fr ? "S7-SCM-TC-2026-v1.0 — Conditions d’achat standard" : "S7-SCM-TC-2026-v1.0 — Standard procurement terms",
+        ...(pkg.involvesVessel ? [fr ? "SUPPLYTIME 2026 — Clauses découlant de la charte" : "SUPPLYTIME 2026 — Charter flow-down clauses"] : []),
       ],
   }
 
   const critical = stage === "outcome_roi" ? null : {
     owner: pkg.ownerRole,
-    label: STAGE_META[stage].checklist[Math.min(2, STAGE_META[stage].checklist.length - 1)],
+    label: t(`stages.${stage}.checklist${Math.min(2, STAGE_META[stage].checklist.length - 1)}`),
     status: (health === "overdue" ? "blocked" : idx >= 1 ? "in_progress" : "pending") as "blocked" | "in_progress" | "pending",
   }
 
@@ -349,8 +447,10 @@ function missionFromPackage(pkg: TenderPackage, stageOverride?: MissionStage): D
   return {
     id: pkg.id,
     name: `${pkg.title} · ${pkg.quantity}`,
-    objective: `Take ${pkg.packageRef} from scope to award for ${PROJECT.shortName} — ${pkg.quantity} against a $${(pkg.budget / 1_000_000).toFixed(1)}M budget, targeting $${Math.round(pkg.targetSavings / 1000)}k in negotiated savings.`,
-    source: { page: "tender-studio", label: "Open in Tender Studio" },
+    objective: fr
+      ? `Conduire ${pkg.packageRef} du cadrage à l’attribution pour ${PROJECT.shortName} — ${pkg.quantity}, budget de ${money(pkg.budget)}, objectif de ${money(pkg.targetSavings)} d’économies négociées.`
+      : `Take ${pkg.packageRef} from scope to award for ${PROJECT.shortName} — ${pkg.quantity} against a $${(pkg.budget / 1_000_000).toFixed(1)}M budget, targeting $${Math.round(pkg.targetSavings / 1000)}k in negotiated savings.`,
+    source: { page: "tender-studio", label: fr ? "Ouvrir dans le Studio d’appels d’offres" : "Open in Tender Studio" },
     stage,
     status: statusForStage[stage],
     health,
@@ -365,7 +465,7 @@ function missionFromPackage(pkg: TenderPackage, stageOverride?: MissionStage): D
     risk: pkg.risk,
     evidence: pkg.evidence,
     successMetric: {
-      label: theme === "charter" ? "Charter exposure avoided" : "Negotiated savings vs. budget",
+      label: theme === "charter" ? (fr ? "Exposition de charte évitée" : "Charter exposure avoided") : (fr ? "Économies négociées vs budget" : "Negotiated savings vs. budget"),
       baseline: 0,
       target: projectedValue,
       current: currentMetric,
@@ -392,6 +492,7 @@ function missionFromPackage(pkg: TenderPackage, stageOverride?: MissionStage): D
       subject,
       openedAt: pkg.openedAt,
       totalDays,
+      locale,
     }),
     reasoningMeta,
   }
@@ -401,7 +502,8 @@ function missionFromPackage(pkg: TenderPackage, stageOverride?: MissionStage): D
 /*  Closed ledger (awarded package history)                            */
 /* ------------------------------------------------------------------ */
 
-const CLOSED_HISTORY: ClosedRecord[] = CLOSED_PACKAGES.map(c => ({
+function closedHistory(locale: Locale): ClosedRecord[] {
+  return localizedClosedPackages(locale).map(c => ({
   id: c.id,
   name: c.name,
   source: "tender-studio",
@@ -410,7 +512,8 @@ const CLOSED_HISTORY: ClosedRecord[] = CLOSED_PACKAGES.map(c => ({
   roiMultiple: Math.round((c.realisedSavings / c.cost) * 10) / 10,
   completionDate: c.completionDate,
   decisionMaker: c.decisionMaker,
-}))
+  }))
+}
 
 /* ------------------------------------------------------------------ */
 /*  Public API                                                         */
@@ -426,13 +529,13 @@ export interface DiamondData {
  * `stageOverrides` carries session progress (e.g. an ITT drafted in
  * Tender Studio advances its package to the approval gate).
  */
-export function buildDiamondMissions(stageOverrides?: Record<string, MissionStage>): DiamondData {
-  const missions = TENDER_PACKAGES.map(pkg => missionFromPackage(pkg, stageOverrides?.[pkg.id]))
+export function buildDiamondMissions(stageOverrides?: Record<string, MissionStage>, locale: Locale = "en"): DiamondData {
+  const missions = localizedTenderPackages(locale).map(pkg => missionFromPackage(pkg, locale, stageOverrides?.[pkg.id]))
 
   // Stable display order: furthest-progressed active work first, awarded last.
   missions.sort((a, b) => stageIndex(b.stage) - stageIndex(a.stage))
 
-  return { missions, closed: CLOSED_HISTORY }
+  return { missions, closed: closedHistory(locale) }
 }
 
 /* ------------------------------------------------------------------ */

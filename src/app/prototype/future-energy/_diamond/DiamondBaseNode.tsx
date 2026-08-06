@@ -1,10 +1,12 @@
+"use client"
+
 import { cn } from "@/lib/utils"
 import {
-  STAGE_META,
   BASE_POS,
   stageIndex,
   type MissionStage,
 } from "./stages"
+import { useT } from "../_i18n/use-t"
 
 // Gate index on the loop (matches stageIndex). Origin is gate 0; the loop
 // returns to it at Outcome, so both share the "0" marker.
@@ -27,8 +29,10 @@ export function DiamondBaseNode({
   selected: boolean
   onSelect: (s: MissionStage) => void
 }) {
+  const t = useT()
   const pos = BASE_POS[stage]
-  const meta = STAGE_META[stage]
+  const baseLabel = t(`stages.${stage}.baseLabel`)
+  const title = t(`stages.${stage}.title`)
   const reached = stageIndex(currentStage) >= stageIndex(stage)
   const isActive = stage === currentStage
 
@@ -43,7 +47,7 @@ export function DiamondBaseNode({
       onClick={() => onSelect(stage)}
       className="cursor-pointer"
       role="button"
-      aria-label={`${meta.baseLabel}: ${meta.title}`}
+      aria-label={`${baseLabel}: ${title}`}
     >
       {isActive ? (
         <circle r={28} className="fill-[var(--color-brand-primary)]" style={{ opacity: 0.16, animation: "adGlow 2.4s ease-in-out infinite" }} />
@@ -82,7 +86,7 @@ export function DiamondBaseNode({
         textAnchor={anchor}
         className="pointer-events-none fill-foreground text-[11px] font-semibold"
       >
-        {meta.baseLabel}
+        {baseLabel}
       </text>
       <text
         x={dx}
@@ -90,7 +94,7 @@ export function DiamondBaseNode({
         textAnchor={anchor}
         className="pointer-events-none fill-muted-foreground text-[10px]"
       >
-        {meta.title}
+        {title}
       </text>
     </g>
   )

@@ -1,5 +1,7 @@
 "use client"
 
+import { activeLocaleTag, formatActivePercent, formatActiveUsd, localizeActiveCopy } from "../_i18n/legacy"
+
 import * as React from "react"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { Card, CardContent } from "@/components/ui/prosera/card"
@@ -24,15 +26,11 @@ import type { IntelModule, ModuleSummary } from "../_modules/types"
 /* ------------------------------------------------------------------ */
 
 function fmtUsd(n: number): string {
-  const abs = Math.abs(n)
-  const sign = n < 0 ? "-" : ""
-  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`
-  if (abs >= 1_000) return `${sign}$${(abs / 1_000).toFixed(0)}k`
-  return `${sign}$${abs.toFixed(0)}`
+  return formatActiveUsd(n)
 }
 
 function fmtPct(n: number): string {
-  return `${(n * 100).toFixed(1)}%`
+  return formatActivePercent(n)
 }
 
 function median(values: number[]): number {
@@ -175,7 +173,7 @@ function BackButton({ onClick }: { onClick: () => void }) {
 function MetricPill({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col">
-      <span className="text-[11px] text-muted-foreground uppercase tracking-wider">{label}</span>
+      <span className="text-[11px] text-muted-foreground uppercase tracking-wider">{localizeActiveCopy(label)}</span>
       <span className="font-mono text-sm font-medium">{value}</span>
     </div>
   )
@@ -258,7 +256,7 @@ function useExecutiveBrief(
       const cityCloneCount = cloneCustomers.length
 
       return {
-        severity: cityExitCount > 3 ? "high" : vRegion < -0.05 ? "medium" : "info",
+        severity: cityExitCount >3 ? "high" : vRegion< -0.05 ? "medium" : "info",
         sentences: [
           `${selectedCity} services ${filteredCity.customerCount} customers across ${filteredCity.jobCount} jobs generating ${fmtUsd(filteredCity.totalRevenue)} revenue at ${fmtPct(cityMargin)} gross margin.`,
           `This market runs ${Math.abs(vRegion * 100).toFixed(1)} percentage points ${vRegion >= 0 ? "above" : "below"} ${regionLabel}'s ${fmtPct(regionMargin)} state average, ${vRegion >= 0 ? "indicating premium pricing power or favorable service mix" : "signaling pricing misalignment or cost overruns relative to the state"}.`,
@@ -289,19 +287,19 @@ function useExecutiveBrief(
       const regionCloneCount = cloneCustomers.length
 
       return {
-        severity: regionExitCount > 5 ? "high" : delta < -0.03 ? "medium" : "info",
+        severity: regionExitCount >5 ? "high" : delta< -0.03 ? "medium" : "info",
         sentences: [
-          `${label} processes ${filteredRegion.validated.jobCount.toLocaleString()} jobs across ${filteredRegion.customerCount} customers in ${cities.length} markets, generating ${fmtUsd(filteredRegion.validated.totalRevenue)} revenue at ${fmtPct(regionMargin)} gross margin.`,
+          `${localizeActiveCopy(label)} processes ${filteredRegion.validated.jobCount.toLocaleString(activeLocaleTag())} jobs across ${filteredRegion.customerCount} customers in ${cities.length} markets, generating ${fmtUsd(filteredRegion.validated.totalRevenue)} revenue at ${fmtPct(regionMargin)} gross margin.`,
           `The state runs ${Math.abs(delta * 100).toFixed(1)} percentage points ${delta >= 0 ? "above" : "below"} the portfolio average of ${fmtPct(portfolioSummary.validated.avgMarginPct)}, ${delta >= 0 ? "contributing positive margin uplift" : "dragging overall portfolio performance"}.`,
           `${bestCity && worstCity && bestCity.city !== worstCity.city ? `Intra-state variance is significant: ${bestCity.city} leads at ${fmtPct(bestCity.avgMarginPct)} while ${worstCity.city} trails at ${fmtPct(worstCity.avgMarginPct)} — a ${((bestCity.avgMarginPct - worstCity.avgMarginPct) * 100).toFixed(1)}pt spread requiring investigation.` : `Market performance is relatively uniform across ${cities.length} cities.`}`,
           `${regionExitCount} Dogs accounts are destroying ${fmtUsd(Math.abs(exitLoss))} in margin through negative-margin jobs, predominantly driven by pricing misalignment or unbilled labor.`,
-          `Prioritize Dogs cleanup ${worstCity ? `starting in ${worstCity.city}` : ""} and replicate ${regionCloneCount > 0 ? `the ${regionCloneCount} Stars accounts` : "proven margin models"} to establish acquisition DNA for PE scaling in ${label}.`,
+          `Prioritize Dogs cleanup ${worstCity ? `starting in ${worstCity.city}` : ""} and replicate ${regionCloneCount > 0 ? `the ${regionCloneCount} Stars accounts` : "proven margin models"} to establish acquisition DNA for PE scaling in ${localizeActiveCopy(label)}.`,
         ],
         bullets: [
           `Investigate ${cities.length} markets for pricing variance across ${fmtUsd(filteredRegion.validated.totalRevenue)} in revenue.`,
           `Escalate ${regionExitCount} Dogs accounts costing ${fmtUsd(Math.abs(exitLoss))} in margin destruction.`,
-          `${regionCloneCount > 0 ? `Protect ${regionCloneCount} Stars accounts anchoring ${label}'s profitability at ${fmtPct(filteredRegion.validated.avgMarginPct)}.` : `Develop Stars candidates through service mix optimization in ${label}.`}`,
-          `${bestCity ? `Benchmark ${bestCity.city}'s ${fmtPct(bestCity.avgMarginPct)} margin model for replication across ${label}.` : `Benchmark top-performing market for replication opportunities.`}`,
+          `${regionCloneCount > 0 ? `Protect ${regionCloneCount} Stars accounts anchoring ${localizeActiveCopy(label)}'s profitability at ${fmtPct(filteredRegion.validated.avgMarginPct)}.` : `Develop Stars candidates through service mix optimization in ${localizeActiveCopy(label)}.`}`,
+          `${bestCity ? `Benchmark ${bestCity.city}'s ${fmtPct(bestCity.avgMarginPct)} margin model for replication across ${localizeActiveCopy(label)}.` : `Benchmark top-performing market for replication opportunities.`}`,
           `${worstCity ? `Review ${worstCity.city}'s ${fmtPct(worstCity.avgMarginPct)} margin for pricing or operational intervention.` : `Review lowest-performing market for pricing or operational intervention.`}`,
           `${atRiskHigh.length > 0 ? `Monitor ${atRiskHigh.length} at-risk quotes exceeding pricing ceilings portfolio-wide.` : `No high-risk quotes currently flagged for pricing ceiling review.`}`,
           `${fuelDelta != null ? `Track fuel costs ${fuelDelta > 0 ? "up" : "down"} ${Math.abs(fuelDelta).toFixed(1)}% over the past 6 weeks for contract fuel clause review.` : `Monitor EIA fuel pricing for contract clause recalibration triggers.`}`,
@@ -451,16 +449,16 @@ function ScoreDistribution({ customers }: { customers: CustomerAggregate[] }) {
 
   return (
     <section className="space-y-3">
-      <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Customer Score (CI-04)</h3>
+      <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{localizeActiveCopy("Customer Score (CI-04)")}</h3>
       <Card><CardContent className="flex flex-col gap-4 p-4">
         <div className="flex items-end justify-between gap-3">
           <div className="flex flex-col">
-            <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Portfolio Avg · composite health</span>
+            <span className="text-[11px] uppercase tracking-wider text-muted-foreground">{localizeActiveCopy("Portfolio Avg · composite health")}</span>
             <span className="mt-1 font-mono text-2xl font-semibold leading-none text-indigo-600 dark:text-indigo-400">
               {dist.avgScore}<span className="text-sm font-normal text-muted-foreground">/100</span>
             </span>
           </div>
-          <span className="text-right text-[10px] uppercase tracking-wider text-muted-foreground/60">{dist.count} scored<br />additive to tier</span>
+          <span className="text-right text-[10px] uppercase tracking-wider text-muted-foreground/60">{dist.count} {localizeActiveCopy("scored")}<br />{localizeActiveCopy("additive to tier")}</span>
         </div>
 
         {/* 0-100 health gauge — distinct form from the categorical tier strip */}
@@ -473,7 +471,7 @@ function ScoreDistribution({ customers }: { customers: CustomerAggregate[] }) {
 
         {/* Grade mix — single-hue ordinal ramp */}
         <div className="space-y-1.5 border-t border-border/30 pt-3">
-          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80">Grade Mix</p>
+          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80">{localizeActiveCopy("Grade Mix")}</p>
           <div className="flex h-2 overflow-hidden rounded-full bg-muted/40">
             {gradeOrder.map(g => {
               const pct = (dist.gradeCounts[g] / dist.count) * 100
@@ -525,11 +523,11 @@ function RegionGrid() {
               <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{r.region}</span>
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
-              <div><span className="text-muted-foreground">Jobs</span><span className="ml-1.5 font-mono">{r.validated.jobCount.toLocaleString()}</span></div>
-              <div><span className="text-muted-foreground">Revenue</span><span className="ml-1.5 font-mono">{fmtUsd(r.validated.totalRevenue)}</span></div>
-              <div><span className="text-muted-foreground">Avg Margin</span><span className={`ml-1.5 font-mono ${isBest ? "text-emerald-600 dark:text-emerald-400" : ""}`}>{fmtPct(r.validated.avgMarginPct)}</span>{r.trend && <TrendArrow direction={r.trend.direction} />}</div>
-              <div><span className="text-muted-foreground">Avg Ticket</span><span className="ml-1.5 font-mono">{fmtUsd(r.validated.avgTicket)}</span></div>
-              <div><span className="text-muted-foreground">Customers</span><span className="ml-1.5 font-mono">{r.customerCount.toLocaleString()}</span></div>
+              <div><span className="text-muted-foreground">{localizeActiveCopy("Jobs")}</span><span className="ml-1.5 font-mono">{r.validated.jobCount.toLocaleString(activeLocaleTag())}</span></div>
+              <div><span className="text-muted-foreground">{localizeActiveCopy("Revenue")}</span><span className="ml-1.5 font-mono">{fmtUsd(r.validated.totalRevenue)}</span></div>
+              <div><span className="text-muted-foreground">{localizeActiveCopy("Avg Margin")}</span><span className={`ml-1.5 font-mono ${isBest ? "text-emerald-600 dark:text-emerald-400" : ""}`}>{fmtPct(r.validated.avgMarginPct)}</span>{r.trend && <TrendArrow direction={r.trend.direction} />}</div>
+              <div><span className="text-muted-foreground">{localizeActiveCopy("Avg Ticket")}</span><span className="ml-1.5 font-mono">{fmtUsd(r.validated.avgTicket)}</span></div>
+              <div><span className="text-muted-foreground">{localizeActiveCopy("Customers")}</span><span className="ml-1.5 font-mono">{r.customerCount.toLocaleString(activeLocaleTag())}</span></div>
             </div>
             {ss && (
               <div className="mt-2.5 space-y-1 border-t border-border/30 pt-2">
@@ -538,9 +536,9 @@ function RegionGrid() {
                     <span className="inline-block h-2 w-2 rounded-full bg-indigo-500" />
                     Customer Score
                   </span>
-                  <span className={`font-mono font-semibold ${gradeText}`} title="Revenue-weighted CI-04 composite score">
-                    {ss.weighted}<span className="text-[9px] font-normal text-muted-foreground"> wtd</span>
-                    <span className="ml-1.5 text-[10px] font-normal text-muted-foreground">{ss.median} med</span>
+                  <span className={`font-mono font-semibold ${gradeText}`} title={localizeActiveCopy("Revenue-weighted CI-04 composite score")}>
+                    {ss.weighted}<span className="text-[9px] font-normal text-muted-foreground">{localizeActiveCopy("wtd")}</span>
+                    <span className="ml-1.5 text-[10px] font-normal text-muted-foreground">{ss.median} {localizeActiveCopy("median short")}</span>
                   </span>
                 </div>
                 {ss.low && ss.high && ss.low.name !== ss.high.name && (
@@ -588,7 +586,7 @@ function CustomerTable({ customers, onCustomerClick, limit }: { customers: Custo
   return (
     <div>
       <div className="flex items-center gap-1.5 mb-3">
-        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mr-1">Sort by</span>
+        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mr-1">{localizeActiveCopy("Sort by")}</span>
         {(Object.keys(sortLabels) as SortKey[]).map(k => (
           <button
             key={k}
@@ -609,13 +607,13 @@ function CustomerTable({ customers, onCustomerClick, limit }: { customers: Custo
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left text-xs text-muted-foreground">
-              <th className="pb-2 pr-4 font-medium">Customer</th>
-              <th className={`pb-2 pr-4 font-medium text-right cursor-pointer hover:text-foreground transition-colors ${sortKey === "jobs" ? "text-foreground" : ""}`} onClick={() => setSortKey("jobs")}>Jobs{sortKey === "jobs" ? " ↓" : ""}</th>
-              <th className={`pb-2 pr-4 font-medium text-right cursor-pointer hover:text-foreground transition-colors ${sortKey === "revenue" ? "text-foreground" : ""}`} onClick={() => setSortKey("revenue")}>Revenue{sortKey === "revenue" ? " ↓" : ""}</th>
-              <th className={`pb-2 pr-4 font-medium text-right cursor-pointer hover:text-foreground transition-colors ${sortKey === "margin" ? "text-foreground" : ""}`} onClick={() => setSortKey("margin")}>Margin{sortKey === "margin" ? " ↓" : ""}</th>
-              <th className={`pb-2 pr-4 font-medium text-right cursor-pointer hover:text-foreground transition-colors ${sortKey === "marginPct" ? "text-foreground" : ""}`} onClick={() => setSortKey("marginPct")}>Margin %{sortKey === "marginPct" ? " ↓" : ""}</th>
-              <th className={`pb-2 pr-4 font-medium text-right cursor-pointer hover:text-foreground transition-colors ${sortKey === "score" ? "text-foreground" : ""}`} onClick={() => setSortKey("score")} title="CI-04 Composite Customer Score (0-100)">Score{sortKey === "score" ? " ↓" : ""}</th>
-              <th className="pb-2 font-medium">Tier</th>
+              <th className="pb-2 pr-4 font-medium">{localizeActiveCopy("Customer")}</th>
+              <th className={`pb-2 pr-4 font-medium text-right cursor-pointer hover:text-foreground transition-colors ${sortKey === "jobs" ? "text-foreground" : ""}`} onClick={() => setSortKey("jobs")}>{localizeActiveCopy("Jobs")}{sortKey === "jobs" ? " ↓" : ""}</th>
+              <th className={`pb-2 pr-4 font-medium text-right cursor-pointer hover:text-foreground transition-colors ${sortKey === "revenue" ? "text-foreground" : ""}`} onClick={() => setSortKey("revenue")}>{localizeActiveCopy("Revenue")}{sortKey === "revenue" ? " ↓" : ""}</th>
+              <th className={`pb-2 pr-4 font-medium text-right cursor-pointer hover:text-foreground transition-colors ${sortKey === "margin" ? "text-foreground" : ""}`} onClick={() => setSortKey("margin")}>{localizeActiveCopy("Margin")}{sortKey === "margin" ? " ↓" : ""}</th>
+              <th className={`pb-2 pr-4 font-medium text-right cursor-pointer hover:text-foreground transition-colors ${sortKey === "marginPct" ? "text-foreground" : ""}`} onClick={() => setSortKey("marginPct")}>{localizeActiveCopy("Margin %")}{sortKey === "marginPct" ? " ↓" : ""}</th>
+              <th className={`pb-2 pr-4 font-medium text-right cursor-pointer hover:text-foreground transition-colors ${sortKey === "score" ? "text-foreground" : ""}`} onClick={() => setSortKey("score")} title={localizeActiveCopy("CI-04 Composite Customer Score (0-100)")}>{localizeActiveCopy("Score")}{sortKey === "score" ? " ↓" : ""}</th>
+              <th className="pb-2 font-medium">{localizeActiveCopy("Tier")}</th>
             </tr>
           </thead>
           <tbody>
@@ -660,13 +658,13 @@ function JobTable({ jobs }: { jobs: Job[] }) {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b text-left text-xs text-muted-foreground">
-            <th className="pb-2 pr-4 font-medium">Job #</th>
-            <th className="pb-2 pr-4 font-medium">Type</th>
-            <th className="pb-2 pr-4 font-medium">Status</th>
-            <th className="pb-2 pr-4 font-medium text-right">Revenue</th>
-            <th className="pb-2 pr-4 font-medium text-right">Cost</th>
-            <th className="pb-2 pr-4 font-medium text-right">Margin</th>
-            <th className="pb-2 font-medium text-right">Margin %</th>
+            <th className="pb-2 pr-4 font-medium">{localizeActiveCopy("Job #")}</th>
+            <th className="pb-2 pr-4 font-medium">{localizeActiveCopy("Type")}</th>
+            <th className="pb-2 pr-4 font-medium">{localizeActiveCopy("Status")}</th>
+            <th className="pb-2 pr-4 font-medium text-right">{localizeActiveCopy("Revenue")}</th>
+            <th className="pb-2 pr-4 font-medium text-right">{localizeActiveCopy("Cost")}</th>
+            <th className="pb-2 pr-4 font-medium text-right">{localizeActiveCopy("Margin")}</th>
+            <th className="pb-2 font-medium text-right">{localizeActiveCopy("Margin %")}</th>
           </tr>
         </thead>
         <tbody>
@@ -772,10 +770,10 @@ function CustomerPortfolioDetail() {
       <TierStrip tierCounts={portfolioSummary.tierCounts} onTierClick={tier => setActiveTier(prev => prev === tier ? null : tier)} activeTier={activeTier} />
 
       <div className="flex items-baseline gap-2 text-sm text-muted-foreground">
-        <span>Portfolio Margin</span>
+        <span>{localizeActiveCopy("Portfolio Margin")}</span>
         <span className="font-mono font-medium text-foreground">{fmtPct(portfolioSummary.validated.avgMarginPct)}</span>
         <TrendArrow direction={data.portfolioTrend?.direction} />
-        <span className="text-xs font-mono">{portfolioSummary.validated.jobCount.toLocaleString()} validated jobs</span>
+        <span className="text-xs font-mono">{portfolioSummary.validated.jobCount.toLocaleString(activeLocaleTag())} {localizeActiveCopy("validated jobs")}</span>
       </div>
 
       <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
@@ -787,9 +785,9 @@ function CustomerPortfolioDetail() {
               <span className="ml-auto font-mono text-xs text-muted-foreground">{ts.count}</span>
             </div>
             <div className="space-y-1.5 text-xs">
-              <div className="flex justify-between"><span className="text-muted-foreground">Margin Share</span><span className={`font-mono ${ts.marginShare < 0 ? "text-red-500" : ""}`}>{fmtPct(ts.marginShare)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Gross Margin</span><span className={`font-mono ${ts.avgMarginPct < 0 ? "text-red-500" : ""}`}>{fmtPct(ts.avgMarginPct)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Avg Ticket</span><span className="font-mono">{fmtUsd(ts.avgTicket)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{localizeActiveCopy("Margin Share")}</span><span className={`font-mono ${ts.marginShare < 0 ? "text-red-500" : ""}`}>{fmtPct(ts.marginShare)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{localizeActiveCopy("Gross Margin")}</span><span className={`font-mono ${ts.avgMarginPct < 0 ? "text-red-500" : ""}`}>{fmtPct(ts.avgMarginPct)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{localizeActiveCopy("Avg Ticket")}</span><span className="font-mono">{fmtUsd(ts.avgTicket)}</span></div>
               {ts.topJobTypes.length > 0 && <div className="pt-1 text-[11px] text-muted-foreground truncate">{ts.topJobTypes.join(", ")}</div>}
             </div>
           </Card>
@@ -813,10 +811,10 @@ const CUSTOMER_MODULES: IntelModule[] = [
       const stars = c.filter(x => x.tier === "Stars").length
       const dogs = c.filter(x => x.tier === "Dogs").length
       return {
-        headline: `${data.portfolioSummary.totalCustomers.toLocaleString()} customers — ${stars} Stars anchor margin, ${dogs} Dogs need pricing or exit decisions.`,
+        headline: `${data.portfolioSummary.totalCustomers.toLocaleString(activeLocaleTag())} customers — ${stars} Stars anchor margin, ${dogs} Dogs need pricing or exit decisions.`,
         severity: dogs > 10 ? "high" : "medium",
         figures: [
-          { label: "Customers", value: data.portfolioSummary.totalCustomers.toLocaleString(), tone: "neutral" },
+          { label: "Customers", value: data.portfolioSummary.totalCustomers.toLocaleString(activeLocaleTag()), tone: "neutral" },
           { label: "Stars", value: stars.toString(), tone: "good" },
           { label: "Dogs", value: dogs.toString(), tone: dogs > 0 ? "bad" : "good" },
         ],
@@ -833,11 +831,11 @@ const CUSTOMER_MODULES: IntelModule[] = [
       const scored = data.customers.filter(x => x.customerScore)
       const avg = scored.length > 0 ? Math.round(scored.reduce((s, x) => s + x.customerScore!.score, 0) / scored.length) : 0
       return {
-        headline: `Portfolio composite health is ${avg}/100 across ${scored.length.toLocaleString()} scored customers.`,
+        headline: `Portfolio composite health is ${avg}/100 across ${scored.length.toLocaleString(activeLocaleTag())} scored customers.`,
         severity: avg < 50 ? "high" : avg < 65 ? "medium" : "info",
         figures: [
           { label: "Avg score", value: `${avg}/100`, tone: avg >= 65 ? "good" : "bad" },
-          { label: "Scored", value: scored.length.toLocaleString(), tone: "neutral" },
+          { label: "Scored", value: scored.length.toLocaleString(activeLocaleTag()), tone: "neutral" },
         ],
       }
     },
@@ -893,7 +891,7 @@ function MacroView() {
   return (
     <div className="space-y-6">
       <ExecutiveBrief computed={brief} />
-      <IntelBoard modules={CUSTOMER_MODULES} boardId="customer-intel" title="Customer Intel Apps" />
+      <IntelBoard modules={CUSTOMER_MODULES} boardId="customer-intel" title={localizeActiveCopy("Customer Intel Apps")} />
     </div>
   )
 }
@@ -942,9 +940,9 @@ function ScopedTierBreakdown({ customers, activeTier, onTierClick }: {
               <span className="ml-auto font-mono text-xs text-muted-foreground">{ts.count}</span>
             </div>
             <div className="space-y-1.5 text-xs">
-              <div className="flex justify-between"><span className="text-muted-foreground">Margin Share</span><span className={`font-mono ${ts.marginShare < 0 ? "text-red-500" : ""}`}>{fmtPct(ts.marginShare)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Gross Margin</span><span className={`font-mono ${ts.avgMarginPct < 0 ? "text-red-500" : ""}`}>{fmtPct(ts.avgMarginPct)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Avg Ticket</span><span className="font-mono">{fmtUsd(ts.avgTicket)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{localizeActiveCopy("Margin Share")}</span><span className={`font-mono ${ts.marginShare < 0 ? "text-red-500" : ""}`}>{fmtPct(ts.marginShare)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{localizeActiveCopy("Gross Margin")}</span><span className={`font-mono ${ts.avgMarginPct < 0 ? "text-red-500" : ""}`}>{fmtPct(ts.avgMarginPct)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{localizeActiveCopy("Avg Ticket")}</span><span className="font-mono">{fmtUsd(ts.avgTicket)}</span></div>
               {ts.topJobTypes.length > 0 && <div className="pt-1 text-[11px] text-muted-foreground truncate">{ts.topJobTypes.join(", ")}</div>}
             </div>
           </Card>
@@ -965,7 +963,7 @@ function DeltaPill({ value, baseline, label }: { value: number; baseline: number
   const isNegative = delta < -0.005
   return (
     <span className={`inline-flex items-center gap-0.5 text-[10px] font-mono ${isPositive ? "text-emerald-600 dark:text-emerald-400" : isNegative ? "text-red-500" : "text-muted-foreground"}`}>
-      {isPositive ? "+" : ""}{pts}pts {label}
+      {isPositive ? "+" : ""}{pts}pts {localizeActiveCopy(label)}
     </span>
   )
 }
@@ -1011,22 +1009,22 @@ function HeroCityCards({ cities, regionMargin, portfolioMargin, onCityClick, all
             className="cursor-pointer px-4 py-4 transition-all hover:shadow-md border-l-2 border-l-transparent hover:border-l-blue-500">
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-sm font-semibold">{c.city}</h4>
-              <span className="text-[10px] text-muted-foreground font-mono">{c.jobCount} jobs</span>
+              <span className="text-[10px] text-muted-foreground font-mono">{c.jobCount} {localizeActiveCopy("jobs")}</span>
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs mb-3">
-              <div><span className="text-muted-foreground">Revenue</span><span className="ml-1.5 font-mono">{fmtUsd(c.totalRevenue)}</span></div>
-              <div><span className="text-muted-foreground">Customers</span><span className="ml-1.5 font-mono">{c.customerCount}</span></div>
+              <div><span className="text-muted-foreground">{localizeActiveCopy("Revenue")}</span><span className="ml-1.5 font-mono">{fmtUsd(c.totalRevenue)}</span></div>
+              <div><span className="text-muted-foreground">{localizeActiveCopy("Customers")}</span><span className="ml-1.5 font-mono">{c.customerCount}</span></div>
               <div className="flex items-baseline gap-1">
-                <span className="text-muted-foreground">Margin</span>
+                <span className="text-muted-foreground">{localizeActiveCopy("Margin")}</span>
                 <span className={`font-mono ${c.avgMarginPct < 0 ? "text-red-500" : ""}`}>{fmtPct(c.avgMarginPct)}</span>
               </div>
-              <div><span className="text-muted-foreground">Avg Ticket</span><span className="ml-1.5 font-mono">{fmtUsd(c.avgTicket)}</span></div>
+              <div><span className="text-muted-foreground">{localizeActiveCopy("Avg Ticket")}</span><span className="ml-1.5 font-mono">{fmtUsd(c.avgTicket)}</span></div>
             </div>
             <div className="space-y-1.5">
               <CityTierBar customers={cityCustomers} />
               <div className="flex gap-3">
-                <DeltaPill value={c.avgMarginPct} baseline={regionMargin} label="vs region" />
-                <DeltaPill value={c.avgMarginPct} baseline={portfolioMargin} label="vs portfolio" />
+                <DeltaPill value={c.avgMarginPct} baseline={regionMargin} label={localizeActiveCopy("vs region")} />
+                <DeltaPill value={c.avgMarginPct} baseline={portfolioMargin} label={localizeActiveCopy("vs portfolio")} />
               </div>
             </div>
           </Card>
@@ -1059,7 +1057,7 @@ function CityTable({ cities, regionMargin, onCityClick }: {
   return (
     <div>
       <div className="flex items-center gap-2 mb-2">
-        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">All Cities</h3>
+        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{localizeActiveCopy("All Cities")}</h3>
         <div className="flex gap-1 ml-auto">
           {(["revenue", "margin", "jobs"] as const).map(key => (
             <button key={key} onClick={() => setSortKey(key)}
@@ -1073,12 +1071,12 @@ function CityTable({ cities, regionMargin, onCityClick }: {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left text-xs text-muted-foreground">
-              <th className="pb-2 pr-4 font-medium">City</th>
-              <th className="pb-2 pr-4 font-medium text-right">Jobs</th>
-              <th className="pb-2 pr-4 font-medium text-right">Revenue</th>
-              <th className="pb-2 pr-4 font-medium text-right">Margin %</th>
-              <th className="pb-2 pr-4 font-medium text-right">vs Region</th>
-              <th className="pb-2 font-medium text-right">Customers</th>
+              <th className="pb-2 pr-4 font-medium">{localizeActiveCopy("City")}</th>
+              <th className="pb-2 pr-4 font-medium text-right">{localizeActiveCopy("Jobs")}</th>
+              <th className="pb-2 pr-4 font-medium text-right">{localizeActiveCopy("Revenue")}</th>
+              <th className="pb-2 pr-4 font-medium text-right">{localizeActiveCopy("Margin %")}</th>
+              <th className="pb-2 pr-4 font-medium text-right">{localizeActiveCopy("vs Region")}</th>
+              <th className="pb-2 font-medium text-right">{localizeActiveCopy("Customers")}</th>
             </tr>
           </thead>
           <tbody>
@@ -1097,7 +1095,7 @@ function CityTable({ cities, regionMargin, onCityClick }: {
                   <td className="py-2 pr-4 text-right font-mono">{c.jobCount}</td>
                   <td className="py-2 pr-4 text-right font-mono">{fmtUsd(c.totalRevenue)}</td>
                   <td className={`py-2 pr-4 text-right font-mono ${c.avgMarginPct < 0 ? "text-red-500" : ""}`}>{fmtPct(c.avgMarginPct)}</td>
-                  <td className={`py-2 pr-4 text-right font-mono text-xs ${delta > 0.005 ? "text-emerald-600 dark:text-emerald-400" : delta < -0.005 ? "text-red-500" : "text-muted-foreground"}`}>
+                  <td className={`py-2 pr-4 text-right font-mono text-xs ${delta >0.005 ? "text-emerald-600 dark:text-emerald-400" : delta< -0.005 ? "text-red-500" : "text-muted-foreground"}`}>
                     {delta > 0.005 ? "+" : ""}{(delta * 100).toFixed(1)}pts
                   </td>
                   <td className="py-2 text-right font-mono">{c.customerCount}</td>
@@ -1144,23 +1142,23 @@ function RegionDrillView() {
 
       <div className="space-y-3">
         <div className="flex items-baseline gap-3">
-          <h2 className="text-xl font-semibold">{label}</h2>
+          <h2 className="text-xl font-semibold">{localizeActiveCopy(label)}</h2>
           <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{selectedRegion}</span>
         </div>
         <div className="flex flex-wrap items-center gap-6">
-          <MetricPill label="Jobs" value={filteredRegion.validated.jobCount.toLocaleString()} />
-          <MetricPill label="Revenue" value={fmtUsd(filteredRegion.validated.totalRevenue)} />
+          <MetricPill label={localizeActiveCopy("Jobs")} value={filteredRegion.validated.jobCount.toLocaleString(activeLocaleTag())} />
+          <MetricPill label={localizeActiveCopy("Revenue")} value={fmtUsd(filteredRegion.validated.totalRevenue)} />
           <div className="flex flex-col">
-            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Margin %</span>
+            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">{localizeActiveCopy("Margin %")}</span>
             <div className="flex items-baseline gap-2">
               <span className="font-mono text-sm font-medium">{fmtPct(regionMargin)} <TrendArrow direction={filteredRegion.trend?.direction} /></span>
-              <span className={`text-[10px] font-mono ${marginDelta > 0.005 ? "text-emerald-600 dark:text-emerald-400" : marginDelta < -0.005 ? "text-red-500" : "text-muted-foreground"}`}>
+              <span className={`text-[10px] font-mono ${marginDelta >0.005 ? "text-emerald-600 dark:text-emerald-400" : marginDelta< -0.005 ? "text-red-500" : "text-muted-foreground"}`}>
                 {marginDelta > 0 ? "+" : ""}{(marginDelta * 100).toFixed(1)}pts vs portfolio
               </span>
             </div>
           </div>
-          <MetricPill label="Avg Ticket" value={fmtUsd(filteredRegion.validated.avgTicket)} />
-          <MetricPill label="Customers" value={filteredRegion.customerCount.toLocaleString()} />
+          <MetricPill label={localizeActiveCopy("Avg Ticket")} value={fmtUsd(filteredRegion.validated.avgTicket)} />
+          <MetricPill label={localizeActiveCopy("Customers")} value={filteredRegion.customerCount.toLocaleString(activeLocaleTag())} />
         </div>
       </div>
 
@@ -1174,7 +1172,7 @@ function RegionDrillView() {
         <>
           <Separator />
           <section className="space-y-4">
-            <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Top Markets</h3>
+            <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{localizeActiveCopy("Top Markets")}</h3>
             <HeroCityCards
               cities={heroCities}
               regionMargin={regionMargin}
@@ -1195,7 +1193,7 @@ function RegionDrillView() {
 
       <Separator />
       <section className="space-y-4">
-        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label} Customers</h3>
+        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{localizeActiveCopy(label)} · {localizeActiveCopy("Customers")}</h3>
         <CustomerTable customers={filteredByTier} onCustomerClick={drillToCustomer} limit={20} />
       </section>
     </div>
@@ -1236,18 +1234,18 @@ function CityDrillView() {
           <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{regionLabel}</span>
         </div>
         <div className="flex flex-wrap items-center gap-6">
-          <MetricPill label="Jobs" value={filteredCity.jobCount.toLocaleString()} />
-          <MetricPill label="Revenue" value={fmtUsd(filteredCity.totalRevenue)} />
+          <MetricPill label={localizeActiveCopy("Jobs")} value={filteredCity.jobCount.toLocaleString(activeLocaleTag())} />
+          <MetricPill label={localizeActiveCopy("Revenue")} value={fmtUsd(filteredCity.totalRevenue)} />
           <div className="flex flex-col">
-            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Margin %</span>
+            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">{localizeActiveCopy("Margin %")}</span>
             <div className="flex items-baseline gap-2">
               <span className="font-mono text-sm font-medium">{fmtPct(cityMargin)}</span>
-              <DeltaPill value={cityMargin} baseline={regionMargin} label="vs region" />
-              <DeltaPill value={cityMargin} baseline={portfolioMargin} label="vs portfolio" />
+              <DeltaPill value={cityMargin} baseline={regionMargin} label={localizeActiveCopy("vs region")} />
+              <DeltaPill value={cityMargin} baseline={portfolioMargin} label={localizeActiveCopy("vs portfolio")} />
             </div>
           </div>
-          <MetricPill label="Avg Ticket" value={fmtUsd(filteredCity.avgTicket)} />
-          <MetricPill label="Customers" value={filteredCity.customerCount.toLocaleString()} />
+          <MetricPill label={localizeActiveCopy("Avg Ticket")} value={fmtUsd(filteredCity.avgTicket)} />
+          <MetricPill label={localizeActiveCopy("Customers")} value={filteredCity.customerCount.toLocaleString(activeLocaleTag())} />
         </div>
       </div>
 
@@ -1261,7 +1259,7 @@ function CityDrillView() {
 
       <Separator />
       <section className="space-y-4">
-        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{selectedCity} Customers</h3>
+        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{selectedCity} · {localizeActiveCopy("Customers")}</h3>
         <CustomerTable customers={filteredByTier} onCustomerClick={drillToCustomer} />
       </section>
     </div>
@@ -1276,15 +1274,15 @@ function ScoreBreakdown({ score }: { score: CustomerScore }) {
   return (
     <section className="space-y-3">
       <div className="flex items-center gap-2">
-        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Customer Score (CI-04)</h3>
-        <span className="text-[9px] text-muted-foreground/50 uppercase tracking-wider">{score.businessType} profile</span>
+        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{localizeActiveCopy("Customer Score (CI-04)")}</h3>
+        <span className="text-[9px] text-muted-foreground/50 uppercase tracking-wider">{localizeActiveCopy(score.businessType)} · {localizeActiveCopy("profile")}</span>
       </div>
       <Card><CardContent className="p-4">
         <div className="flex items-start gap-5">
           <div className="flex shrink-0 flex-col items-center justify-center rounded-lg bg-muted/40 px-5 py-3">
             <span className={`font-mono text-3xl font-bold leading-none ${gradeText}`}>{score.score}</span>
-            <span className={`mt-1 text-xs font-semibold ${gradeText}`}>Grade {score.grade}</span>
-            <span className="mt-0.5 text-[9px] uppercase tracking-wider text-muted-foreground">of 100</span>
+            <span className={`mt-1 text-xs font-semibold ${gradeText}`}>{localizeActiveCopy("Grade")} {score.grade}</span>
+            <span className="mt-0.5 text-[9px] uppercase tracking-wider text-muted-foreground">{localizeActiveCopy("of 100")}</span>
           </div>
           <div className="flex-1 space-y-2.5">
             {score.factors.map(f => (
@@ -1292,10 +1290,10 @@ function ScoreBreakdown({ score }: { score: CustomerScore }) {
                 <div className="flex items-baseline justify-between gap-2 text-xs">
                   <span className="flex items-center gap-1.5">
                     <span className="font-mono font-semibold text-foreground">{f.key}</span>
-                    <span className="text-muted-foreground">{f.label}</span>
+                    <span className="text-muted-foreground">{localizeActiveCopy(f.label)}</span>
                     <span className="text-[10px] text-muted-foreground/50">×{f.weight.toFixed(2)}</span>
                     {f.mocked && (
-                      <span className="rounded-sm bg-amber-500/15 px-1 py-0.5 text-[8px] font-medium uppercase tracking-wide text-amber-700 dark:text-amber-400" title="Relies on assumed / missing-data fallback (weighting held at x1 per spec)">assumed</span>
+                      <span className="rounded-sm bg-amber-500/15 px-1 py-0.5 text-[8px] font-medium uppercase tracking-wide text-amber-700 dark:text-amber-400" title={localizeActiveCopy("Relies on assumed / missing-data fallback (weighting held at x1 per spec)")}>{localizeActiveCopy("assumed")}</span>
                     )}
                   </span>
                   <span className="font-mono text-muted-foreground">+{Math.round(f.weighted * 100)}</span>
@@ -1303,7 +1301,7 @@ function ScoreBreakdown({ score }: { score: CustomerScore }) {
                 <div className="h-1.5 overflow-hidden rounded-full bg-muted/50">
                   <div className={`h-full rounded-full ${f.mocked ? "bg-amber-400/60" : "bg-indigo-500"}`} style={{ width: `${Math.round(f.normalized * 100)}%` }} />
                 </div>
-                <p className="text-[10px] leading-snug text-muted-foreground/80">{f.detail}</p>
+                <p className="text-[10px] leading-snug text-muted-foreground/80">{localizeActiveCopy(f.detail)}</p>
               </div>
             ))}
           </div>
@@ -1341,7 +1339,7 @@ function WhitespaceLineBar({ line, max }: { line: ServiceLinePotential; max: num
         <span className="flex items-center gap-1.5">
           <span className="font-medium text-foreground">{line.line}</span>
           {!line.penetrated && (
-            <span className="rounded-sm bg-muted px-1 py-0.5 text-[8px] font-medium uppercase tracking-wide text-muted-foreground">untapped</span>
+            <span className="rounded-sm bg-muted px-1 py-0.5 text-[8px] font-medium uppercase tracking-wide text-muted-foreground">{localizeActiveCopy("untapped")}</span>
           )}
         </span>
         <span className="font-mono text-muted-foreground">
@@ -1361,25 +1359,25 @@ function WhitespaceSection({ tam }: { tam: CustomerTam }) {
   return (
     <section className="space-y-3">
       <div className="flex items-center gap-2">
-        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Account Expansion — Untapped Revenue</h3>
-        <span className="text-[9px] text-muted-foreground/50 uppercase tracking-wider">{tam.businessType} opportunity</span>
+        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{localizeActiveCopy("Account Expansion — Untapped Revenue")}</h3>
+        <span className="text-[9px] text-muted-foreground/50 uppercase tracking-wider">{localizeActiveCopy(tam.businessType)} · {localizeActiveCopy("opportunity")}</span>
       </div>
       <Card><CardContent className="p-4 space-y-4">
         <div className="flex flex-wrap gap-5">
           <div className="flex flex-col">
-            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Addressable</span>
-            <span className="font-mono text-sm font-semibold">{fmtUsd(tam.totalAddressable)}<span className="text-[10px] font-normal text-muted-foreground">/yr</span></span>
+            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">{localizeActiveCopy("Addressable")}</span>
+            <span className="font-mono text-sm font-semibold">{fmtUsd(tam.totalAddressable)}<span className="text-[10px] font-normal text-muted-foreground">{localizeActiveCopy("/yr")}</span></span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Current Wallet</span>
-            <span className="font-mono text-sm font-semibold">{fmtUsd(tam.currentWallet)}<span className="text-[10px] font-normal text-muted-foreground">/yr</span></span>
+            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">{localizeActiveCopy("Current Wallet")}</span>
+            <span className="font-mono text-sm font-semibold">{fmtUsd(tam.currentWallet)}<span className="text-[10px] font-normal text-muted-foreground">{localizeActiveCopy("/yr")}</span></span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Untapped Revenue</span>
-            <span className="font-mono text-sm font-semibold text-amber-600 dark:text-amber-400">{fmtUsd(tam.whitespace)}<span className="text-[10px] font-normal text-muted-foreground">/yr</span></span>
+            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">{localizeActiveCopy("Untapped Revenue")}</span>
+            <span className="font-mono text-sm font-semibold text-amber-600 dark:text-amber-400">{fmtUsd(tam.whitespace)}<span className="text-[10px] font-normal text-muted-foreground">{localizeActiveCopy("/yr")}</span></span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Wallet Share</span>
+            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">{localizeActiveCopy("Wallet Share")}</span>
             <span className="font-mono text-sm font-semibold">{(tam.sharePct * 100).toFixed(0)}%</span>
           </div>
         </div>
@@ -1387,23 +1385,23 @@ function WhitespaceSection({ tam }: { tam: CustomerTam }) {
         <div className="space-y-2.5 border-t border-border/30 pt-3">
           {tam.lines.map(l => <WhitespaceLineBar key={l.line} line={l} max={max} />)}
           <div className="flex items-center gap-3 pt-1 text-[10px] text-muted-foreground/70">
-            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-blue-500" /> Captured</span>
-            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-amber-400/50" /> Untapped</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-blue-500" />{localizeActiveCopy("Captured")}</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-amber-400/50" />{localizeActiveCopy("Untapped")}</span>
           </div>
         </div>
 
         {tam.intelPackage.length > 0 && (
           <div className="space-y-2 border-t border-border/30 pt-3">
-            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80">Intelligence Package</p>
+            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80">{localizeActiveCopy("Intelligence Package")}</p>
             <div className="space-y-1.5">
               {tam.intelPackage.map((s, i) => (
                 <div key={i} className="flex items-start gap-2 text-[11px] leading-snug">
                   <span className={`mt-0.5 shrink-0 rounded-sm px-1 py-0.5 text-[8px] font-semibold tracking-wide ${intelSourceStyle[s.source].cls}`}>{intelSourceStyle[s.source].label}</span>
                   <span className="flex-1">
-                    <span className="font-medium text-foreground">{s.label}.</span>{" "}
-                    <span className="text-muted-foreground">{s.detail}</span>
+                    <span className="font-medium text-foreground">{localizeActiveCopy(s.label)}.</span>{" "}
+                    <span className="text-muted-foreground">{localizeActiveCopy(s.detail)}</span>
                   </span>
-                  <span className={`shrink-0 text-[9px] uppercase ${confColor[s.confidence]}`} title="Signal confidence">{s.confidence}</span>
+                  <span className={`shrink-0 text-[9px] uppercase ${confColor[s.confidence]}`} title={localizeActiveCopy("Signal confidence")}>{s.confidence}</span>
                 </div>
               ))}
             </div>
@@ -1412,7 +1410,7 @@ function WhitespaceSection({ tam }: { tam: CustomerTam }) {
 
         {tam.recommendedActions.length > 0 && (
           <div className="space-y-2 border-t border-border/30 pt-3">
-            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80">Recommended Actions</p>
+            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80">{localizeActiveCopy("Recommended Actions")}</p>
             <div className="space-y-2">
               {tam.recommendedActions.map((p, i) => (
                 <div key={i} className="flex items-start justify-between gap-3 rounded-md bg-muted/30 px-3 py-2">
@@ -1420,7 +1418,7 @@ function WhitespaceSection({ tam }: { tam: CustomerTam }) {
                     <p className="text-xs font-medium text-foreground">{p.action}</p>
                     <p className="text-[10px] leading-snug text-muted-foreground">{p.how}</p>
                   </div>
-                  <span className="shrink-0 font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">+{fmtUsd(p.expectedAnnual)}/yr</span>
+                  <span className="shrink-0 font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">+{fmtUsd(p.expectedAnnual)}/{localizeActiveCopy("yr")}</span>
                 </div>
               ))}
             </div>
@@ -1440,20 +1438,20 @@ function WhitespaceRollup({ customers }: { customers: CustomerAggregate[] }) {
   const capturedPct = rollup.totalAddressable > 0 ? (rollup.currentWallet / rollup.totalAddressable) * 100 : 0
   return (
     <section className="space-y-3">
-      <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Untapped Revenue by Account</h3>
+      <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{localizeActiveCopy("Untapped Revenue by Account")}</h3>
       <Card><CardContent className="p-4 space-y-3">
         <div className="flex flex-wrap items-center gap-5">
           <div className="flex flex-col">
-            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Addressable</span>
-            <span className="font-mono text-base font-semibold">{fmtUsd(rollup.totalAddressable)}<span className="text-[10px] font-normal text-muted-foreground">/yr</span></span>
+            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">{localizeActiveCopy("Addressable")}</span>
+            <span className="font-mono text-base font-semibold">{fmtUsd(rollup.totalAddressable)}<span className="text-[10px] font-normal text-muted-foreground">{localizeActiveCopy("/yr")}</span></span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Captured</span>
+            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">{localizeActiveCopy("Captured")}</span>
             <span className="font-mono text-base font-semibold">{(rollup.sharePct * 100).toFixed(0)}%</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Untapped Revenue</span>
-            <span className="font-mono text-base font-semibold text-teal-600 dark:text-teal-400">{fmtUsd(rollup.whitespace)}<span className="text-[10px] font-normal text-muted-foreground">/yr</span></span>
+            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">{localizeActiveCopy("Untapped Revenue")}</span>
+            <span className="font-mono text-base font-semibold text-teal-600 dark:text-teal-400">{fmtUsd(rollup.whitespace)}<span className="text-[10px] font-normal text-muted-foreground">{localizeActiveCopy("/yr")}</span></span>
           </div>
         </div>
         <div className="space-y-1">
@@ -1462,19 +1460,19 @@ function WhitespaceRollup({ customers }: { customers: CustomerAggregate[] }) {
             <div className="h-full bg-teal-500" style={{ width: `${100 - capturedPct}%` }} />
           </div>
           <div className="flex gap-x-4 text-[10px] text-muted-foreground">
-            <span className="flex items-center gap-1.5"><span className="inline-block h-2 w-2 rounded-full bg-zinc-400 dark:bg-zinc-600" />Captured wallet</span>
-            <span className="flex items-center gap-1.5"><span className="inline-block h-2 w-2 rounded-full bg-teal-500" />Expansion opportunity</span>
+            <span className="flex items-center gap-1.5"><span className="inline-block h-2 w-2 rounded-full bg-zinc-400 dark:bg-zinc-600" />{localizeActiveCopy("Captured wallet")}</span>
+            <span className="flex items-center gap-1.5"><span className="inline-block h-2 w-2 rounded-full bg-teal-500" />{localizeActiveCopy("Expansion opportunity")}</span>
           </div>
         </div>
         <div className="space-y-1.5 border-t border-border/30 pt-3">
-          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80">Top Expansion Targets</p>
+          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80">{localizeActiveCopy("Top Expansion Targets")}</p>
           {rollup.topWhitespaceCustomers.slice(0, 5).map(t => (
             <div key={t.customerName} className="flex items-center justify-between gap-2 text-xs">
               <span className="flex items-center gap-2 truncate">
                 <span className="truncate font-medium text-foreground">{t.customerName}</span>
                 <span className="text-[10px] text-muted-foreground/60">{t.businessType}</span>
               </span>
-              <span className="shrink-0 font-mono text-teal-600 dark:text-teal-400">+{fmtUsd(t.whitespace)}/yr</span>
+              <span className="shrink-0 font-mono text-teal-600 dark:text-teal-400">+{fmtUsd(t.whitespace)}/{localizeActiveCopy("yr")}</span>
             </div>
           ))}
         </div>
@@ -1523,15 +1521,15 @@ function CustomerDrillView() {
           <TierBadge tier={c.tier} />
         </div>
         <div className="flex flex-wrap gap-6">
-          <MetricPill label="Jobs" value={c.validated.jobCount.toLocaleString()} />
-          <MetricPill label="Revenue" value={fmtUsd(c.validated.totalRevenue)} />
-          <MetricPill label="Margin" value={fmtUsd(c.validated.totalMargin)} />
+          <MetricPill label={localizeActiveCopy("Jobs")} value={c.validated.jobCount.toLocaleString(activeLocaleTag())} />
+          <MetricPill label={localizeActiveCopy("Revenue")} value={fmtUsd(c.validated.totalRevenue)} />
+          <MetricPill label={localizeActiveCopy("Margin")} value={fmtUsd(c.validated.totalMargin)} />
           <div className="flex flex-col">
-            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Margin %</span>
+            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">{localizeActiveCopy("Margin %")}</span>
             <span className="font-mono text-sm font-medium">{fmtPct(c.validated.avgMarginPct)} <TrendArrow direction={c.trend?.direction} /></span>
           </div>
-          <MetricPill label="Avg Ticket" value={fmtUsd(c.validated.avgTicket)} />
-          <MetricPill label="Negative Jobs" value={c.negativeMarginJobCount.toLocaleString()} />
+          <MetricPill label={localizeActiveCopy("Avg Ticket")} value={fmtUsd(c.validated.avgTicket)} />
+          <MetricPill label={localizeActiveCopy("Negative Jobs")} value={c.negativeMarginJobCount.toLocaleString(activeLocaleTag())} />
         </div>
       </div>
 
@@ -1540,12 +1538,12 @@ function CustomerDrillView() {
       {c.customerScore && <ScoreBreakdown score={c.customerScore} />}
 
       <section className="space-y-3">
-        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Service Mix</h3>
+        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{localizeActiveCopy("Service Mix")}</h3>
         <ServiceMixBar mix={c.jobTypeMix} />
       </section>
 
       <section className="space-y-3">
-        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Property Types</h3>
+        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{localizeActiveCopy("Property Types")}</h3>
         <div className="flex flex-wrap gap-2">
           {Object.entries(c.propertyTypeMix).sort((a, b) => b[1] - a[1]).map(([type, count]) => (
             <Badge key={type} variant="secondary" className="text-xs font-normal">
@@ -1566,14 +1564,14 @@ function CustomerDrillView() {
         <>
           <Separator />
           <section className="space-y-3">
-            <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Regional Variance</h3>
+            <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{localizeActiveCopy("Regional Variance")}</h3>
             <Card><CardContent className="p-4">
               <div className="space-y-3">
                 {regionMargins.map(rm => (
                   <div key={rm.region} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{rm.label}</span>
-                      <span className="text-xs text-muted-foreground font-mono">{rm.jobs} jobs</span>
+                      <span className="font-medium">{localizeActiveCopy(rm.label)}</span>
+                      <span className="text-xs text-muted-foreground font-mono">{rm.jobs} {localizeActiveCopy("jobs")}</span>
                     </div>
                     <div className="flex items-center gap-4">
                       <span className={`font-mono ${rm.margin < 0 ? "text-red-500" : ""}`}>{fmtUsd(rm.margin)}</span>
@@ -1590,7 +1588,7 @@ function CustomerDrillView() {
       <Separator />
 
       <section className="space-y-4">
-        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Jobs</h3>
+        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{localizeActiveCopy("Jobs")}</h3>
         <JobTable jobs={c.jobs} />
       </section>
     </div>

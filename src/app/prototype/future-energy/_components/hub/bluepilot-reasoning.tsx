@@ -3,9 +3,10 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import type { ReasoningStep } from "../../agents/_types"
+import { useT } from "../../_i18n/use-t"
 
 export function BluePilotReasoning({
-  title = "Why these actions, in this order",
+  title,
   paragraphs,
   className,
 }: {
@@ -13,6 +14,7 @@ export function BluePilotReasoning({
   paragraphs: string[]
   className?: string
 }) {
+  const t = useT()
   if (paragraphs.length === 0) return null
 
   return (
@@ -24,9 +26,9 @@ export function BluePilotReasoning({
     >
       <div className="flex items-center gap-2">
         <span className="size-[7px] shrink-0 rounded-full bg-[var(--color-brand-primary)]" aria-hidden />
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-muted)]">BluePilot reasoning</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-muted)]">{t("reasoning.title")}</p>
       </div>
-      <h2 className="mt-3 text-[16px] font-semibold text-[var(--color-text-primary)]">{title}</h2>
+      <h2 className="mt-3 text-[16px] font-semibold text-[var(--color-text-primary)]">{title ?? t("reasoning.actionsOrder")}</h2>
       <div className="mt-3 space-y-3">
         {paragraphs.map((p, i) => (
           <p key={i} className="text-[14px] leading-relaxed text-[var(--color-text-secondary)]">{p}</p>

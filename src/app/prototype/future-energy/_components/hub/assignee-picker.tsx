@@ -15,6 +15,10 @@ import {
 import { BluePilotMark } from "../bluepilot-mark"
 import { displayName } from "./active-user"
 import { avatarColor, avatarSrcById } from "./avatar-color"
+import { useT } from "../../_i18n/use-t"
+import { useStore } from "../../_store"
+import { localeTag } from "../../_i18n"
+import { localizeRole } from "../../_i18n/domain"
 
 export interface AssigneePickerProps {
   ownerRole: string
@@ -24,13 +28,14 @@ export interface AssigneePickerProps {
 }
 
 function RecommendBadge({ reasoning }: { reasoning: string }) {
+  const t = useT()
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <span
           tabIndex={0}
           className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-[var(--color-brand-strong)]"
-          aria-label="BluePilot recommendation"
+          aria-label={t("missionCard.recommendation")}
         >
           <SafeIcon name="Star" className="size-3.5 fill-current" />
         </span>
@@ -41,7 +46,7 @@ function RecommendBadge({ reasoning }: { reasoning: string }) {
       >
         <div className="flex items-start gap-2">
           <BluePilotMark size={16} className="mt-0.5 shrink-0 text-[var(--color-brand-strong)]" />
-          <p className="whitespace-pre-wrap">{reasoning}</p>
+          <p className="whitespace-pre-wrap">{t("missionCard.recommendationReason", { reason: reasoning })}</p>
         </div>
       </TooltipContent>
     </Tooltip>
@@ -49,6 +54,8 @@ function RecommendBadge({ reasoning }: { reasoning: string }) {
 }
 
 export function AssigneePicker({ ownerRole, selectedId, onSelect, className }: AssigneePickerProps) {
+  const t = useT()
+  const { locale } = useStore()
   const [query, setQuery] = React.useState("")
   const recommendations = React.useMemo(() => getAssignRecommendations(ownerRole), [ownerRole])
   const reasoningById = React.useMemo(
@@ -64,9 +71,9 @@ export function AssigneePicker({ ownerRole, selectedId, onSelect, className }: A
       const aRec = recIds.has(a.id)
       const bRec = recIds.has(b.id)
       if (aRec !== bRec) return aRec ? -1 : 1
-      return a.name.localeCompare(b.name)
+      return a.name.localeCompare(b.name, localeTag(locale))
     })
-  }, [filtered, recommendations])
+  }, [filtered, recommendations, locale])
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -79,14 +86,14 @@ export function AssigneePicker({ ownerRole, selectedId, onSelect, className }: A
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by name or position…"
+          placeholder={t("missionCard.searchPeople")}
           className="h-7 rounded-[7px] border-[var(--color-border-default)] bg-[var(--color-bg-surface)] pl-8 pr-2.5 text-[12px] shadow-none placeholder:text-[var(--color-text-muted)] focus-visible:ring-[var(--color-border-default)]"
         />
       </div>
 
       <div className="max-h-[156px] overflow-y-auto overscroll-contain pr-0.5">
         {sorted.length === 0 ? (
-          <p className="px-2 py-3 text-center text-[12px] text-[var(--color-text-muted)]">No matches</p>
+          <p className="px-2 py-3 text-center text-[12px] text-[var(--color-text-muted)]">{t("missionCard.noMatches")}</p>
         ) : (
           <div className="space-y-0.5">
             {sorted.map((employee) => {
@@ -123,7 +130,7 @@ export function AssigneePicker({ ownerRole, selectedId, onSelect, className }: A
                     <p className="truncate text-[13px] font-medium text-[var(--color-text-primary)]">
                       {displayName(employee.name)}
                     </p>
-                    <p className="truncate text-[11px] text-[var(--color-text-muted)]">{employee.role}</p>
+                    <p className="truncate text-[11px] text-[var(--color-text-muted)]">{localizeRole(employee.role, locale)}</p>
                   </div>
                   {reasoning && <RecommendBadge reasoning={reasoning} />}
                   {selected && (

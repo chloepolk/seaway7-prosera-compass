@@ -2,6 +2,7 @@
 
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import type { AppTileItem } from "./app-tile-grid"
+import { useT } from "../../_i18n/use-t"
 
 export function AddTileModal({
   available,
@@ -12,11 +13,12 @@ export function AddTileModal({
   onAdd: (id: string) => void
   onClose: () => void
 }) {
+  const t = useT()
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true">
       <button
         type="button"
-        aria-label="Close"
+        aria-label={t("common.close")}
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
       />
@@ -24,7 +26,7 @@ export function AddTileModal({
         <div className="flex items-center justify-between border-b border-[var(--color-border-default)] px-5 py-3">
           <div className="flex items-center gap-2">
             <SafeIcon name="LayoutGrid" className="h-4 w-4 text-[var(--color-brand-strong)]" />
-            <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Add app</h3>
+            <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{t("common.addApp")}</h3>
           </div>
           <button
             type="button"
@@ -37,7 +39,7 @@ export function AddTileModal({
         <div className="max-h-[60vh] overflow-y-auto p-3">
           {available.length === 0 ? (
             <p className="px-2 py-6 text-center text-[12px] text-[var(--color-text-muted)]">
-              Every app is already on your board.
+              {t("common.everyAppOnBoard")}
             </p>
           ) : (
             <ul className="space-y-1.5">

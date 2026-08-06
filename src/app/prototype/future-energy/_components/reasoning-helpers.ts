@@ -1,9 +1,12 @@
+import { activeLocaleTag } from "../_i18n/legacy"
 import type { BPFinding } from "../data/_insights"
 import type { OrchestratorFinding } from "../agents/_types"
 import type { DiamondMission } from "../_diamond/types"
 import type { ExpansionAction, ExpansionPrescription } from "../data/_expansion"
 import type { ReasoningContent } from "./reasoning-disclosure"
 import { aggregateCitationsFromMissions, citationFromLabel, mergeCitations } from "./source-citations"
+import type { Locale } from "../_i18n/types"
+import { localeTag } from "../_i18n"
 
 export function isReasoningEmpty(r?: ReasoningContent | null): boolean {
   if (!r) return true
@@ -181,7 +184,7 @@ export function reasoningFromFinding(f: BPFinding | OrchestratorFinding): Reason
 /*  Mission reasoning (margin / expansion / weather actions)           */
 /* ------------------------------------------------------------------ */
 
-export function reasoningFromMission(m: DiamondMission): ReasoningContent {
+export function reasoningFromMission(m: DiamondMission, locale: Locale = "en"): ReasoningContent {
   const meta = m.reasoningMeta
   if (meta) {
     const citations = aggregateCitationsFromMissions([m])
@@ -190,7 +193,9 @@ export function reasoningFromMission(m: DiamondMission): ReasoningContent {
       steps: meta.steps,
       equations: meta.equations,
       evidence: m.evidence,
-      conclusion: `${m.recommendation} Recommended with ${Math.round(m.confidence * 100)}% confidence. Risk: ${m.risk}`,
+      conclusion: locale === "fr"
+        ? `${m.recommendation} Recommandé avec ${Math.round(m.confidence * 100)} % de confiance. Risque : ${m.risk}`
+        : `${m.recommendation} Recommended with ${Math.round(m.confidence * 100)}% confidence. Risk: ${m.risk}`,
       sources: meta.sources,
       citations,
     }
@@ -199,7 +204,9 @@ export function reasoningFromMission(m: DiamondMission): ReasoningContent {
   return {
     summary: m.objective,
     evidence: m.evidence,
-    conclusion: `Recommended with ${Math.round(m.confidence * 100)}% confidence. Risk: ${m.risk}`,
+    conclusion: locale === "fr"
+      ? `Recommandé avec ${Math.round(m.confidence * 100)} % de confiance. Risque : ${m.risk}`
+      : `Recommended with ${Math.round(m.confidence * 100)}% confidence. Risk: ${m.risk}`,
     sources: [m.source.label],
     citations: [citationFromLabel(m.source.label, m.source.page)],
   }
@@ -214,14 +221,22 @@ export function buildActionBoardHeroReasoning(
   options: {
     agentSteps?: string[]
     useAgentSteps: boolean
+    locale?: Locale
   },
 ): ReasoningContent {
+  const locale = options.locale ?? "en"
+  const fr = locale === "fr"
   const active = missions.filter((m) => m.stage !== "outcome_roi")
 
   const steps =
     options.useAgentSteps && options.agentSteps?.length
       ? options.agentSteps
-      : [
+      : fr ? [
+          "Chargement du registre d’AO Meridian et application de l’avancement de session par lot",
+          "Calcul des jours restants pour chaque fenêtre d’AO et délai de clarification",
+          "Association de chaque lot à ses documents contrôlés, normes et interfaces de charte",
+          "Classement par échéance, objectif d’économies et chemin critique d’installation",
+        ] : [
           "Loaded the Meridian tender register and applied session progress per package",
           "Computed days remaining against each 21-day tender window and clarification cutoff",
           "Mapped each package to its controlled documents, standards and charter interfaces",
@@ -230,7 +245,9 @@ export function buildActionBoardHeroReasoning(
 
   const evidence = active.slice(0, 5).map(
     (m) =>
-      `${m.name}: $${m.projectedValue.toLocaleString()} projected · ${Math.round(m.confidence * 100)}% confidence`,
+      fr
+        ? `${m.name} : ${m.projectedValue.toLocaleString(localeTag(locale))} $ projetés · ${Math.round(m.confidence * 100)} % de confiance`
+        : `${m.name}: $${m.projectedValue.toLocaleString(localeTag(locale))} projected · ${Math.round(m.confidence * 100)}% confidence`,
   )
 
   const citations = mergeCitations(
@@ -240,11 +257,13 @@ export function buildActionBoardHeroReasoning(
 
   return {
     summary: options.useAgentSteps
-      ? "BluePilot prioritised the tender pipeline from procurement portfolio, commercial and supply market specialist outputs."
-      : "BluePilot ranked packages by submission deadline, savings target and installation critical path.",
+      ? (fr ? "BluePilot a priorisé le pipeline à partir des analyses portefeuille achats, commerciales et marché fournisseurs." : "BluePilot prioritised the tender pipeline from procurement portfolio, commercial and supply market specialist outputs.")
+      : (fr ? "BluePilot a classé les lots selon l’échéance, l’objectif d’économies et le chemin critique d’installation." : "BluePilot ranked packages by submission deadline, savings target and installation critical path."),
     steps,
     evidence,
-    conclusion: `${active.length} packages are live on this board. Follow the view sources links to inspect each underlying document or workspace.`,
+    conclusion: fr
+      ? `${active.length} lots sont actifs sur ce tableau. Consultez les liens de sources pour examiner chaque document ou espace de travail.`
+      : `${active.length} packages are live on this board. Follow the view sources links to inspect each underlying document or workspace.`,
     citations,
   }
 }
@@ -316,7 +335,7 @@ export const KPI_REASONING = {
       "Sum of validated job revenue across the portfolio export.",
       {
         steps: ["Filtered jobs with totalAmount > 0 and not excluded by data quality rules", "Summed totalAmount across validated cohort"],
-        equations: [`Revenue = Σ(totalAmount) = $${Math.round(totalRevenue).toLocaleString()} across ${jobCount.toLocaleString()} jobs`],
+        equations: [`Revenue = Σ(totalAmount) = $${Math.round(totalRevenue).toLocaleString(activeLocaleTag())} across ${jobCount.toLocaleString(activeLocaleTag())} jobs`],
         sources: ["Internal — Platform job export (_raw.ts)"],
       },
     ),
@@ -339,7 +358,7 @@ export const KPI_REASONING = {
       "Distinct customer accounts with at least one validated job.",
       {
         steps: ["Joined jobs on customer key", "Counted distinct customers in validated cohort"],
-        equations: [`Customers = COUNT(DISTINCT customerName) = ${count.toLocaleString()}`],
+        equations: [`Customers = COUNT(DISTINCT customerName) = ${count.toLocaleString(activeLocaleTag())}`],
         sources: ["Internal — Platform job export (_raw.ts)"],
       },
     ),
@@ -373,7 +392,7 @@ export const KPI_REASONING = {
         ],
         equations: [
           "invoiceLagDays = days(firstInvoiceCreated − completedDate)",
-          `Median = ${medianLag.toFixed(1)} days across ${invoicedCount.toLocaleString()} invoiced jobs`,
+          `Median = ${medianLag.toFixed(1)} days across ${invoicedCount.toLocaleString(activeLocaleTag())} invoiced jobs`,
           "Target ≤ 2 days (48-hour billing SLA)",
         ],
         sources: ["Internal — Platform job export (_raw.ts)"],
@@ -397,8 +416,8 @@ export const KPI_REASONING = {
       {
         steps: ["Identified completed jobs with no firstInvoiceCreated", "Summed totalAmount on uninvoiced backlog"],
         equations: [
-          `cashTiedUp = Σ(totalAmount) where completed AND NOT invoiced = $${Math.round(amount).toLocaleString()}`,
-          `${count.toLocaleString()} jobs in backlog`,
+          `cashTiedUp = Σ(totalAmount) where completed AND NOT invoiced = $${Math.round(amount).toLocaleString(activeLocaleTag())}`,
+          `${count.toLocaleString(activeLocaleTag())} jobs in backlog`,
         ],
         sources: ["Internal — Platform job export (_raw.ts)"],
       },

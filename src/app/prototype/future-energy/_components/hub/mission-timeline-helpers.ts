@@ -1,9 +1,11 @@
 import type { DiamondMission, GateTask } from "../../_diamond/types"
-import { STAGE_META, STAGE_ORDER, stageIndex, type MissionStage } from "../../_diamond/stages"
+import { STAGE_ORDER, stageIndex, type MissionStage } from "../../_diamond/stages"
 import { personForRole } from "../../_diamond/org"
 import { employeeByName, employeeByRole, type Employee } from "../../data/_people"
 import type { ActionTimelineEntry, AgentTimelineSubEntry, TimelineEntryStatus } from "./hub-types"
 import { displayName, resolveAssigneeDisplayName } from "./active-user"
+import type { Locale } from "../../_i18n/types"
+import { createT } from "../../_i18n"
 
 /** Resolve the employee directory entry for a timeline step assignee. */
 export function employeeForTimelineEntry(entry: ActionTimelineEntry): Employee | undefined {
@@ -64,17 +66,18 @@ function agentSubEntry(
   }
 }
 
-function outcomeHumanFallback() {
-  const finance = personForRole("CFO")
+function outcomeHumanFallback(locale: Locale) {
+  const finance = personForRole("CFO", locale)
   return {
-    label: "Confirm realized value with Finance and close the loop",
+    label: locale === "fr" ? "Confirmer la valeur réalisée avec la Finance et fermer la boucle" : "Confirm realized value with Finance and close the loop",
     assignee: finance.name,
     assigneeRole: finance.role,
   }
 }
 
 /** Human-confirmation timeline with agent prep/verify nested per gate. */
-export function buildFullTimeline(mission: DiamondMission): ActionTimelineEntry[] {
+export function buildFullTimeline(mission: DiamondMission, locale: Locale = "en"): ActionTimelineEntry[] {
+  const t = createT(locale)
   const entries: ActionTimelineEntry[] = []
   const missionIdx = stageIndex(mission.stage)
 
@@ -86,7 +89,7 @@ export function buildFullTimeline(mission: DiamondMission): ActionTimelineEntry[
     if (humans.length === 0) {
       // outcome_roi is agent-only in seed data — surface as human close with agent nested
       if (stage === "outcome_roi" && agents.length > 0) {
-        const fallback = outcomeHumanFallback()
+        const fallback = outcomeHumanFallback(locale)
         const stageIdx = stageIndex(stage)
         let status: TimelineEntryStatus = "upcoming"
         if (stageIdx < missionIdx) status = "done"
@@ -103,7 +106,7 @@ export function buildFullTimeline(mission: DiamondMission): ActionTimelineEntry[
               ? mission.completedAt ?? mission.stageDates[stage] ?? undefined
               : undefined,
           dueAt: status !== "done" ? agents[0]?.dueAt : undefined,
-          stageLabel: STAGE_META[stage].title,
+          stageLabel: t(`stages.${stage}.title`),
           agentSteps: agents.map((a) => agentSubEntry(a, stage, mission)),
         })
       }
@@ -123,7 +126,7 @@ export function buildFullTimeline(mission: DiamondMission): ActionTimelineEntry[
             ? mission.stageDates[stage] ?? human.dueAt ?? mission.openedAt
             : undefined,
         dueAt: status !== "done" ? human.dueAt : undefined,
-        stageLabel: STAGE_META[stage].title,
+        stageLabel: t(`stages.${stage}.title`),
         agentSteps: agents.map((a) => agentSubEntry(a, stage, mission)),
       })
     }
@@ -133,6 +136,6 @@ export function buildFullTimeline(mission: DiamondMission): ActionTimelineEntry[
 }
 
 /** @deprecated Use buildFullTimeline */
-export function buildCompletedTimeline(mission: DiamondMission): ActionTimelineEntry[] {
-  return buildFullTimeline(mission).filter((e) => e.status === "done")
+export function buildCompletedTimeline(mission: DiamondMission, locale: Locale = "en"): ActionTimelineEntry[] {
+  return buildFullTimeline(mission, locale).filter((e) => e.status === "done")
 }

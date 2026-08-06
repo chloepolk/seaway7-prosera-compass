@@ -6,6 +6,7 @@
 /* ------------------------------------------------------------------ */
 
 import type { BidInput } from "./_bids"
+import type { Locale } from "../../_i18n"
 
 export const PRICE_MAX = 35
 export const TECH_MAX = 25
@@ -32,6 +33,16 @@ export const GATE_LABELS: Record<GateId, string> = {
   iso9001: "Valid ISO 9001",
   knockForKnock: "Mutual knock-for-knock",
   ddpRotterdam: "DDP Rotterdam",
+}
+
+const FR_GATE_LABELS: Record<GateId, string> = {
+  iso9001: "ISO 9001 valide",
+  knockForKnock: "Knock-for-knock mutuel",
+  ddpRotterdam: "DDP Rotterdam",
+}
+
+export function gateLabels(locale: Locale): Record<GateId, string> {
+  return locale === "fr" ? FR_GATE_LABELS : GATE_LABELS
 }
 
 export type GatingStatus = "Pass" | "Fail"
@@ -105,16 +116,30 @@ function buildRecommendation(
     BidEvaluationResult,
     "gatingStatus" | "gateFailures" | "compositeScore" | "finalRank" | "highCommercialRisk" | "priceScore"
   >,
+  locale: Locale,
 ): string {
+  const labelsForLocale = gateLabels(locale)
   if (result.gatingStatus === "Fail") {
-    const labels = result.gateFailures.map((g) => GATE_LABELS[g]).join("; ")
+    const labels = result.gateFailures.map((g) => labelsForLocale[g]).join("; ")
+    if (locale === "fr") {
+      return `Disqualifié — échec aux portes éliminatoires : ${labels}. Ne pas faire progresser vers une recommandation d’attribution commerciale.`
+    }
     return `Disqualified — failed hard gate(s): ${labels}. Do not progress to commercial award recommendation.`
   }
   if (result.highCommercialRisk) {
+    if (locale === "fr") {
+      return `Rang n°${result.finalRank}, score composite ${result.compositeScore}. Risque commercial élevé : garantie réduite de plus de 25 % sous la norme Future Energy de 24 mois. Privilégier un soumissionnaire conforme mieux classé, sauf acceptation formelle du risque.`
+    }
     return `Rank #${result.finalRank} with composite ${result.compositeScore}. High commercial risk: warranty reduced more than 25% below the 24-month Future Energy standard. Prefer a higher-ranked compliant bidder unless risk is formally accepted.`
   }
   if (result.finalRank === 1) {
+    if (locale === "fr") {
+      return `Candidat recommandé pour l’attribution — rang n°1, score composite ${result.compositeScore}. ${bid.insight}`
+    }
     return `Recommended award candidate — Rank #1, composite ${result.compositeScore}. ${bid.insight}`
+  }
+  if (locale === "fr") {
+    return `Rang n°${result.finalRank}, score composite ${result.compositeScore}. ${bid.insight}`
   }
   return `Rank #${result.finalRank}, composite ${result.compositeScore}. ${bid.insight}`
 }
@@ -123,7 +148,7 @@ function buildRecommendation(
  * Evaluate a set of bids. Price normalisation uses P_min among **eligible**
  * (gate-passing) bids only. Disqualified bids keep null scores and no rank.
  */
-export function evaluateBids(bids: BidInput[]): BidEvaluationResult[] {
+export function evaluateBids(bids: BidInput[], locale: Locale = "en"): BidEvaluationResult[] {
   const gated = bids.map((bid) => {
     const gateFailures = evaluateGates(bid)
     return { bid, gateFailures, pass: gateFailures.length === 0 }
@@ -153,7 +178,7 @@ export function evaluateBids(bids: BidInput[]): BidEvaluationResult[] {
         insight: bid.insight,
         recommendation: "",
       }
-      base.recommendation = buildRecommendation(bid, base)
+      base.recommendation = buildRecommendation(bid, base, locale)
       return base
     }
 
@@ -202,7 +227,7 @@ export function evaluateBids(bids: BidInput[]): BidEvaluationResult[] {
     const bid = bids.find((b) => b.id === r.bidId)!
     return {
       ...r,
-      recommendation: buildRecommendation(bid, r),
+      recommendation: buildRecommendation(bid, r, locale),
     }
   })
 }

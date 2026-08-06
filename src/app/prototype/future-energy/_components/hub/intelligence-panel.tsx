@@ -7,12 +7,13 @@ import { useStore, type IntelRailSection } from "../../_store"
 import { ReasoningTooltip } from "../reasoning-disclosure"
 import { reasoningFromFinding } from "../reasoning-helpers"
 import { ChatMessageBody } from "../chat-message-body"
+import { useT } from "../../_i18n/use-t"
 
-const SECTIONS: { key: IntelRailSection; label: string; icon: string }[] = [
-  { key: "findings", label: "Findings", icon: "SearchCheck" },
-  { key: "reasoning", label: "Reasoning", icon: "BrainCircuit" },
-  { key: "context", label: "Context", icon: "Globe" },
-  { key: "ask", label: "Ask", icon: "MessageCircle" },
+const SECTIONS: { key: IntelRailSection; labelKey: string; icon: string }[] = [
+  { key: "findings", labelKey: "intel.findings", icon: "SearchCheck" },
+  { key: "reasoning", labelKey: "intel.reasoning", icon: "BrainCircuit" },
+  { key: "context", labelKey: "intel.context", icon: "Globe" },
+  { key: "ask", labelKey: "intel.ask", icon: "MessageCircle" },
 ]
 
 function ShimmerRow({ delay = 0 }: { delay?: number }) {
@@ -31,6 +32,7 @@ function ShimmerRow({ delay = 0 }: { delay?: number }) {
 }
 
 export function IntelligenceDetailedPanel({ className }: { className?: string }) {
+  const t = useT()
   const {
     intelRailSection,
     setIntelRailSection,
@@ -46,11 +48,12 @@ export function IntelligenceDetailedPanel({ className }: { className?: string })
     chatLoading,
     sendChatMessage,
     clearChat,
+    locale,
   } = useStore()
 
   const [input, setInput] = React.useState("")
 
-  const findings = useStaticFallback
+  const findings = useStaticFallback && locale === "en"
     ? contextFindings
     : bpFindings
 
@@ -64,11 +67,11 @@ export function IntelligenceDetailedPanel({ className }: { className?: string })
       <header className="border-b border-[var(--color-border-default)] bg-[var(--color-bg-inverse)] px-4 py-3">
         <div className="flex items-center gap-2">
           <SafeIcon name="BrainCircuit" className="size-4 text-[var(--color-brand-primary)]" />
-          <h2 className="text-[14px] font-semibold text-[var(--color-text-inverse)]">Intelligence</h2>
+          <h2 className="text-[14px] font-semibold text-[var(--color-text-inverse)]">{t("nav.intelligencePanel")}</h2>
           {(isThinking || isAgentLoading) && (
             <span className="ml-2 inline-flex items-center gap-1 text-[11px] text-[var(--color-text-inverse)]/70">
               <span className="size-1.5 animate-pulse rounded-full bg-[var(--color-brand-primary)]" />
-              Analyzing…
+              {t("agent.analyzing")}
             </span>
           )}
         </div>
@@ -91,7 +94,7 @@ export function IntelligenceDetailedPanel({ className }: { className?: string })
             )}
           >
             <SafeIcon name={s.icon} className="size-3.5" />
-            {s.label}
+            {t(s.labelKey)}
           </button>
         ))}
       </div>
@@ -106,13 +109,13 @@ export function IntelligenceDetailedPanel({ className }: { className?: string })
                 <ShimmerRow delay={240} />
               </>
             ) : findings.length === 0 ? (
-              <p className="py-8 text-center text-[12px] text-[var(--color-text-muted)]">No findings for current view</p>
+              <p className="py-8 text-center text-[12px] text-[var(--color-text-muted)]">{t("intel.noFindingsCurrent")}</p>
             ) : (
               findings.map((f) => (
                 <div key={f.id} className="rounded-lg border border-l-[3px] border-l-[var(--color-brand-primary)] bg-[var(--color-bg-subtle)] p-3">
                   <p className="flex items-center gap-1 text-[12px] font-semibold text-[var(--color-text-primary)]">
                     {f.title}
-                    <ReasoningTooltip reasoning={reasoningFromFinding(f)} label={`Why ${f.title}`} />
+                    <ReasoningTooltip reasoning={reasoningFromFinding(f)} label={t("intel.whyPrefix", { title: f.title })} />
                   </p>
                   <p className="mt-1 text-[11px] leading-relaxed text-[var(--color-text-secondary)]">{f.narrative}</p>
                 </div>
@@ -133,7 +136,7 @@ export function IntelligenceDetailedPanel({ className }: { className?: string })
               useStaticFallback && bpHeadline ? (
                 <p className="text-[12px] leading-relaxed text-[var(--color-text-secondary)]">{bpHeadline.narrative}</p>
               ) : (
-                <p className="py-8 text-center text-[12px] text-[var(--color-text-muted)]">Reasoning will appear after BluePilot analysis</p>
+                <p className="py-8 text-center text-[12px] text-[var(--color-text-muted)]">{t("intel.reasoningPending")}</p>
               )
             ) : (
               bpReasoning.map((step) => (
@@ -150,7 +153,9 @@ export function IntelligenceDetailedPanel({ className }: { className?: string })
 
         {intelRailSection === "context" && (
           <p className="text-[12px] leading-relaxed text-[var(--color-text-secondary)]">
-            Fuel, weather, and market signals are woven into each action above. Open Context on any hub for full detail.
+            {locale === "fr"
+              ? "Les signaux carburant, météo et marché sont intégrés à chaque action ci-dessus. Ouvrez le contexte d’un hub pour consulter le détail."
+              : "Fuel, weather, and market signals are woven into each action above. Open Context on any hub for full detail."}
           </p>
         )}
 
@@ -179,7 +184,7 @@ export function IntelligenceDetailedPanel({ className }: { className?: string })
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about this data…"
+                placeholder={t("intel.askPlaceholder")}
                 className="flex-1 rounded-lg border border-[var(--color-border-default)] bg-transparent px-3 py-2 text-[12px] outline-none focus:border-[var(--color-brand-primary)]"
               />
               <button
@@ -187,12 +192,12 @@ export function IntelligenceDetailedPanel({ className }: { className?: string })
                 disabled={chatLoading || !input.trim()}
                 className="rounded-lg bg-[var(--color-brand-primary)] px-3 py-2 text-[12px] font-semibold text-[var(--color-brand-onPrimary)] disabled:opacity-50"
               >
-                Send
+                {t("common.send")}
               </button>
             </form>
             {chatMessages.length > 0 && (
               <button type="button" onClick={clearChat} className="text-[11px] text-[var(--color-text-muted)] hover:underline">
-                New chat
+                {t("intel.clearChat")}
               </button>
             )}
           </div>

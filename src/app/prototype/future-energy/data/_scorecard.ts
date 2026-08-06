@@ -1,3 +1,4 @@
+import { activeLocaleTag } from "../_i18n/legacy"
 /* ------------------------------------------------------------------ */
 /*  CI-04: Composite Customer Health Scoring                           */
 /*                                                                     */
@@ -171,7 +172,7 @@ function computeFactors(c: CustomerAggregate, ctx: ScoreContext): CustomerScoreF
   const R: CustomerScoreFactor = {
     key: "R", label: "Revenue Volume & Value", weight: WEIGHTS.R, normalized: rNorm,
     weighted: WEIGHTS.R * rNorm,
-    detail: `~$${Math.round(annualized).toLocaleString()}/yr vs. $${profile.targetAnnualValue.toLocaleString()} ${profile.label} target x ${predictability.toFixed(2)} predictability`,
+    detail: `~$${Math.round(annualized).toLocaleString(activeLocaleTag())}/yr vs. $${profile.targetAnnualValue.toLocaleString(activeLocaleTag())} ${profile.label} target x ${predictability.toFixed(2)} predictability`,
     mocked: false,
   }
 

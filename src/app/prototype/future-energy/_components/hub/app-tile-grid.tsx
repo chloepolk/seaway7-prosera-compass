@@ -4,6 +4,8 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { enterMotion, pcmCard, pcmJiggle } from "../motion"
+import { localizeLegacyCopy } from "../../_i18n/legacy"
+import { useStore } from "../../_store"
 
 export interface AppTileItem {
   id: string
@@ -38,6 +40,8 @@ export function AppTile({
   onRemove: () => void
   onClick?: () => void
 }) {
+  const { locale } = useStore()
+  const localizedLabel = localizeLegacyCopy(item.label, locale)
   const motion = editing ? { className: "", style: undefined } : enterMotion(index)
   return (
     <div
@@ -77,7 +81,7 @@ export function AppTile({
             onRemove()
           }}
           className="absolute -left-2 -top-2 flex size-[22px] items-center justify-center rounded-full border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] text-[var(--color-text-muted)] shadow-sm hover:bg-[var(--color-tint-critical)] hover:text-[var(--color-accent-critical)]"
-          aria-label={`Remove ${item.label}`}
+          aria-label={locale === "fr" ? `Retirer ${localizedLabel}` : `Remove ${localizedLabel}`}
         >
           <SafeIcon name="X" className="h-3 w-3" />
         </button>
@@ -104,7 +108,7 @@ export function AppTile({
         </div>
       ) : (
         <>
-          <p className="mt-3 truncate text-[13px] font-medium text-[var(--color-text-primary)]">{item.label}</p>
+          <p className="mt-3 truncate text-[13px] font-medium text-[var(--color-text-primary)]">{localizedLabel}</p>
           <p className="mt-1 text-[18px] font-semibold tabular-nums leading-none text-[var(--color-text-primary)]">
             {item.metric}
           </p>

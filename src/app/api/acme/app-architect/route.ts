@@ -71,13 +71,16 @@ export async function POST(req: Request) {
   const model = gemini ? MODELS.gemini : MODELS.openai
 
   try {
-    const { intent } = await req.json()
+    const { intent, locale } = await req.json()
     const userMsg = [
       typeof intent === "string" && intent.trim()
         ? `User intent: ${intent.trim()}`
         : "The user has no specific intent — surface the highest-value apps for this commercial field-services business.",
       "",
       buildCatalogPromptContext(),
+      locale === "fr"
+        ? "IMPORTANT: Return every user-visible log, app title, rationale, source label and method in French. Preserve brand names, source names, IDs and technical acronyms."
+        : "Return all user-visible copy in English.",
     ].join("\n")
 
     const response = await callWithRetry(

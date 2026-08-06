@@ -3,6 +3,9 @@
 import { cn } from "@/lib/utils"
 import { enterMotion } from "../motion"
 import { ReasoningTooltip, type ReasoningContent } from "../reasoning-disclosure"
+import { useT } from "../../_i18n/use-t"
+import { localizeLegacyCopy } from "../../_i18n/legacy"
+import { useStore } from "../../_store"
 
 export interface KpiItem {
   label: string
@@ -31,6 +34,8 @@ export function KpiStrip({
   className?: string
   variant?: "cards" | "unified"
 }) {
+  const t = useT()
+  const { locale } = useStore()
   if (variant === "unified") {
     return (
       <div
@@ -48,14 +53,14 @@ export function KpiStrip({
               style={motion.style}
             >
               <p className="flex items-center gap-1 text-[13px] text-[var(--color-text-secondary)]">
-                {item.label}
-                <ReasoningTooltip reasoning={item.reasoning} label={`Why ${item.label}`} />
+                {localizeLegacyCopy(item.label, locale)}
+                <ReasoningTooltip reasoning={item.reasoning} label={t("common.whyNamed", { name: localizeLegacyCopy(item.label, locale) })} />
               </p>
               <p className={cn("mt-1 text-[22px] font-semibold tabular-nums leading-none", kpiValueCls(item.tone))}>
                 {item.value}
               </p>
               {item.sublabel && (
-                <p className="mt-1 text-[11px] leading-snug text-[var(--color-text-muted)]">{item.sublabel}</p>
+                <p className="mt-1 text-[11px] leading-snug text-[var(--color-text-muted)]">{localizeLegacyCopy(item.sublabel, locale)}</p>
               )}
             </div>
           )
@@ -78,14 +83,14 @@ export function KpiStrip({
             style={motion.style}
           >
             <p className="flex items-center gap-1 text-[13px] text-[var(--color-text-secondary)]">
-              {item.label}
-              <ReasoningTooltip reasoning={item.reasoning} label={`Why ${item.label}`} />
+              {localizeLegacyCopy(item.label, locale)}
+              <ReasoningTooltip reasoning={item.reasoning} label={t("common.whyNamed", { name: localizeLegacyCopy(item.label, locale) })} />
             </p>
             <p className={cn("mt-1 text-[22px] font-semibold tabular-nums leading-none", kpiValueCls(item.tone))}>
               {item.value}
             </p>
             {item.sublabel && (
-              <p className="mt-1 text-[11px] leading-snug text-[var(--color-text-muted)]">{item.sublabel}</p>
+              <p className="mt-1 text-[11px] leading-snug text-[var(--color-text-muted)]">{localizeLegacyCopy(item.sublabel, locale)}</p>
             )}
           </article>
         )

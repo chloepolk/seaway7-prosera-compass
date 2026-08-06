@@ -12,6 +12,7 @@ import {
 } from "./stages"
 import type { DiamondMission } from "./types"
 import { DiamondBaseNode } from "./DiamondBaseNode"
+import { useT } from "../_i18n/use-t"
 
 function Arrow({ active }: { active: boolean }) {
   return <span className={active ? "text-[var(--color-brand-primary)]" : "text-slate-300"}>{"\u2192"}</span>
@@ -26,6 +27,7 @@ export function MissionDiamond({
   selectedGate: MissionStage
   onSelectGate: (s: MissionStage) => void
 }) {
+  const t = useT()
   const pulse = BASE_POS[mission.stage]
   const idx = stageIndex(mission.stage)
   const pct = idx / 4
@@ -131,7 +133,7 @@ export function MissionDiamond({
             {Math.round(pct * 100)}%
           </text>
           <text x={200} y={219} textAnchor="middle" className="fill-muted-foreground text-[8px] font-medium uppercase tracking-[0.15em]">
-            {mission.completedAt ? "Loop closed" : `${mission.elapsedDays}/${mission.totalDays}d`}
+            {mission.completedAt ? t("diamond.loopClosed") : `${mission.elapsedDays}/${mission.totalDays}${t("diamond.dayShort")}`}
           </text>
         </g>
 
@@ -183,15 +185,15 @@ export function MissionDiamond({
       </svg>
 
       <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-        <span className={idx >= 2 ? "text-[var(--color-brand-primary)]" : ""}>Recommendation</span>
+        <span className={idx >= 2 ? "text-[var(--color-brand-primary)]" : ""}>{t("diamond.recommendation")}</span>
         <Arrow active={idx >= 2} />
-        <span className={idx >= 2 ? "text-[var(--color-brand-primary)]" : ""}>Decision</span>
+        <span className={idx >= 2 ? "text-[var(--color-brand-primary)]" : ""}>{t("diamond.decision")}</span>
         <Arrow active={idx >= 3} />
-        <span className={idx >= 3 ? "text-[var(--color-brand-primary)]" : ""}>Action</span>
+        <span className={idx >= 3 ? "text-[var(--color-brand-primary)]" : ""}>{t("diamond.action")}</span>
         <Arrow active={idx >= 4} />
-        <span className={idx >= 4 ? "text-[var(--color-brand-primary)]" : ""}>Outcome</span>
+        <span className={idx >= 4 ? "text-[var(--color-brand-primary)]" : ""}>{t("diamond.outcome")}</span>
         <Arrow active={idx >= 4} />
-        <span className={idx >= 4 ? "text-[var(--color-brand-primary)]" : ""}>ROI</span>
+        <span className={idx >= 4 ? "text-[var(--color-brand-primary)]" : ""}>{t("diamond.roi")}</span>
       </div>
     </div>
   )

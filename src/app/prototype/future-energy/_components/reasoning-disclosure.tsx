@@ -6,8 +6,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/prosera
 import { cn } from "@/lib/utils"
 import { isReasoningEmpty } from "./reasoning-helpers"
 import { BluePilotMark } from "./bluepilot-mark"
-import { useStore, type Page } from "../_store"
+import { useStore } from "../_store"
 import { citationFromLabel, type ReasoningCitation } from "./source-citations"
+import { useT } from "../_i18n/use-t"
+import { localizeLegacyCopy } from "../_i18n/legacy"
 
 export type { ReasoningCitation } from "./source-citations"
 
@@ -103,6 +105,7 @@ function WorksCited({
   defaultOpen?: boolean
 }) {
   const [open, setOpen] = React.useState(defaultOpen)
+  const t = useT()
   const citations = resolveCitations(reasoning)
   if (citations.length === 0) return null
   const isDark = variant === "dark"
@@ -119,7 +122,7 @@ function WorksCited({
         )}
       >
         <span className="text-[10px] font-semibold uppercase tracking-wider">
-          View sources ({citations.length})
+          {t("reasoning.viewSources", { count: citations.length })}
         </span>
         <SafeIcon name={open ? "ChevronUp" : "ChevronDown"} className="size-3.5 shrink-0 opacity-70" />
       </button>
@@ -150,24 +153,26 @@ function ReasoningBody({
   variant?: "default" | "dark"
 }) {
   const isDark = variant === "dark"
+  const t = useT()
+  const { locale } = useStore()
   return (
     <div className={cn("space-y-2", className)}>
       {reasoning.summary && (
-        <p className={cn("text-[12px] leading-relaxed", textClassName)}>{reasoning.summary}</p>
+        <p className={cn("text-[12px] leading-relaxed", textClassName)}>{localizeLegacyCopy(reasoning.summary, locale)}</p>
       )}
       {reasoning.steps && reasoning.steps.length > 0 && (
         <div className="space-y-1">
-          <p className={cn("text-[10px] font-semibold uppercase tracking-wider", labelClassName)}>Analysis</p>
+          <p className={cn("text-[10px] font-semibold uppercase tracking-wider", labelClassName)}>{t("reasoning.analysis")}</p>
           <ol className="list-decimal space-y-0.5 pl-4 text-[11px] leading-relaxed">
             {reasoning.steps.map((step, i) => (
-              <li key={i} className={textClassName}>{step}</li>
+              <li key={i} className={textClassName}>{localizeLegacyCopy(step, locale)}</li>
             ))}
           </ol>
         </div>
       )}
       {reasoning.equations && reasoning.equations.length > 0 && (
         <div className="space-y-1">
-          <p className={cn("text-[10px] font-semibold uppercase tracking-wider", labelClassName)}>Calculations</p>
+          <p className={cn("text-[10px] font-semibold uppercase tracking-wider", labelClassName)}>{t("reasoning.calculations")}</p>
           <ul className="space-y-1 pl-0 text-[11px] leading-relaxed">
             {reasoning.equations.map((eq, i) => (
               <li
@@ -177,7 +182,7 @@ function ReasoningBody({
                   isDark ? "bg-white/8 text-[#AECBDC]" : "bg-[var(--color-bg-canvas)] text-[var(--color-text-secondary)]",
                 )}
               >
-                {eq}
+                {localizeLegacyCopy(eq, locale)}
               </li>
             ))}
           </ul>
@@ -185,10 +190,10 @@ function ReasoningBody({
       )}
       {reasoning.evidence && reasoning.evidence.length > 0 && (
         <div className="space-y-1">
-          <p className={cn("text-[10px] font-semibold uppercase tracking-wider", labelClassName)}>Evidence</p>
+          <p className={cn("text-[10px] font-semibold uppercase tracking-wider", labelClassName)}>{t("reasoning.evidence")}</p>
           <ul className="list-disc space-y-0.5 pl-4 text-[11px] leading-relaxed">
             {reasoning.evidence.map((item, i) => (
-              <li key={i} className={textClassName}>{item}</li>
+              <li key={i} className={textClassName}>{localizeLegacyCopy(item, locale)}</li>
             ))}
           </ul>
         </div>
@@ -208,7 +213,7 @@ function ReasoningBody({
               isDark ? "text-[#5BD2F2]" : labelClassName,
             )}
           >
-            Recommendation
+            {t("reasoning.recommendation")}
           </p>
           <p
             className={cn(
@@ -216,7 +221,7 @@ function ReasoningBody({
               isDark ? "text-white" : textClassName,
             )}
           >
-            {reasoning.conclusion}
+            {localizeLegacyCopy(reasoning.conclusion, locale)}
           </p>
         </div>
       )}
@@ -251,8 +256,10 @@ export function ReasoningTooltip({
   side = "top",
   className,
   iconClassName,
-  label = "Why this value",
+  label,
 }: ReasoningTooltipProps) {
+  const t = useT()
+  const effectiveLabel = label ?? t("reasoning.whyValue")
   if (isReasoningEmpty(reasoning)) return null
 
   return (
@@ -269,7 +276,7 @@ export function ReasoningTooltip({
             "inline-flex size-4 shrink-0 items-center justify-center rounded-full text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-bg-subtle)] hover:text-[var(--color-text-secondary)]",
             className,
           )}
-          aria-label={label}
+          aria-label={effectiveLabel}
         >
           <SafeIcon name="Info" className={cn("size-3", iconClassName)} />
         </span>
@@ -320,6 +327,7 @@ export function BluePilotReasoningButton({
   dark?: boolean
   className?: string
 }) {
+  const t = useT()
   const btnCls = compact
     ? dark
       ? COMPACT_BTN_DARK
@@ -335,8 +343,8 @@ export function BluePilotReasoningButton({
       type="button"
       onClick={onClick}
       aria-expanded={open}
-      aria-label={open ? "Hide BluePilot reasoning" : "Show BluePilot reasoning"}
-      title="BluePilot reasoning"
+      aria-label={open ? t("reasoning.hide") : t("reasoning.show")}
+      title={t("reasoning.title")}
       className={cn(
         btnCls,
         open && (dark ? "bg-white/12 ring-1 ring-white/20" : "bg-[var(--color-bg-subtle)] ring-1 ring-[var(--color-border-default)]"),

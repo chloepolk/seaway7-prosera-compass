@@ -10,20 +10,23 @@ import { DEFAULT_SCENARIO } from "./types"
 import { projectAll, getDogsCount, getCurrentFuelPrice, getDogsNames } from "./projections"
 import { buildSandboxPrompt } from "./prompt"
 import { buildPortfolioContext } from "../agents/_context"
+import { useT } from "../_i18n/use-t"
+import { localeTag } from "../_i18n"
+import { activeLocaleTag, formatActiveUsd } from "../_i18n/legacy"
 
-const usd = (n: number) => (n >= 0 ? "+$" : "-$") + Math.abs(Math.round(n)).toLocaleString()
+const usd = (n: number) => `${n >= 0 ? "+" : ""}${formatActiveUsd(n, false)}`
 const pts = (n: number) => (n >= 0 ? "+" : "") + n.toFixed(1)
 const bps = (n: number) => (n >= 0 ? "+" : "") + Math.round(n)
 
-const LEVER_TABS: { key: LeverCategory; label: string; icon: string }[] = [
-  { key: "customer-mix", label: "Customer Mix", icon: "Users" },
-  { key: "pricing", label: "Pricing", icon: "TrendingUp" },
-  { key: "fuel", label: "Fuel", icon: "Fuel" },
-  { key: "nte", label: "NTE Friction", icon: "ShieldCheck" },
-]
-
 export function SandboxDrawer() {
-  const { sandboxOpen, setSandboxOpen, data, savedScenarios, saveScenario, deleteScenario } = useStore()
+  const { sandboxOpen, setSandboxOpen, data, savedScenarios, saveScenario, deleteScenario, locale } = useStore()
+  const t = useT()
+  const leverTabs: { key: LeverCategory; label: string; icon: string }[] = [
+    { key: "customer-mix", label: t("sandbox.customerMix"), icon: "Users" },
+    { key: "pricing", label: t("sandbox.pricing"), icon: "TrendingUp" },
+    { key: "fuel", label: t("sandbox.fuel"), icon: "Fuel" },
+    { key: "nte", label: t("sandbox.nteFriction"), icon: "ShieldCheck" },
+  ]
   const [activeLever, setActiveLever] = React.useState<LeverCategory>("customer-mix")
   const [scenario, setScenario] = React.useState<ScenarioState>(() => ({
     ...DEFAULT_SCENARIO,
@@ -79,17 +82,18 @@ export function SandboxDrawer() {
       state,
       projection: proj,
       portfolioContext: ctx,
+      locale,
     })
 
     fetch("/api/acme/sandbox", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ scenarioPrompt }),
+      body: JSON.stringify({ scenarioPrompt, locale }),
       signal: controller.signal,
     })
       .then(async (res) => {
         if (!res.ok || !res.body) {
-          setAgentText("Unable to connect to BluePilot. Check API key configuration.")
+          setAgentText(t("sandbox.unable"))
           setAgentLoading(false)
           return
         }
@@ -106,11 +110,11 @@ export function SandboxDrawer() {
       })
       .catch((err) => {
         if ((err as Error).name !== "AbortError") {
-          setAgentText("Something went wrong. Please try again.")
+          setAgentText(t("sandbox.error"))
           setAgentLoading(false)
         }
       })
-  }, [data])
+  }, [data, locale, t])
 
   const debouncedFireAgent = React.useCallback((state: ScenarioState, lever: LeverCategory) => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -160,7 +164,7 @@ export function SandboxDrawer() {
     const lines = [
       "═══ BluePilot What-If Scenario Export ═══",
       "",
-      `Date: ${new Date().toLocaleDateString()}`,
+      `${locale === "fr" ? "Date" : "Date"}: ${new Date().toLocaleDateString(localeTag(locale))}`,
       "",
       "── Scenario Parameters ──",
       `Customer Mix: Exit ${scenario.customerMix.exitDogs} Dogs, Add ${scenario.customerMix.addStars} Stars`,
@@ -181,7 +185,7 @@ export function SandboxDrawer() {
       "── Powered by BluePilot / Future Energy ──",
     ]
     navigator.clipboard.writeText(lines.join("\n"))
-  }, [scenario, projection, agentText])
+  }, [scenario, projection, agentText, locale])
 
   React.useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -210,11 +214,11 @@ export function SandboxDrawer() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <SafeIcon name="FlaskConical" className="h-4 w-4 text-[var(--color-brand-strong)]" />
-            <span className="text-sm font-semibold text-[var(--color-text-primary)]">What-If Sandbox</span>
+            <span className="text-sm font-semibold text-[var(--color-text-primary)]">{t("sandbox.title")}</span>
           </div>
           {/* Lever tabs */}
           <div className="flex items-center gap-1 ml-4">
-            {LEVER_TABS.map(tab => (
+            {leverTabs.map(tab => (
               <button
                 key={tab.key}
                 type="button"
@@ -237,7 +241,7 @@ export function SandboxDrawer() {
             <div className="relative">
               <Button variant="ghost" size="sm" className="h-7 text-xs gap-1.5" onClick={() => setShowSaved(!showSaved)}>
                 <SafeIcon name="FolderOpen" className="h-3 w-3" />
-                Saved ({savedScenarios.length})
+                {t("sandbox.saved", { count: savedScenarios.length })}
               </Button>
               {showSaved && (
                 <div className="absolute right-0 top-8 z-50 w-64 rounded-lg border bg-background p-2 shadow-lg space-y-1">
@@ -245,7 +249,7 @@ export function SandboxDrawer() {
                     <div key={s.id} className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 hover:bg-muted/40 group">
                       <button type="button" className="flex-1 text-left text-xs truncate" onClick={() => loadScenario(s)}>
                         <span className="font-medium">{s.name}</span>
-                        <span className="text-muted-foreground ml-2">{new Date(s.timestamp).toLocaleDateString()}</span>
+                        <span className="text-muted-foreground ml-2">{new Date(s.timestamp).toLocaleDateString(localeTag(locale))}</span>
                       </button>
                       <button
                         type="button"
@@ -262,7 +266,7 @@ export function SandboxDrawer() {
           )}
           <Button variant="ghost" size="sm" className="h-7 text-xs gap-1.5" onClick={resetScenario} disabled={isNeutral}>
             <SafeIcon name="RotateCcw" className="h-3 w-3" />
-            Reset
+            {t("sandbox.reset")}
           </Button>
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSandboxOpen(false)}>
             <SafeIcon name="X" className="h-4 w-4" />
@@ -307,14 +311,14 @@ export function SandboxDrawer() {
                 type="text"
                 value={saveName}
                 onChange={e => setSaveName(e.target.value)}
-                placeholder="Scenario name…"
+                placeholder={t("sandbox.scenarioName")}
                 autoFocus
                 className="w-full rounded-md border border-[var(--color-border-default)] bg-transparent px-2 py-1.5 text-xs text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand-primary)]"
                 onKeyDown={e => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") setSavePromptOpen(false) }}
               />
               <div className="flex gap-1.5">
-                <Button size="sm" className="h-6 text-[10px] flex-1" onClick={handleSave} disabled={!saveName.trim()}>Save</Button>
-                <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => setSavePromptOpen(false)}>Cancel</Button>
+                <Button size="sm" className="h-6 text-[10px] flex-1" onClick={handleSave} disabled={!saveName.trim()}>{t("sandbox.save")}</Button>
+                <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => setSavePromptOpen(false)}>{t("sandbox.cancel")}</Button>
               </div>
             </div>
           )}
@@ -378,14 +382,15 @@ function CustomerMixLevers({ scenario, dogsCount, exitedNames, onUpdate }: {
   exitedNames: string[]
   onUpdate: (fn: (s: ScenarioState) => ScenarioState) => void
 }) {
+  const t = useT()
   return (
     <>
       <div className="flex items-center gap-1.5 text-xs font-semibold">
         <SafeIcon name="Users" className="h-3.5 w-3.5 text-[var(--color-brand-strong)]" />
-        Customer Portfolio Mix
+        {t("sandbox.customerPortfolioMix")}
       </div>
       <LeverSlider
-        label="Exit Dogs accounts"
+        label={t("sandbox.exitDogs")}
         value={scenario.customerMix.exitDogs}
         min={0}
         max={dogsCount}
@@ -394,14 +399,14 @@ function CustomerMixLevers({ scenario, dogsCount, exitedNames, onUpdate }: {
       />
       {scenario.customerMix.exitDogs > 0 && exitedNames.length > 0 && (
         <div className="rounded-md bg-red-500/5 border border-red-500/10 p-2 space-y-0.5">
-          <p className="text-[9px] font-medium text-red-600 dark:text-red-400 uppercase tracking-wider">Exiting</p>
+          <p className="text-[9px] font-medium text-red-600 dark:text-red-400 uppercase tracking-wider">{t("sandbox.exiting")}</p>
           {exitedNames.map(n => (
             <p key={n} className="text-[10px] text-muted-foreground truncate">{n}</p>
           ))}
         </div>
       )}
       <LeverSlider
-        label="Add Stars-profile acquisitions"
+        label={t("sandbox.addStars")}
         value={scenario.customerMix.addStars}
         min={0}
         max={20}
@@ -416,29 +421,30 @@ function PricingLevers({ scenario, onUpdate }: {
   scenario: ScenarioState
   onUpdate: (fn: (s: ScenarioState) => ScenarioState) => void
 }) {
+  const t = useT()
   return (
     <>
       <div className="flex items-center gap-1.5 text-xs font-semibold">
         <SafeIcon name="TrendingUp" className="h-3.5 w-3.5 text-[var(--color-brand-strong)]" />
-        Pricing Adjustments
+        {t("sandbox.pricingAdjustments")}
       </div>
       <LeverSlider
-        label="Labor billing multiplier"
+        label={t("sandbox.laborMultiplier")}
         value={scenario.pricing.laborMultiplier}
         min={0}
         max={4.0}
         step={0.1}
-        displayValue={scenario.pricing.laborMultiplier === 0 ? "Off" : `${scenario.pricing.laborMultiplier.toFixed(1)}x`}
+        displayValue={scenario.pricing.laborMultiplier === 0 ? t("sandbox.off") : `${scenario.pricing.laborMultiplier.toFixed(1)}x`}
         onChange={v => onUpdate(s => ({ ...s, pricing: { ...s.pricing, laborMultiplier: v } }))}
       />
       <LeverSlider
-        label="Material markup target"
+        label={t("sandbox.materialMarkup")}
         value={scenario.pricing.materialMarkupPct}
         min={0}
         max={35}
         step={1}
         unit="%"
-        displayValue={scenario.pricing.materialMarkupPct === 0 ? "Off" : `${scenario.pricing.materialMarkupPct}%`}
+        displayValue={scenario.pricing.materialMarkupPct === 0 ? t("sandbox.off") : `${scenario.pricing.materialMarkupPct}%`}
         onChange={v => onUpdate(s => ({ ...s, pricing: { ...s.pricing, materialMarkupPct: v } }))}
       />
     </>
@@ -450,15 +456,16 @@ function FuelLevers({ scenario, currentPrice, onUpdate }: {
   currentPrice: number
   onUpdate: (fn: (s: ScenarioState) => ScenarioState) => void
 }) {
+  const t = useT()
   const delta = scenario.fuel.pricePerGal - currentPrice
   return (
     <>
       <div className="flex items-center gap-1.5 text-xs font-semibold">
         <SafeIcon name="Fuel" className="h-3.5 w-3.5 text-[var(--color-brand-strong)]" />
-        Fuel Price Scenario
+        {t("sandbox.fuelScenario")}
       </div>
       <LeverSlider
-        label="Unleaded price per gallon"
+        label={t("sandbox.unleadedPrice")}
         value={scenario.fuel.pricePerGal}
         min={2.50}
         max={6.00}
@@ -467,7 +474,7 @@ function FuelLevers({ scenario, currentPrice, onUpdate }: {
         onChange={v => onUpdate(s => ({ ...s, fuel: { pricePerGal: v } }))}
       />
       <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-        <span>Current: ${currentPrice.toFixed(2)}</span>
+        <span>{t("sandbox.current")}: ${currentPrice.toFixed(2)}</span>
         <span className={cn(delta > 0 ? "text-[var(--color-accent-critical-text)]" : delta < 0 ? "text-[var(--color-accent-positive-text)]" : "")}>
           {delta > 0 ? "+" : ""}{delta.toFixed(2)}/gal
         </span>
@@ -480,14 +487,15 @@ function NteLevers({ scenario, onUpdate }: {
   scenario: ScenarioState
   onUpdate: (fn: (s: ScenarioState) => ScenarioState) => void
 }) {
+  const t = useT()
   return (
     <>
       <div className="flex items-center gap-1.5 text-xs font-semibold">
         <SafeIcon name="ShieldCheck" className="h-3.5 w-3.5 text-[var(--color-brand-strong)]" />
-        NTE Escalation Friction
+        {t("sandbox.nteTitle")}
       </div>
       <LeverSlider
-        label="Counterfactual sensitivity"
+        label={t("sandbox.counterfactual")}
         value={scenario.nte.thresholdMultiplier}
         min={1.0}
         max={2.0}
@@ -496,7 +504,7 @@ function NteLevers({ scenario, onUpdate }: {
         onChange={v => onUpdate(s => ({ ...s, nte: { thresholdMultiplier: v } }))}
       />
       <p className="text-[10px] text-muted-foreground leading-relaxed">
-        Counterfactual only — models dispatch friction when jobs exceed customer-set NTE caps. NTE is controlled by the customer, not ACME; use this to quantify escalation cost and internal workflow opportunities, not to recommend threshold changes.
+        {t("sandbox.nteHelp")}
       </p>
     </>
   )
@@ -512,19 +520,20 @@ function ImpactPanel({ projection, isNeutral, onSnapshot, onExport }: {
   onSnapshot: () => void
   onExport: () => void
 }) {
+  const t = useT()
   const metrics = [
-    { label: "Revenue", value: usd(projection.revenueDelta), positive: projection.revenueDelta >= 0 },
-    { label: "Margin", value: `${usd(projection.marginDelta)} (${pts(projection.marginPtsDelta)} pts)`, positive: projection.marginDelta >= 0 },
+    { label: t("sandbox.revenue"), value: usd(projection.revenueDelta), positive: projection.revenueDelta >= 0 },
+    { label: t("sandbox.margin"), value: `${usd(projection.marginDelta)} (${pts(projection.marginPtsDelta)} pts)`, positive: projection.marginDelta >= 0 },
     { label: "EBITDA", value: `${bps(projection.ebitdaDeltaBps)} bps`, positive: projection.ebitdaDeltaBps >= 0 },
-    { label: "Truck Rolls", value: projection.freedTruckRolls > 0 ? `${projection.freedTruckRolls} freed` : "—", positive: projection.freedTruckRolls >= 0 },
-    { label: "Jobs Affected", value: projection.affectedJobs > 0 ? projection.affectedJobs.toLocaleString() : "—", positive: true },
+    { label: t("sandbox.truckRolls"), value: projection.freedTruckRolls > 0 ? t("sandbox.freed", { count: projection.freedTruckRolls }) : "—", positive: projection.freedTruckRolls >= 0 },
+    { label: t("sandbox.jobsAffected"), value: projection.affectedJobs > 0 ? projection.affectedJobs.toLocaleString(activeLocaleTag()) : "—", positive: true },
   ]
 
   return (
     <>
       <div className="flex items-center gap-1.5 text-xs font-semibold">
         <SafeIcon name="BarChart3" className="h-3.5 w-3.5 text-[var(--color-brand-strong)]" />
-        Projected Impact
+        {t("sandbox.projectedImpact")}
       </div>
       <div className="space-y-1.5">
         {metrics.map(m => (
@@ -541,7 +550,7 @@ function ImpactPanel({ projection, isNeutral, onSnapshot, onExport }: {
       </div>
       {!isNeutral && projection.affectedCustomers.length > 0 && (
         <div className="rounded-md border bg-muted/20 p-2">
-          <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider mb-1">Affected Accounts</p>
+          <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider mb-1">{t("sandbox.affectedAccounts")}</p>
           <div className="space-y-0.5 max-h-20 overflow-y-auto">
             {projection.affectedCustomers.map(c => (
               <p key={c} className="text-[10px] text-muted-foreground truncate">{c}</p>
@@ -552,11 +561,11 @@ function ImpactPanel({ projection, isNeutral, onSnapshot, onExport }: {
       <div className="flex gap-1.5 pt-1">
         <Button size="sm" variant="outline" className="h-7 text-[10px] flex-1 gap-1" onClick={onSnapshot} disabled={isNeutral}>
           <SafeIcon name="Camera" className="h-3 w-3" />
-          Snapshot
+          {t("sandbox.snapshot")}
         </Button>
         <Button size="sm" variant="outline" className="h-7 text-[10px] flex-1 gap-1" onClick={onExport} disabled={isNeutral}>
           <SafeIcon name="Copy" className="h-3 w-3" />
-          Export
+          {t("sandbox.export")}
         </Button>
       </div>
     </>
@@ -568,6 +577,7 @@ function ImpactPanel({ projection, isNeutral, onSnapshot, onExport }: {
 /* ------------------------------------------------------------------ */
 
 function AgentPanel({ text, loading, isNeutral }: { text: string; loading: boolean; isNeutral: boolean }) {
+  const t = useT()
   const scrollRef = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
@@ -581,9 +591,9 @@ function AgentPanel({ text, loading, isNeutral }: { text: string; loading: boole
       <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
         <SafeIcon name="FlaskConical" className="h-8 w-8 text-muted-foreground/30" />
         <div>
-          <p className="text-sm font-medium text-muted-foreground/60">Adjust a lever to begin</p>
+          <p className="text-sm font-medium text-muted-foreground/60">{t("sandbox.adjustLever")}</p>
           <p className="text-xs text-muted-foreground/40 mt-1">
-            BluePilot will analyze the strategic implications of your scenario in real time.
+            {t("sandbox.agentHelp")}
           </p>
         </div>
       </div>
@@ -594,7 +604,7 @@ function AgentPanel({ text, loading, isNeutral }: { text: string; loading: boole
     <div className="h-full flex flex-col">
       <div className="flex items-center gap-1.5 text-xs font-semibold mb-3 shrink-0">
         <SafeIcon name="BrainCircuit" className="h-3.5 w-3.5 text-[var(--color-brand-strong)]" />
-        Strategic Analysis
+        {t("sandbox.strategicAnalysis")}
         {loading && (
           <span className="ml-2 inline-flex items-center gap-1 text-[9px] text-muted-foreground font-normal">
             <span className="h-1 w-1 rounded-full bg-[var(--color-brand-primary)] animate-pulse" />
