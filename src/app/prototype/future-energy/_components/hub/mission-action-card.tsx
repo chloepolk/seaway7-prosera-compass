@@ -16,7 +16,8 @@ import { BluePilotMark } from "../bluepilot-mark"
 import { ReasoningExpand, BluePilotReasoningButton, ReasoningTooltip, type ReasoningContent } from "../reasoning-disclosure"
 import { isReasoningEmpty } from "../reasoning-helpers"
 import type { MissionObjective } from "@/app/prototype/future-energy/_diamond/types"
-import { VALUE_BADGE_CLS, VALUE_BADGE_LABEL, valueBadgeAmount } from "../value-tones"
+import { useT } from "../../_i18n/use-t"
+import { VALUE_BADGE_CLS, valueBadgeAmount } from "../value-tones"
 import { ACTIVE_USER, displayName, NOTIFY_DELEGATE } from "./active-user"
 import { avatarColor, avatarSrcFor } from "./avatar-color"
 import { employeeForCurrentTimelineStep } from "./mission-timeline-helpers"
@@ -107,6 +108,7 @@ export function MissionActionCard({
   className,
   ...props
 }: MissionActionCardProps) {
+  const t = useT()
   const displayOwner = displayName(owner)
   const ownerAvatarSrc = avatarSrcFor(owner, EMPLOYEES, ACTIVE_USER.name)
   const initials = isAssignedToYou ? "Y" : getInitials(owner)
@@ -195,7 +197,7 @@ export function MissionActionCard({
             </Avatar>
             <span>
               {isAssignedToYou ? (
-                <span className="font-medium text-[var(--color-text-primary)]">Assigned to you</span>
+                <span className="font-medium text-[var(--color-text-primary)]">{t("missionCard.assignedToYou")}</span>
               ) : (
                 <>
                   <span className="font-medium text-[var(--color-text-primary)]">{displayOwner}</span>
@@ -213,7 +215,7 @@ export function MissionActionCard({
               isCompleted ? COMPLETED_STATUS_CLS : STATUS_CLS[statusTone],
             )}
           >
-            {isCompleted ? "LANDED" : statusLabel}
+            {isCompleted ? t("actionCentre.landed") : statusLabel}
           </span>
           <span
             className={cn(
@@ -225,7 +227,7 @@ export function MissionActionCard({
               {valueBadgeAmount(valueChip, valueType)}
             </span>
             <span className="text-[10px] font-semibold uppercase tracking-wide opacity-80">
-              {VALUE_BADGE_LABEL[valueType]}
+              {valueType === "creation" ? t("missionCard.create") : t("missionCard.protect")}
             </span>
           </span>
           <SafeIcon
@@ -251,7 +253,7 @@ export function MissionActionCard({
             className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
           >
             <SafeIcon name={narrativeOpen ? "ChevronUp" : "ChevronDown"} className="size-3" />
-            {narrativeOpen ? "Hide details" : "Show details"}
+            {narrativeOpen ? t("missionCard.hideDetails") : t("missionCard.showDetails")}
           </button>
         )}
       </div>
@@ -260,7 +262,7 @@ export function MissionActionCard({
         <div className="mt-3 ml-9 flex items-center gap-2 rounded-[10px] border border-[var(--color-brand-strong)]/20 bg-[var(--color-tint-brand)] px-3 py-2">
           <BluePilotMark size={16} className="shrink-0 text-[var(--color-brand-strong)]" />
           <span className="text-[11px] font-medium text-[var(--color-brand-strong)]">
-            {reconcilePhase ?? "BluePilot is updating this action…"}
+            {reconcilePhase ?? t("missionCard.updating")}
           </span>
           <span className="ml-auto inline-block size-1.5 animate-pulse rounded-full bg-[var(--color-brand-strong)]" />
         </div>
@@ -329,16 +331,16 @@ export function MissionActionCard({
                       className="text-[var(--color-accent-positive-text)]"
                     >
                       <SafeIcon name="CheckCircle2" className="h-4 w-4" />
-                      Mark as complete
+                      {t("missionCard.complete")}
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem onClick={onEditClick}>
                     <SafeIcon name="Pencil" className="h-4 w-4" />
-                    Edit
+                    {t("missionCard.edit")}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={onEmailClick}>
                     <SafeIcon name="Mail" className="h-4 w-4" />
-                    Notify
+                    {t("missionCard.email")}
                   </DropdownMenuItem>
                   {hasReasoning && (
                     <>
@@ -398,7 +400,7 @@ export function MissionActionCard({
                   onClick={onViewAudit}
                   className="text-[11px] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] hover:underline"
                 >
-                  View audit ({auditEntries.length})
+                  {t("missionCard.viewAudit")} ({auditEntries.length})
                 </button>
               )}
               <ActionCompletionTimeline entries={timelineEntries} />
@@ -406,7 +408,7 @@ export function MissionActionCard({
                 <div className="grid grid-cols-3 gap-3">
                   {confidence != null && (
                     <div className="rounded-[10px] border border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] px-3 py-2.5">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Confidence</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">{t("missionCard.confidence")}</p>
                       <p className="mt-1 text-[15px] font-semibold tabular-nums text-[var(--color-text-primary)]">
                         {Math.round(confidence * 100)}%
                       </p>
@@ -414,7 +416,7 @@ export function MissionActionCard({
                   )}
                   {risk && (
                     <div className="rounded-[10px] border border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] px-3 py-2.5">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Risk</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">{t("missionCard.risk")}</p>
                       <p className="mt-1 line-clamp-2 text-[12px] leading-snug text-[var(--color-text-secondary)]">
                         {risk}
                       </p>

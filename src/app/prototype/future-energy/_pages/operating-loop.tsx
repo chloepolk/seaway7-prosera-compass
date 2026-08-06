@@ -4,13 +4,14 @@ import * as React from "react"
 import { useStore } from "../_store"
 import { buildDiamondMissions, buildPortfolioRoi } from "../_diamond/adapter"
 import { personForRole } from "../_diamond/org"
-import { formatCurrency, HEALTH_STYLE } from "../_diamond/stages"
+import { formatCurrency } from "../_diamond/stages"
 import type { DiamondMission, MissionHorizon } from "../_diamond/types"
 import { AgenticFocusHero } from "../_components/agentic-hero"
 import { PortfolioLedger, compactUsd } from "../_components/hub/portfolio-ledger"
 import { ActionFilterBar, type AssigneeKey, type HorizonKey } from "../_components/hub/action-filter-bar"
 import { MissionActionCard } from "../_components/hub/mission-action-card"
-import { FLIGHT_PATH_STEPS, flightProgressLabel, flightStepIdForStage } from "../_components/hub/flight-stages"
+import { translatedFlightPathSteps, flightProgressLabel, flightStepIdForStage } from "../_components/hub/flight-stages"
+import { useT } from "../_i18n/use-t"
 import type { AuditEntry, StatusKey } from "../_components/hub/hub-types"
 import { EditActionModal } from "../_components/hub/edit-action-modal"
 import { CompleteActionModal } from "../_components/hub/complete-action-modal"
@@ -66,9 +67,10 @@ function matchesAssignee(m: DiamondMission, filter: AssigneeKey | null): boolean
 }
 
 function EmptyState() {
+  const t = useT()
   return (
     <p className="rounded-[14px] border border-dashed border-[var(--color-border-default)] py-12 text-center text-[13px] text-[var(--color-text-muted)]">
-      No actions match this filter.
+      {t("actionCentre.empty")}
     </p>
   )
 }
@@ -88,6 +90,7 @@ function missionFields(mission: DiamondMission, patch?: MissionSessionPatch) {
 }
 
 export function OperatingLoopPage() {
+  const t = useT()
   const {
     missionPriority,
     bpReasoning,
@@ -96,6 +99,7 @@ export function OperatingLoopPage() {
     openTenderStudio,
     openBidEvaluation,
   } = useStore()
+  const flightPathSteps = translatedFlightPathSteps(t)
 
   const [horizonFilter, setHorizonFilter] = React.useState<HorizonKey | null>(null)
   const [statusFilter, setStatusFilter] = React.useState<StatusKey | null>(null)
@@ -139,7 +143,7 @@ export function OperatingLoopPage() {
     setEditingMissionId(null)
     setExpandedId(missionId)
     setReconcilingId(missionId)
-    setReconcilePhase("Ingesting your edit…")
+    setReconcilePhase(t("actionCentre.ingestingEdit"))
 
     void reconcileMissionAfterEdit(mission, newValue, setReconcilePhase).then((patch) => {
       setMissionPatches((prev) => ({ ...prev, [missionId]: patch }))
@@ -160,7 +164,7 @@ export function OperatingLoopPage() {
       setReconcilingId(null)
       setReconcilePhase("")
     })
-  }, [orderedMissions])
+  }, [orderedMissions, t])
 
   const saveComplete = React.useCallback((missionId: string, oldValue: string, confirmedAction: string) => {
     const mission = orderedMissions.find((m) => m.id === missionId)
@@ -180,7 +184,7 @@ export function OperatingLoopPage() {
     setCompletingMissionId(null)
     setExpandedId(missionId)
     setReconcilingId(missionId)
-    setReconcilePhase("Ingesting your confirmation…")
+    setReconcilePhase(t("actionCentre.ingestingEdit"))
 
     void reconcileMissionAfterComplete(effectiveMission, confirmedAction, setReconcilePhase).then((patch) => {
       setMissionPatches((prev) => ({
@@ -200,11 +204,11 @@ export function OperatingLoopPage() {
           },
         ],
       }))
-      setSessionHeroNote(`BluePilot recorded your confirmation on "${mission.name}" — timeline advanced to the next gate.`)
+      setSessionHeroNote(t("actionCentre.recordedConfirmation", { name: mission.name }))
       setReconcilingId(null)
       setReconcilePhase("")
     })
-  }, [orderedMissions, missionPatches])
+  }, [orderedMissions, missionPatches, t])
 
   const roi = React.useMemo(() => buildPortfolioRoi(orderedMissions, closed), [orderedMissions, closed])
 
@@ -243,9 +247,10 @@ export function OperatingLoopPage() {
   const protectTotal = orderedMissions.filter((m) => m.valueType === "protection").reduce((s, m) => s + m.projectedValue, 0)
   const createTotal = orderedMissions.filter((m) => m.valueType === "creation").reduce((s, m) => s + m.projectedValue, 0)
 
-  const staticHeroHeadline = `${compactUsd(protectTotal + createTotal)} of negotiated savings is in play across the Meridian tender pipeline.`
-  const staticHeroBody =
-    `${openMissions.length} packages are live. Four returns are in on the 66kV array cable ITT — run the gated evaluation before the award recommendation.`
+  const staticHeroHeadline = t("actionCentre.heroHeadline", {
+    amount: compactUsd(protectTotal + createTotal),
+  })
+  const staticHeroBody = t("actionCentre.heroBody", { count: openMissions.length })
 
   const heroReasoning = React.useMemo(
     () =>
@@ -257,7 +262,6 @@ export function OperatingLoopPage() {
   )
 
   const renderOpenMission = (mission: DiamondMission, i: number) => {
-    const health = HEALTH_STYLE[mission.health]
     const expanded = expandedId === mission.id
     const patch = missionPatches[mission.id]
     const fields = missionFields(mission, patch)
@@ -269,7 +273,11 @@ export function OperatingLoopPage() {
     const canDraft = fields.stage === "mission_created" || fields.stage === "understand"
     // Issued packages open Bid Evaluation for that ITT.
     const canEvaluate = fields.stage === "execute"
-    const primaryActionLabel = canEvaluate ? "Evaluate bids" : canDraft ? "Draft ITT" : undefined
+    const primaryActionLabel = canEvaluate
+      ? t("actionCentre.evaluateBids")
+      : canDraft
+        ? t("actionCentre.draftItt")
+        : undefined
     const onPrimaryAction = canEvaluate
       ? () => openBidEvaluation(mission.id)
       : canDraft
@@ -285,10 +293,10 @@ export function OperatingLoopPage() {
           narrative={fields.narrative}
           valueChip={formatCurrency(mission.projectedValue)}
           valueType={mission.valueType}
-          statusLabel={health.label.toUpperCase()}
+          statusLabel={t(`health.${mission.health}`).toUpperCase()}
           statusTone={mission.health}
-          stageLabel={flightProgressLabel(fields.stage)}
-          flightPathSteps={FLIGHT_PATH_STEPS}
+          stageLabel={flightProgressLabel(fields.stage, t)}
+          flightPathSteps={flightPathSteps}
           currentFlightStepId={flightStepIdForStage(fields.stage)}
           owner={person.name}
           ownerRole={person.role}
@@ -326,10 +334,10 @@ export function OperatingLoopPage() {
           narrative={fields.narrative}
           valueChip={formatCurrency(mission.realizedValue ?? mission.projectedValue)}
           valueType={mission.valueType}
-          statusLabel="LANDED"
+          statusLabel={t("actionCentre.landed")}
           statusTone="on_track"
-          stageLabel="Landed · 100%"
-          flightPathSteps={FLIGHT_PATH_STEPS}
+          stageLabel={t("actionCentre.landedStage")}
+          flightPathSteps={flightPathSteps}
           currentFlightStepId="landed"
           owner={displayName(person.name)}
           ownerRole={person.role}
@@ -358,10 +366,10 @@ export function OperatingLoopPage() {
           narrative={card.narrative}
           valueChip={card.valueChip}
           valueType={card.valueType}
-          statusLabel="LANDED"
+          statusLabel={t("actionCentre.landed")}
           statusTone="on_track"
-          stageLabel="Landed · 100%"
-          flightPathSteps={FLIGHT_PATH_STEPS}
+          stageLabel={t("actionCentre.landedStage")}
+          flightPathSteps={flightPathSteps}
           currentFlightStepId="landed"
           owner={displayName(card.owner)}
           ownerRole={card.ownerRole}
@@ -380,18 +388,18 @@ export function OperatingLoopPage() {
   return (
     <div className="space-y-7">
       <AgenticFocusHero
-        eyebrow="Today's focus · from BluePilot"
+        eyebrow={t("actionCentre.todaysFocus")}
         staticHeadline={staticHeroHeadline}
         staticBody={staticHeroBody}
         bodyOverride={sessionHeroNote}
         reasoningDisclosure="expand"
         reasoningContent={heroReasoning}
-        agentReasoningSummary="BluePilot prioritised the tender pipeline by submission deadline, savings target and installation critical path."
-        ctaLabel="Review the pipeline →"
+        agentReasoningSummary={t("actionCentre.heroReasoningSummary")}
+        ctaLabel={t("actionCentre.reviewPipeline")}
         onCta={() => document.getElementById("actions-section")?.scrollIntoView({ behavior: "smooth" })}
         stats={[
-          { value: compactUsd(protectTotal), label: "Value Protection" },
-          { value: compactUsd(createTotal), label: "Value Creation" },
+          { value: compactUsd(protectTotal), label: t("actionCentre.valueProtection") },
+          { value: compactUsd(createTotal), label: t("actionCentre.valueCreation") },
         ]}
       />
 
@@ -417,7 +425,7 @@ export function OperatingLoopPage() {
             {showOpen && openMissions.length > 0 && (
               <div className="space-y-3">
                 <h3 className="text-[13px] font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
-                  Open actions
+                  {t("actionCentre.openSection")}
                 </h3>
                 {openMissions.map((mission, i) => renderOpenMission(mission, i))}
               </div>
@@ -425,7 +433,7 @@ export function OperatingLoopPage() {
             {showCompleted && (completedLiveMissions.length > 0 || closedCards.length > 0) && (
               <div className="space-y-3">
                 <h3 className="text-[13px] font-semibold uppercase tracking-wide text-[var(--color-accent-positive-text)]">
-                  Completed actions
+                  {t("actionCentre.completedSection")}
                 </h3>
                 {completedLiveMissions.map((mission, i) => renderCompletedMission(mission, i))}
                 {closedCards.map((card, i) => renderClosedCard(card, completedLiveMissions.length + i))}

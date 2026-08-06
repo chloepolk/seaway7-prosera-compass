@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { useStore } from "../_store"
+import { useT } from "../_i18n/use-t"
 import { BluePilotSkeleton } from "./bluepilot-summary"
 import { FocusHero, type FocusHeroProps } from "./hub/focus-hero"
 import type { ReasoningContent } from "./reasoning-disclosure"
@@ -27,12 +28,13 @@ export function AgenticFocusHero({
   ...heroProps
 }: AgenticFocusHeroProps) {
   const { isAgentLoading, useStaticFallback, bpHeadline, bpReasoning, agentPhase } = useStore()
+  const t = useT()
 
   if (isAgentLoading) {
     const phaseText =
       agentPhase === "orchestrating" || agentPhase === "verifying"
-        ? "Synthesizing findings…"
-        : "BluePilot is analyzing…"
+        ? t("agent.synthesisingFindingsHero")
+        : t("agent.bluePilotAnalyzing")
     return <BluePilotSkeleton label={phaseText} />
   }
 
@@ -59,6 +61,7 @@ export function AgenticFocusHero({
 
 export function useAgentPhaseLabel(): string {
   const { agentPhase } = useStore()
-  if (agentPhase === "orchestrating" || agentPhase === "verifying") return "Synthesizing findings…"
-  return "BluePilot is analyzing…"
+  const t = useT()
+  if (agentPhase === "orchestrating" || agentPhase === "verifying") return t("agent.synthesisingFindingsHero")
+  return t("agent.bluePilotAnalyzing")
 }

@@ -5,6 +5,7 @@ import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { Button } from "@/components/ui/prosera/button"
 import { cn } from "@/lib/utils"
 import { useStore, type DraftedTender } from "../_store"
+import { useT } from "../_i18n/use-t"
 import { enterMotion, listItemMotion, pcmButton, pcmCard } from "../_components/motion"
 import { ACTIVE_USER } from "../_components/hub/active-user"
 import {
@@ -407,10 +408,10 @@ function SectionHeading({ number, title }: { number: string; title: string }) {
   )
 }
 
-const AUDIT_STATUS_STYLE: Record<string, { icon: string; cls: string; label: string }> = {
-  pass: { icon: "CheckCircle2", cls: "text-emerald-600 dark:text-emerald-400", label: "Pass" },
-  corrected: { icon: "Wrench", cls: "text-amber-600 dark:text-amber-400", label: "Corrected" },
-  flagged: { icon: "TriangleAlert", cls: "text-red-600 dark:text-red-400", label: "Flagged" },
+const AUDIT_STATUS_STYLE: Record<string, { icon: string; cls: string; labelKey: "common.pass" | "tenderStudio.corrected" | "tenderStudio.flagged" }> = {
+  pass: { icon: "CheckCircle2", cls: "text-emerald-600 dark:text-emerald-400", labelKey: "common.pass" },
+  corrected: { icon: "Wrench", cls: "text-amber-600 dark:text-amber-400", labelKey: "tenderStudio.corrected" },
+  flagged: { icon: "TriangleAlert", cls: "text-red-600 dark:text-red-400", labelKey: "tenderStudio.flagged" },
 }
 
 /* ------------------------------------------------------------------ */
@@ -420,12 +421,13 @@ const AUDIT_STATUS_STYLE: Record<string, { icon: string; cls: string; label: str
 const CATEGORY_ORDER: DocumentCategory[] = ["technical", "quality", "commercial", "legal", "template"]
 
 function DocumentRepository({ activeDocRefs }: { activeDocRefs: Set<string> }) {
+  const t = useT()
   return (
     <section className={cn(pcmCard, "rounded-[16px] border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] p-4 space-y-4")}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <SafeIcon name="FolderLock" className="h-4 w-4 text-[var(--color-text-muted)]" />
-          <h2 className="text-[13px] font-semibold text-[var(--color-text-primary)]">Controlled Documents</h2>
+          <h2 className="text-[13px] font-semibold text-[var(--color-text-primary)]">{t("tenderStudio.sources")}</h2>
         </div>
         <span className="text-[11px] tabular-nums text-[var(--color-text-muted)]">{DOCUMENTS.length} on register</span>
       </div>
@@ -475,6 +477,7 @@ function DocumentRepository({ activeDocRefs }: { activeDocRefs: Set<string> }) {
 /* ------------------------------------------------------------------ */
 
 export function TenderStudioPage() {
+  const t = useT()
   const { focusTenderId, openTenderStudio, advanceTenderStage, setPage, draftedTenders, saveDraftedTender, deleteDraftedTender } = useStore()
 
   const [prompt, setPrompt] = React.useState("")
@@ -641,9 +644,9 @@ export function TenderStudioPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className={cn(heroMotion.className, "space-y-1")} style={heroMotion.style}>
-        <h1 className="text-[22px] font-bold text-[var(--color-text-primary)]">Tender Studio</h1>
+        <h1 className="text-[22px] font-bold text-[var(--color-text-primary)]">{t("tenderStudio.title")}</h1>
         <p className="text-[13px] text-[var(--color-text-secondary)]">
-          Draft, audit and issue Invitations to Tender against the {PROJECT.shortName} controlled document register.
+          {t("tenderStudio.subtitle")}
         </p>
       </div>
 
@@ -665,7 +668,7 @@ export function TenderStudioPage() {
                 onChange={(e) => setPrompt(e.target.value)}
                 rows={3}
                 disabled={isRunning}
-                placeholder="Describe the package to tender…"
+                placeholder={t("tenderStudio.placeholder")}
                 className="w-full resize-none rounded-[10px] border border-[var(--color-border-default)] bg-[var(--color-bg-canvas)] px-3 py-2.5 text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] outline-none focus:border-[var(--color-brand-primary)] disabled:opacity-60"
               />
               <Button
@@ -676,19 +679,19 @@ export function TenderStudioPage() {
                 {isRunning ? (
                   <>
                     <SafeIcon name="Loader2" className="h-3.5 w-3.5 animate-spin" />
-                    Drafting…
+                    {t("tenderStudio.drafting")}
                   </>
                 ) : (
                   <>
                     <SafeIcon name="FileSignature" className="h-3.5 w-3.5" />
-                    Draft ITT
+                    {t("tenderStudio.draft")}
                   </>
                 )}
               </Button>
             </form>
             {phase === "idle" && (
               <div className="space-y-1.5 pt-1">
-                <p className="text-[10px] font-semibold uppercase tracking-[1px] text-[var(--color-text-muted)]">Try</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[1px] text-[var(--color-text-muted)]">{t("tenderStudio.suggestions")}</p>
                 {SUGGESTED_PROMPTS.map(p => (
                   <button
                     key={p}
@@ -709,7 +712,7 @@ export function TenderStudioPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <SafeIcon name="Archive" className="h-4 w-4 text-[var(--color-text-muted)]" />
-                  <h2 className="text-[13px] font-semibold text-[var(--color-text-primary)]">Drafted tenders</h2>
+                  <h2 className="text-[13px] font-semibold text-[var(--color-text-primary)]">{t("tenderStudio.archive")}</h2>
                 </div>
                 <span className="text-[11px] tabular-nums text-[var(--color-text-muted)]">{draftedTenders.length}</span>
               </div>
@@ -740,7 +743,7 @@ export function TenderStudioPage() {
                         </span>
                       </button>
                       {d.submitted ? (
-                        <span className="shrink-0 rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-600 dark:text-emerald-400">Sent</span>
+                        <span className="shrink-0 rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-600 dark:text-emerald-400">{t("tenderStudio.issued")}</span>
                       ) : (
                         <span className="shrink-0 rounded-full bg-[var(--color-bg-subtle)] px-1.5 py-0.5 text-[9px] font-semibold text-[var(--color-text-muted)]">Draft</span>
                       )}
@@ -905,7 +908,7 @@ export function TenderStudioPage() {
                     <div className="flex items-center gap-2">
                       <SafeIcon name={audit.verified ? "ShieldCheck" : "ShieldAlert"} className={cn("h-4 w-4", audit.verified ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400")} />
                       <h2 className="text-[13px] font-semibold text-[var(--color-text-primary)]">
-                        {audit.verified ? "Audit passed — verified against source" : "Audit complete — corrections applied"}
+                        {t("tenderStudio.audit")}
                       </h2>
                     </div>
                     <div className="flex items-center gap-3">
@@ -931,7 +934,10 @@ export function TenderStudioPage() {
                       const motion = listItemMotion(i)
                       return (
                         <div key={i} className={cn(motion.className, "flex gap-2 rounded-[10px] border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] p-2.5")} style={motion.style}>
-                          <SafeIcon name={style.icon} className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", style.cls)} />
+                          <div className="mt-0.5 flex shrink-0 flex-col items-center gap-0.5">
+                            <SafeIcon name={style.icon} className={cn("h-3.5 w-3.5", style.cls)} />
+                            <span className={cn("text-[8px] font-semibold uppercase tracking-wide", style.cls)}>{t(style.labelKey)}</span>
+                          </div>
                           <div className="min-w-0 space-y-0.5">
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">{c.section}</p>
                             <p className="text-[11px] font-medium leading-snug text-[var(--color-text-primary)]">{c.claim}</p>
@@ -967,7 +973,7 @@ export function TenderStudioPage() {
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="space-y-1">
                         <p className="text-[10px] font-semibold uppercase tracking-[2px] text-[var(--color-text-inverse)]/60">
-                          Future Energy · Supply Chain Management
+                          {t("tenderStudio.scmLabel")}
                         </p>
                         <h2 className="text-[18px] font-bold text-[var(--color-text-inverse)]">{itt.title}</h2>
                         <p className="text-[12px] text-[var(--color-text-inverse)]/70">{PROJECT.name} — {PROJECT.client}</p>
@@ -989,13 +995,13 @@ export function TenderStudioPage() {
                               className={cn(pcmButton, "gap-1.5 rounded-[10px] bg-[var(--color-brand-primary)] text-[12px] font-semibold text-[var(--color-brand-onPrimary)] hover:opacity-90")}
                             >
                               <SafeIcon name="SendHorizontal" className="h-3.5 w-3.5" />
-                              Send for approval
+                              {t("tenderStudio.issue")}
                             </Button>
                           )}
                           {submitted && (
                             <span className="inline-flex items-center gap-1.5 rounded-[10px] bg-emerald-500/15 px-3 py-2 text-[12px] font-semibold text-emerald-400">
                               <SafeIcon name="CheckCircle2" className="h-3.5 w-3.5" />
-                              Sent to {pkg?.sponsorRole ?? "SCM Director"}
+                              {t("tenderStudio.issued")}
                             </span>
                           )}
                         </div>

@@ -4,6 +4,7 @@ import * as React from "react"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { cn } from "@/lib/utils"
 import { ACTIVE_USER } from "./active-user"
+import { useT } from "../../_i18n/use-t"
 import { PROJECT } from "../../data/future-energy/_tenders"
 import { GATE_LABELS, type BidEvaluationResult } from "../../data/future-energy/_bid-scoring"
 
@@ -21,10 +22,10 @@ function supplierEmail(supplier: string): string {
   return `tenders@${slug}.com`
 }
 
-const OUTCOME_META: Record<Outcome, { label: string; cls: string }> = {
-  award: { label: "Award", cls: "bg-[var(--color-tint-positive)] text-[var(--color-accent-positive-text)]" },
-  unsuccessful: { label: "Unsuccessful", cls: "bg-[var(--color-bg-subtle)] text-[var(--color-text-secondary)]" },
-  disqualified: { label: "Disqualified", cls: "bg-[var(--color-tint-critical)] text-[var(--color-accent-critical-text)]" },
+const OUTCOME_META: Record<Outcome, { labelKey: "notify.award" | "notify.unsuccessful" | "notify.disqualified"; cls: string }> = {
+  award: { labelKey: "notify.award", cls: "bg-[var(--color-tint-positive)] text-[var(--color-accent-positive-text)]" },
+  unsuccessful: { labelKey: "notify.unsuccessful", cls: "bg-[var(--color-bg-subtle)] text-[var(--color-text-secondary)]" },
+  disqualified: { labelKey: "notify.disqualified", cls: "bg-[var(--color-tint-critical)] text-[var(--color-accent-critical-text)]" },
 }
 
 const SIGN_OFF = `Yours faithfully,
@@ -94,6 +95,7 @@ export function BidderNotifyModal({
   results: BidEvaluationResult[]
   onClose: () => void
 }) {
+  const t = useT()
   const ordered = React.useMemo(() => {
     const rank = (r: BidEvaluationResult) => {
       const o = outcomeFor(r)
@@ -169,13 +171,13 @@ export function BidderNotifyModal({
 
   return (
     <div className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto p-4 sm:p-8" role="dialog" aria-modal="true">
-      <button type="button" aria-label="Close" className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <button type="button" aria-label={t("common.close")} className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 my-auto flex w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] shadow-2xl">
         {/* Toolbar */}
         <div className="flex items-center justify-between border-b border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] px-4 py-2.5">
           <div className="flex items-center gap-2">
             <SafeIcon name="Mail" className="h-4 w-4 text-[var(--color-text-muted)]" />
-            <h2 className="text-[13px] font-semibold text-[var(--color-text-primary)]">Notify bidders</h2>
+            <h2 className="text-[13px] font-semibold text-[var(--color-text-primary)]">{t("notify.title")}</h2>
             <span className="text-[11px] text-[var(--color-text-muted)]">· {ittRef}</span>
           </div>
           <div className="flex items-center gap-2">
@@ -228,7 +230,7 @@ export function BidderNotifyModal({
                         {isSent && <SafeIcon name="CheckCircle2" className="size-3.5 shrink-0 text-emerald-500" />}
                       </div>
                       <span className={cn("mt-1 inline-block rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide", meta.cls)}>
-                        {meta.label}
+                        {t(meta.labelKey)}
                       </span>
                     </button>
                   </li>
@@ -255,10 +257,10 @@ export function BidderNotifyModal({
                   {sendPhase === "sending" && !activeSent && <SafeIcon name="Loader" className="h-3.5 w-3.5 animate-spin" />}
                   {activeSent && <SafeIcon name="Check" className="h-3.5 w-3.5" />}
                   {!activeSent && sendPhase === "idle" && <SafeIcon name="Send" className="h-3.5 w-3.5" />}
-                  {activeSent ? "Sent" : sendPhase === "sending" ? "Sending…" : "Send"}
+                  {activeSent ? t("common.sent") : sendPhase === "sending" ? t("common.sending") : t("common.send")}
                 </button>
                 <span className="text-[11px] text-[var(--color-text-muted)]">
-                  {OUTCOME_META[outcomeFor(active)].label} notification to {active.supplier}
+                  {t(OUTCOME_META[outcomeFor(active)].labelKey)} notification to {active.supplier}
                 </span>
               </div>
 

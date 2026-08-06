@@ -29,6 +29,11 @@ import {
   buildChatBriefing,
   buildBidEvaluationContext,
 } from "./agents/_context"
+import {
+  type Locale,
+  loadStoredLocale,
+  persistLocale,
+} from "./_i18n"
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -37,6 +42,7 @@ import {
 export type Page = "commercial-center" | "customer-intel" | "pricing-intel" | "market-position" | "process-velocity" | "operating-loop" | "tender-studio" | "bid-evaluation"
 export type DrillLevel = "macro" | "region" | "city" | "customer" | "job"
 export type IntelRailSection = "findings" | "reasoning" | "context" | "ask"
+export type { Locale }
 
 export interface ChatMessage {
   role: "user" | "assistant"
@@ -120,6 +126,10 @@ export interface AcmeDemoStore {
 
   authenticated: boolean
   login: () => void
+
+  /** UI language for the Future Energy module (EN / FR). Persisted in localStorage. */
+  locale: Locale
+  setLocale: (locale: Locale) => void
 
   agentPhase: AgentPhase
   orchestratorResult: OrchestratorOutput | null
@@ -557,6 +567,22 @@ export function useStore(): AcmeDemoStore {
 export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode }) {
 
   const [authenticated, setAuthenticated] = React.useState(false)
+  const [locale, setLocaleState] = React.useState<Locale>("en")
+
+  React.useEffect(() => {
+    setLocaleState(loadStoredLocale())
+  }, [])
+
+  React.useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.lang = locale === "fr" ? "fr" : "en"
+    }
+  }, [locale])
+
+  const setLocale = React.useCallback((next: Locale) => {
+    setLocaleState(next)
+    persistLocale(next)
+  }, [])
 
   const [state, setState] = React.useState<CockpitState>({
     activePage: "operating-loop",
@@ -1234,6 +1260,8 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
       ...derived,
       authenticated,
       login,
+      locale,
+      setLocale,
       agentPhase: agentState.agentPhase,
       orchestratorResult: agentState.orchestratorResult,
       verifierResult: agentState.verifierResult,
@@ -1283,7 +1311,7 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
       deletedCustomApps,
       restoreCustomApp,
     }),
-    [state, actions, derived, authenticated, login, agentState, chatMessages, chatLoading, sendChatMessage, clearChat, sandboxOpen, biOpen, intelPanelOpen, savedScenarios, saveScenario, deleteScenario, missionPriority, setMissionPriority, focusMissionId, setFocusMission, tenderStages, advanceTenderStage, focusTenderId, openTenderStudio, focusEvalPackageId, openBidEvaluation, draftedTenders, saveDraftedTender, deleteDraftedTender, taskActions, markTaskComplete, overrideTask, postponeTask, sendTaskAlert, boards, getBoard, setBoardOrder, setModuleHidden, setBoardHero, openModuleId, openModule, closeModule, customApps, saveCustomApp, deleteCustomApp, deletedCustomApps, restoreCustomApp]
+    [state, actions, derived, authenticated, login, locale, setLocale, agentState, chatMessages, chatLoading, sendChatMessage, clearChat, sandboxOpen, biOpen, intelPanelOpen, savedScenarios, saveScenario, deleteScenario, missionPriority, setMissionPriority, focusMissionId, setFocusMission, tenderStages, advanceTenderStage, focusTenderId, openTenderStudio, focusEvalPackageId, openBidEvaluation, draftedTenders, saveDraftedTender, deleteDraftedTender, taskActions, markTaskComplete, overrideTask, postponeTask, sendTaskAlert, boards, getBoard, setBoardOrder, setModuleHidden, setBoardHero, openModuleId, openModule, closeModule, customApps, saveCustomApp, deleteCustomApp, deletedCustomApps, restoreCustomApp]
   )
 
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>

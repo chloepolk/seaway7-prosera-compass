@@ -25,6 +25,8 @@ import {
   SheetTitle,
 } from "@/components/ui/prosera/sheet"
 import { useStore, type Page, type IntelRailSection, type ChatMessage } from "./_store"
+import { useT } from "./_i18n/use-t"
+import type { Locale } from "./_i18n"
 import { SandboxDrawer } from "./_sandbox/SandboxDrawer"
 import { BiDashboardDrawer } from "./_bi/BiDashboardDrawer"
 import { DOCUMENTS, CATEGORY_LABELS, CHARTER, type DocumentCategory } from "./data/future-energy/_documents"
@@ -54,15 +56,15 @@ const SHELL_CONTENT_CLASS =
 
 type TopNavTab = {
   id: string
-  label: string
+  labelKey: "nav.actionCentre" | "nav.tenderStudio" | "nav.bidEvaluation"
   pages: Page[]
   defaultPage: Page
 }
 
 const TOP_NAV_TABS: TopNavTab[] = [
-  { id: "action-board", label: "Action Centre", pages: ["operating-loop"], defaultPage: "operating-loop" },
-  { id: "tender-studio", label: "Tender Studio", pages: ["tender-studio"], defaultPage: "tender-studio" },
-  { id: "bid-evaluation", label: "Bid Evaluation", pages: ["bid-evaluation"], defaultPage: "bid-evaluation" },
+  { id: "action-board", labelKey: "nav.actionCentre", pages: ["operating-loop"], defaultPage: "operating-loop" },
+  { id: "tender-studio", labelKey: "nav.tenderStudio", pages: ["tender-studio"], defaultPage: "tender-studio" },
+  { id: "bid-evaluation", labelKey: "nav.bidEvaluation", pages: ["bid-evaluation"], defaultPage: "bid-evaluation" },
 ]
 
 function activeTabForPage(page: Page): TopNavTab {
@@ -75,6 +77,7 @@ function activeTabForPage(page: Page): TopNavTab {
 
 function ThemeToggle() {
   const { theme, setTheme, systemTheme } = useTheme()
+  const t = useT()
   const [mounted, setMounted] = React.useState(false)
   React.useEffect(() => setMounted(true), [])
   const isDark = theme === "system" ? systemTheme === "dark" : theme === "dark"
@@ -82,7 +85,7 @@ function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <Button variant="ghost" size="icon" aria-label="Toggle theme" disabled>
+      <Button variant="ghost" size="icon" aria-label={t("common.toggleTheme")} disabled>
         <SafeIcon name="Loader2" className="size-4 animate-spin" />
       </Button>
     )
@@ -91,11 +94,60 @@ function ThemeToggle() {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Toggle theme" onClick={toggle} className={cn(pcmButton, "border border-border/60")}>
+        <Button variant="ghost" size="icon" aria-label={t("common.toggleTheme")} onClick={toggle} className={cn(pcmButton, "border border-border/60")}>
           <SafeIcon name={isDark ? "Moon" : "Sun"} className="size-4" />
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="bottom">Toggle theme</TooltipContent>
+      <TooltipContent side="bottom">{t("common.toggleTheme")}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Language Toggle (EN / FR)                                          */
+/* ------------------------------------------------------------------ */
+
+function LanguageToggle() {
+  const { locale, setLocale } = useStore()
+  const t = useT()
+
+  const select = (next: Locale) => {
+    if (next !== locale) setLocale(next)
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div
+          role="group"
+          aria-label={t("common.language")}
+          className={cn(
+            pcmButton,
+            "inline-flex h-9 items-center rounded-[9px] border border-border/60 p-0.5 text-[11px] font-semibold",
+          )}
+        >
+          {([
+            { id: "en" as const, label: "EN" },
+            { id: "fr" as const, label: "FR" },
+          ]).map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => select(opt.id)}
+              aria-pressed={locale === opt.id}
+              className={cn(
+                "rounded-[7px] px-2 py-1 transition-colors",
+                locale === opt.id
+                  ? "bg-[var(--color-tint-neutral)] text-[var(--color-text-primary)]"
+                  : "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]",
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">{t("common.language")}</TooltipContent>
     </Tooltip>
   )
 }
@@ -105,6 +157,7 @@ function ThemeToggle() {
 /* ------------------------------------------------------------------ */
 
 function DataScopeBadge() {
+  const t = useT()
   const categoryCounts = React.useMemo(() => {
     const counts = new Map<string, number>()
     for (const d of DOCUMENTS) counts.set(d.category, (counts.get(d.category) ?? 0) + 1)
@@ -128,32 +181,32 @@ function DataScopeBadge() {
         </div>
         <div className="px-4 py-3 space-y-2.5 text-xs">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Client</span>
+            <span className="text-muted-foreground">{t("scope.client")}</span>
             <span className="font-medium">{PROJECT.client}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Mobilisation port</span>
+            <span className="text-muted-foreground">{t("scope.mobilisationPort")}</span>
             <span className="font-medium">{PROJECT.mobilisationPort}</span>
           </div>
           <div className="h-px bg-border" />
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Live packages</span>
+            <span className="text-muted-foreground">{t("scope.livePackages")}</span>
             <span className="font-medium tabular-nums">{TENDER_PACKAGES.length}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Controlled documents</span>
+            <span className="text-muted-foreground">{t("scope.controlledDocuments")}</span>
             <span className="font-medium tabular-nums">{DOCUMENTS.length}</span>
           </div>
           {Array.from(categoryCounts.entries()).map(([cat, count]) => (
             <div key={cat} className="flex justify-between pl-3">
-              <span className="text-muted-foreground">{CATEGORY_LABELS[cat as DocumentCategory] ?? cat}</span>
+              <span className="text-muted-foreground">{t(`categories.${cat}`) || CATEGORY_LABELS[cat as DocumentCategory] || cat}</span>
               <span className="font-medium tabular-nums">{count}</span>
             </div>
           ))}
         </div>
         <div className="px-4 py-2.5 bg-muted/40 border-t rounded-b-md">
           <p className="text-[11px] text-muted-foreground leading-relaxed">
-            All tender documents are drafted against the current revision of each controlled document in the project register.
+            {t("scope.registerNote")}
           </p>
         </div>
       </PopoverContent>
@@ -167,6 +220,7 @@ function DataScopeBadge() {
 
 function DataIntegrityBadge() {
   const { setIntelRailSection, setIntelPanelOpen } = useStore()
+  const t = useT()
 
   return (
     <Tooltip>
@@ -188,7 +242,7 @@ function DataIntegrityBadge() {
         </button>
       </TooltipTrigger>
       <TooltipContent side="bottom">
-        {DOCUMENTS.length} controlled documents at current revision ‚Äî register is clean
+        {t("scope.integrityTooltip", { count: DOCUMENTS.length })}
       </TooltipContent>
     </Tooltip>
   )
@@ -200,6 +254,7 @@ function DataIntegrityBadge() {
 
 function DrillBreadcrumbBar() {
   const { breadcrumbs, drillLevel, activePage, setPage } = useStore()
+  const t = useT()
   const hubPages: Page[] = ["operating-loop", "commercial-center", "market-position", "process-velocity"]
   const showIntelHubBack =
     (activePage === "customer-intel" || activePage === "pricing-intel") && drillLevel === "macro"
@@ -221,7 +276,7 @@ function DrillBreadcrumbBar() {
           className="inline-flex items-center gap-1.5 font-sans text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
         >
           <SafeIcon name="ArrowLeft" className="h-4 w-4 shrink-0" />
-          Back
+          {t("common.back")}
         </button>
       )}
       {breadcrumbs.map((c, i) => (
@@ -253,6 +308,7 @@ function TopNavBar() {
     setIntelPanelOpen,
     setIntelRailSection,
   } = useStore()
+  const t = useT()
   const { theme, systemTheme } = useTheme()
   const [mounted, setMounted] = React.useState(false)
   React.useEffect(() => setMounted(true), [])
@@ -292,7 +348,7 @@ function TopNavBar() {
                     : "font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                 )}
               >
-                {tab.label}
+                {t(tab.labelKey)}
               </button>
             )
           })}
@@ -317,8 +373,9 @@ function TopNavBar() {
           )}
         >
           <SafeIcon name="BrainCircuit" className="h-3.5 w-3.5" />
-          Intelligence Panel
+          {t("nav.intelligencePanel")}
         </Button>
+        <LanguageToggle />
         <ThemeToggle />
         <Avatar className="h-9 w-9 border border-[var(--color-border-default)]">
           {ACTIVE_USER_AVATAR ? (
@@ -340,7 +397,7 @@ function TopNavBar() {
  * Severity styling for the Intelligence rail deliberately avoids the hero
  * pages' BCG tier palette (Stars=amber, Cash Cows=blue, Question Marks=yellow,
  * Dogs=red) so a finding never reads as "correlated" to a tier. We use a
- * monochrome zinc ramp plus an icon + label tag ‚Äî an ops/alert idiom distinct
+ * monochrome zinc ramp plus an icon + label tag ù an ops/alert idiom distinct
  * from the hero's flat color blocks.
  */
 const severityBorder: Record<Severity, string> = {
@@ -350,34 +407,36 @@ const severityBorder: Record<Severity, string> = {
   info: "border-l-zinc-300 dark:border-l-zinc-700",
 }
 
-const severityTag: Record<Severity, { label: string; icon: string; cls: string }> = {
-  critical: { label: "Critical", icon: "OctagonAlert", cls: "bg-foreground text-background" },
-  high: { label: "High", icon: "TriangleAlert", cls: "bg-muted-foreground/20 text-foreground" },
-  medium: { label: "Medium", icon: "Info", cls: "bg-muted text-muted-foreground" },
-  info: { label: "Info", icon: "CircleDot", cls: "bg-muted/60 text-muted-foreground" },
+const severityTag: Record<Severity, { labelKey: string; icon: string; cls: string }> = {
+  critical: { labelKey: "severity.critical", icon: "OctagonAlert", cls: "bg-foreground text-background" },
+  high: { labelKey: "severity.high", icon: "TriangleAlert", cls: "bg-muted-foreground/20 text-foreground" },
+  medium: { labelKey: "severity.medium", icon: "Info", cls: "bg-muted text-muted-foreground" },
+  info: { labelKey: "severity.info", icon: "CircleDot", cls: "bg-muted/60 text-muted-foreground" },
 }
 
 function SeverityTag({ severity }: { severity: Severity }) {
-  const t = severityTag[severity] ?? severityTag.info
+  const translate = useT()
+  const meta = severityTag[severity] ?? severityTag.info
   return (
-    <span className={cn("inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide", t.cls)}>
-      <SafeIcon name={t.icon} className="h-2.5 w-2.5" />
-      {t.label}
+    <span className={cn("inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide", meta.cls)}>
+      <SafeIcon name={meta.icon} className="h-2.5 w-2.5" />
+      {translate(meta.labelKey)}
     </span>
   )
 }
 
-const categoryLabel: Record<string, string> = {
-  "pipeline-health": "Pipeline",
-  "deadline-risk": "Deadline",
-  "savings-signal": "Savings",
-  "compliance-flag": "Compliance",
-  "charter-interface": "Charter",
-  "supplier-signal": "Suppliers",
-  "data-quality": "Data Quality",
+const categoryLabelKeys: Record<string, string> = {
+  "pipeline-health": "findingCategory.pipeline-health",
+  "deadline-risk": "findingCategory.deadline-risk",
+  "savings-signal": "findingCategory.savings-signal",
+  "compliance-flag": "findingCategory.compliance-flag",
+  "charter-interface": "findingCategory.charter-interface",
+  "supplier-signal": "findingCategory.supplier-signal",
+  "data-quality": "findingCategory.data-quality",
 }
 
 function FindingCard({ finding, index }: { finding: BPFinding; index: number }) {
+  const t = useT()
   const motion = findingMotion(index)
 
   return (
@@ -393,7 +452,7 @@ function FindingCard({ finding, index }: { finding: BPFinding; index: number }) 
       <div className="flex items-center gap-1.5">
         <SeverityTag severity={finding.severity} />
         <span className="ml-auto shrink-0 inline-flex items-center rounded-full bg-muted/60 px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground">
-          {categoryLabel[finding.category] ?? finding.category}
+          {categoryLabelKeys[finding.category] ? t(categoryLabelKeys[finding.category]) : finding.category}
         </span>
       </div>
       <p className="flex items-center gap-1 text-xs font-semibold leading-snug">
@@ -413,6 +472,7 @@ function FindingCard({ finding, index }: { finding: BPFinding; index: number }) 
 
 function FindingsPanel() {
   const { contextFindings, bpFindings, isThinking, isAgentLoading, useStaticFallback, agentPhase, verifierResult } = useStore()
+  const t = useT()
 
   const annotationsMap = React.useMemo(() => {
     const map = new Map<string, string[]>()
@@ -429,11 +489,11 @@ function FindingsPanel() {
   const shimmerBg = "linear-gradient(90deg, var(--color-muted) 25%, var(--color-muted-foreground) 37%, var(--color-muted) 63%)"
 
   const phaseLabels = React.useMemo(() => {
-    if (agentPhase === "specialists") return ["Pipeline analysis‚Ä¶", "Commercial analysis‚Ä¶", "Supply market signals‚Ä¶"]
-    if (agentPhase === "orchestrating") return ["Synthesising findings‚Ä¶", "Cross-referencing documents‚Ä¶", ""]
-    if (agentPhase === "verifying") return ["Verifying claims‚Ä¶", "Auditing calculations‚Ä¶", ""]
+    if (agentPhase === "specialists") return [t("agent.pipelineAnalysis"), t("agent.commercialAnalysis"), t("agent.supplyMarketSignals")]
+    if (agentPhase === "orchestrating") return [t("agent.synthesisingFindings"), t("agent.crossReferencing"), ""]
+    if (agentPhase === "verifying") return [t("agent.verifyingClaimsShort"), t("agent.auditingCalculations"), ""]
     return ["", "", ""]
-  }, [agentPhase])
+  }, [agentPhase, t])
 
   if (isAgentLoading || (isThinking && bpFindings.length === 0)) {
     return (
@@ -493,6 +553,12 @@ function FindingsPanel() {
 
 function ReasoningPanel() {
   const { activePage, bpReasoning, isThinking, isAgentLoading, useStaticFallback, agentPhase, verifierResult, isVerified } = useStore()
+  const t = useT()
+  const specialistLabels: Record<SpecialistId, string> = {
+    portfolio: t("agent.specialistPipeline"),
+    pricing: t("agent.specialistCommercial"),
+    market: t("agent.specialistSupplyMarket"),
+  }
 
   const hasAgentReasoning = bpReasoning.length > 0
 
@@ -517,12 +583,12 @@ function ReasoningPanel() {
         chain: [
           "Applied hard gates: ISO 9001, mutual knock-for-knock, DDP Rotterdam",
           "Normalised eligible prices against the lowest compliant bid (Price 35)",
-          "Scored Tech 25, QA/HSEQ 20 and Legal 20 ‚Äî flagged warranty cuts above 25%",
+          "Scored Tech 25, QA/HSEQ 20 and Legal 20 ù flagged warranty cuts above 25%",
           "Ranked gate-passing returns into an award recommendation matrix",
         ],
         sources: [
           "Four returns against ITT-MER-SCM-2101",
-          "S7-SCM-TC-2026 ¬ß4.1 Incoterms and warranty baseline",
+          "S7-SCM-TC-2026 ù4.1 Incoterms and warranty baseline",
           "QA-MAN-2026-EPCI FAT / ITP notice alignment",
         ],
       }
@@ -566,7 +632,7 @@ function ReasoningPanel() {
               {i > 0 && (i === activeSpecialists.length - 1 ? " and " : ", ")}
               <span className="inline-flex items-center gap-0.5">
                 <span className={cn("inline-block h-1.5 w-1.5 rotate-45", specialistMeta[sid].color)} />
-                {specialistMeta[sid].label}
+                {specialistLabels[sid]}
               </span>
             </React.Fragment>
           ))}{" "}
@@ -646,7 +712,7 @@ function ReasoningPanel() {
         {agentPhase === "verifying" ? (
           <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-            <span style={{ backgroundImage: "linear-gradient(90deg, var(--color-muted-foreground) 25%, var(--color-foreground) 50%, var(--color-muted-foreground) 75%)", backgroundSize: "200% 100%", animation: "shimmer 2s ease-in-out infinite", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Verifying claims against source data‚Ä¶</span>
+            <span style={{ backgroundImage: "linear-gradient(90deg, var(--color-muted-foreground) 25%, var(--color-foreground) 50%, var(--color-muted-foreground) 75%)", backgroundSize: "200% 100%", animation: "shimmer 2s ease-in-out infinite", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Verifying claims against source dataù</span>
           </div>
         ) : verifierResult ? (
           <div className="space-y-1.5">
@@ -680,7 +746,7 @@ function ReasoningPanel() {
         ) : (
           <div className="flex items-center gap-2 text-[11px] text-muted-foreground/50">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-muted" />
-            Static analysis ‚Äî verification not applicable
+            Static analysis ù verification not applicable
           </div>
         )}
       </div>
@@ -790,6 +856,7 @@ const specialistMeta: Record<SpecialistId, { color: string; icon: string; label:
 
 function AgentStatusStrip() {
   const { agentPhase, isVerified, bpFindings } = useStore()
+  const t = useT()
   const [showComplete, setShowComplete] = React.useState(false)
   const [specialistsDone, setSpecialistsDone] = React.useState<Set<SpecialistId>>(new Set())
 
@@ -814,9 +881,15 @@ function AgentStatusStrip() {
   if (agentPhase === "idle" && !showComplete) return null
 
   const phaseText: Record<string, string> = {
-    specialists: "Analyzing‚Ä¶",
-    orchestrating: "Synthesizing intelligence‚Ä¶",
-    verifying: "Verifying claims‚Ä¶",
+    specialists: t("agent.analyzing"),
+    orchestrating: t("agent.synthesizing"),
+    verifying: t("agent.verifying"),
+  }
+
+  const specialistLabels: Record<SpecialistId, string> = {
+    portfolio: t("agent.specialistPipeline"),
+    pricing: t("agent.specialistCommercial"),
+    market: t("agent.specialistSupplyMarket"),
   }
 
   return (
@@ -873,6 +946,12 @@ function AgentStatusStrip() {
 /* ------------------------------------------------------------------ */
 
 function AgentFindingCard({ finding, annotations, index }: { finding: OrchestratorFinding; annotations?: string[]; index: number }) {
+  const t = useT()
+  const specialistLabels: Record<SpecialistId, string> = {
+    portfolio: t("agent.specialistPipeline"),
+    pricing: t("agent.specialistCommercial"),
+    market: t("agent.specialistSupplyMarket"),
+  }
   const motion = findingMotion(index)
   const reasoning = React.useMemo(() => {
     const base = reasoningFromFinding(finding)
@@ -898,7 +977,7 @@ function AgentFindingCard({ finding, annotations, index }: { finding: Orchestrat
       <div className="flex items-center gap-1.5">
         <SeverityTag severity={finding.severity as Severity} />
         <span className="ml-auto shrink-0 inline-flex items-center rounded-full bg-muted/60 px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground">
-          {categoryLabel[finding.category] ?? finding.category}
+          {categoryLabelKeys[finding.category] ? t(categoryLabelKeys[finding.category]) : finding.category}
         </span>
       </div>
       <p className="flex items-center gap-1 text-xs font-semibold leading-snug">
@@ -916,7 +995,7 @@ function AgentFindingCard({ finding, annotations, index }: { finding: Orchestrat
             {finding.sourceSpecialists.map(sid => (
               <span key={sid} className="flex items-center gap-1 text-[9px] text-muted-foreground/60">
                 <SafeIcon name={specialistMeta[sid].icon} className="h-3 w-3" />
-                {specialistMeta[sid].label}
+                {specialistLabels[sid]}
               </span>
             ))}
           </>
@@ -924,7 +1003,7 @@ function AgentFindingCard({ finding, annotations, index }: { finding: Orchestrat
         {finding.dataSources && finding.dataSources.filter(s => s !== "Internal").length > 0 && (
           <>
             {finding.sourceSpecialists && finding.sourceSpecialists.length > 0 && (
-              <span className="text-[9px] text-muted-foreground/30 mx-0.5">¬∑</span>
+              <span className="text-[9px] text-muted-foreground/30 mx-0.5">ù</span>
             )}
             {finding.dataSources.filter(s => s !== "Internal").map(src => (
               <span key={src} className={cn(
@@ -950,36 +1029,38 @@ function AgentFindingCard({ finding, annotations, index }: { finding: Orchestrat
 
 function useDynamicPrompts(): string[] {
   const { activePage } = useStore()
+  const t = useT()
 
   return React.useMemo(() => {
     if (activePage === "tender-studio") {
       return [
-        "What standards apply to the 66kV array cable?",
-        "Which clauses flow down from the vessel charter?",
-        "What does the QA manual require for FAT witnessing?",
-        "Summarise the payment and warranty terms for suppliers",
+        t("askSuggestions.standards"),
+        t("askSuggestions.charter"),
+        t("askSuggestions.fat"),
+        t("askSuggestions.warranty"),
       ]
     }
     if (activePage === "bid-evaluation") {
       return [
-        "Show the bid score calculation for J-Tech",
-        "Which ITTs are ready to score right now?",
-        "Who ranks first on the array cable package?",
-        "Which returns carry a high commercial risk flag?",
+        t("askSuggestions.jtechScore"),
+        t("askSuggestions.readyToScore"),
+        t("askSuggestions.ranksFirst"),
+        t("askSuggestions.riskFlag"),
       ]
     }
     return [
-      "Show the bid score calculation for J-Tech",
-      "Which package is on the critical path this week?",
-      "How much of the savings target is still unrealised?",
-      "Which packages carry knock-for-knock exposure?",
+      t("askSuggestions.jtechScore"),
+      t("askSuggestions.criticalPath"),
+      t("askSuggestions.savings"),
+      t("askSuggestions.knockForKnock"),
     ]
-  }, [activePage])
+  }, [activePage, t])
 }
 
 
 function ChatPanel() {
   const { chatMessages, chatLoading, sendChatMessage, clearChat } = useStore()
+  const t = useT()
   const prompts = useDynamicPrompts()
   const [input, setInput] = React.useState("")
   const scrollRef = React.useRef<HTMLDivElement>(null)
@@ -1009,7 +1090,7 @@ function ChatPanel() {
             className="flex items-center gap-1 text-[9px] font-medium text-muted-foreground/60 hover:text-foreground transition-colors disabled:opacity-40"
           >
             <SafeIcon name="RotateCcw" className="h-3 w-3" />
-            New chat
+            {t("intel.clearChat")}
           </button>
         </div>
       )}
@@ -1088,7 +1169,7 @@ function ChatPanel() {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about this data..."
+            placeholder={t("intel.askPlaceholder")}
             disabled={chatLoading}
             className="flex-1 rounded-lg border border-border/60 bg-transparent px-3 py-1.5 text-xs placeholder:text-muted-foreground/50 outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 disabled:opacity-50"
           />
@@ -1108,7 +1189,7 @@ function ChatPanel() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Intelligence Panel ‚Äî slide-out right drawer (Silver State pattern) */
+/*  Intelligence Panel ù slide-out right drawer (Silver State pattern) */
 /* ------------------------------------------------------------------ */
 
 type RailSectionKey = IntelRailSection
@@ -1124,11 +1205,12 @@ function IntelligencePanelDrawer({
   activeSection: RailSectionKey
   onSectionChange: (k: RailSectionKey) => void
 }) {
+  const t = useT()
   const items: { key: RailSectionKey; label: string; icon: string }[] = [
-    { key: "findings", label: "Findings", icon: "SearchCheck" },
-    { key: "reasoning", label: "Reasoning", icon: "BrainCircuit" },
-    { key: "context", label: "Context", icon: "Globe" },
-    { key: "ask", label: "Ask", icon: "MessageCircle" },
+    { key: "findings", label: t("intel.findings"), icon: "SearchCheck" },
+    { key: "reasoning", label: t("intel.reasoning"), icon: "BrainCircuit" },
+    { key: "context", label: t("intel.context"), icon: "Globe" },
+    { key: "ask", label: t("intel.ask"), icon: "MessageCircle" },
   ]
 
   const { contextFindings, isThinking, isAgentLoading, useStaticFallback, bpFindings } = useStore()
@@ -1150,7 +1232,7 @@ function IntelligencePanelDrawer({
             <div className="flex items-center gap-2">
               <SafeIcon name="BrainCircuit" className="h-4 w-4 text-[var(--color-brand-primary)]" />
               <SheetTitle className="text-[14px] font-semibold text-[var(--color-text-inverse)]">
-                Intelligence Panel
+                {t("nav.intelligencePanel")}
               </SheetTitle>
             </div>
             <Button
@@ -1159,7 +1241,7 @@ function IntelligencePanelDrawer({
               size="icon"
               onClick={() => onOpenChange(false)}
               className={cn(pcmButton, "h-8 w-8 text-[var(--color-text-inverse)]/80 hover:bg-white/10 hover:text-[var(--color-text-inverse)]")}
-              aria-label="Close intelligence panel"
+              aria-label={t("nav.closeIntelPanel")}
             >
               <SafeIcon name="PanelRightClose" className="h-4 w-4" />
             </Button>
@@ -1222,14 +1304,15 @@ function IntelligencePanelDrawer({
 /* ------------------------------------------------------------------ */
 
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
+  const t = useT()
   const [email, setEmail] = React.useState("d.hoffmann@future-energy.com")
-  const [password, setPassword] = React.useState("‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢")
+  const [password, setPassword] = React.useState("ùùùùùùùù")
   const [error, setError] = React.useState("")
   const [loading, setLoading] = React.useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email.trim() || !password.trim()) { setError("Please enter your credentials"); return }
+    if (!email.trim() || !password.trim()) { setError(t("common.credentialsError")); return }
     setError("")
     setLoading(true)
     setTimeout(() => { setLoading(false); onLogin() }, 800)
@@ -1252,21 +1335,21 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
         <form onSubmit={handleSubmit} className="rounded-2xl border border-white/10 bg-white/[0.06] p-8 shadow-2xl backdrop-blur-xl">
           <div className="space-y-5">
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-xs font-medium uppercase tracking-wider text-white/60">Email</label>
+              <label htmlFor="email" className="block text-xs font-medium uppercase tracking-wider text-white/60">{t("common.email")}</label>
               <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@future-energy.com" autoComplete="email" autoFocus className="w-full rounded-lg border border-white/15 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-white/40 focus:bg-white/15 focus:ring-1 focus:ring-white/20" />
             </div>
             <div className="space-y-2">
-              <label htmlFor="password" className="block text-xs font-medium uppercase tracking-wider text-white/60">Password</label>
-              <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢" autoComplete="current-password" className="w-full rounded-lg border border-white/15 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-white/40 focus:bg-white/15 focus:ring-1 focus:ring-white/20" />
+              <label htmlFor="password" className="block text-xs font-medium uppercase tracking-wider text-white/60">{t("common.password")}</label>
+              <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="ùùùùùùùù" autoComplete="current-password" className="w-full rounded-lg border border-white/15 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-white/40 focus:bg-white/15 focus:ring-1 focus:ring-white/20" />
             </div>
             {error && <p className="text-xs text-red-300 text-center">{error}</p>}
             <button type="submit" disabled={loading} className="w-full rounded-lg bg-white px-4 py-3 text-sm font-semibold text-primary transition hover:bg-white/90 disabled:opacity-60">
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" /><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
-                  Refreshing BluePilot intelligence‚Ä¶
+                  Refreshing BluePilot intelligenceù
                 </span>
-              ) : "Sign In"}
+              ) : t("common.signIn")}
             </button>
           </div>
         </form>

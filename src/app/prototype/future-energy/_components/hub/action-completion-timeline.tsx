@@ -7,6 +7,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { cn } from "@/lib/utils"
 import { getInitials } from "@/app/prototype/future-energy/_diamond/stages"
 import { EMPLOYEES } from "@/app/prototype/future-energy/data/_people"
+import { useT } from "../../_i18n/use-t"
+import type { TranslateFn } from "../../_i18n"
 import type { ActionTimelineEntry, AgentTimelineSubEntry, TimelineEntryStatus } from "./hub-types"
 import { ACTIVE_USER, displayName } from "./active-user"
 import { avatarColor, avatarSrcFor } from "./avatar-color"
@@ -39,14 +41,28 @@ const PILL_CLS: Record<PillTone, string> = {
   upcoming: "bg-[var(--color-bg-subtle)] text-[var(--color-text-secondary)]",
 }
 
-function statusPill(status: TimelineEntryStatus, completedAt?: string, dueAt?: string): { label: string; tone: PillTone } {
-  if (status === "done") return { label: completedAt ? `Done · ${formatDate(completedAt)}` : "Done", tone: "done" }
-  if (status === "current") return { label: "In Progress", tone: "current" }
-  return { label: dueAt ? `Due ${formatDate(dueAt)}` : "Pending", tone: "upcoming" }
+function statusPill(
+  status: TimelineEntryStatus,
+  t: TranslateFn,
+  completedAt?: string,
+  dueAt?: string,
+): { label: string; tone: PillTone } {
+  if (status === "done") {
+    return {
+      label: completedAt ? t("timeline.doneDated", { date: formatDate(completedAt) }) : t("timeline.done"),
+      tone: "done",
+    }
+  }
+  if (status === "current") return { label: t("timeline.inProgress"), tone: "current" }
+  return {
+    label: dueAt ? t("timeline.due", { date: formatDate(dueAt) }) : t("timeline.pending"),
+    tone: "upcoming",
+  }
 }
 
 function StatusPill({ status, completedAt, dueAt }: { status: TimelineEntryStatus; completedAt?: string; dueAt?: string }) {
-  const { label, tone } = statusPill(status, completedAt, dueAt)
+  const t = useT()
+  const { label, tone } = statusPill(status, t, completedAt, dueAt)
   return (
     <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap", PILL_CLS[tone])}>
       {label}
@@ -56,6 +72,7 @@ function StatusPill({ status, completedAt, dueAt }: { status: TimelineEntryStatu
 
 /** A single BluePilot agent sub-activity inside the shaded AI layer. */
 function AgentRow({ agent }: { agent: AgentTimelineSubEntry }) {
+  const t = useT()
   const isDone = agent.status === "done"
   const isCurrent = agent.status === "current"
   return (
@@ -76,8 +93,8 @@ function AgentRow({ agent }: { agent: AgentTimelineSubEntry }) {
         </p>
         <p className="mt-0.5 text-[10px] text-[var(--color-text-muted)]">
           {isDone && agent.completedAt ? formatDate(agent.completedAt) : null}
-          {isCurrent ? <span className="font-medium text-[var(--color-brand-strong)]">In progress</span> : null}
-          {!isDone && !isCurrent && agent.dueAt ? `Due ${formatDate(agent.dueAt)}` : null}
+          {isCurrent ? <span className="font-medium text-[var(--color-brand-strong)]">{t("timeline.inProgress")}</span> : null}
+          {!isDone && !isCurrent && agent.dueAt ? t("timeline.due", { date: formatDate(agent.dueAt) }) : null}
         </p>
       </div>
     </div>

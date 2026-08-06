@@ -10,6 +10,7 @@ import type { PortfolioRoi } from "../../_diamond/adapter"
 
 import { formatCurrency } from "../../_diamond/stages"
 
+import { useT } from "../../_i18n/use-t"
 import { enterMotion, sparkDrawMotion } from "../motion"
 import { ReasoningTooltip } from "../reasoning-disclosure"
 
@@ -141,6 +142,7 @@ function LedgerMetric({
 
 
 export function PortfolioLedger({ roi, className }: { roi: PortfolioRoi; className?: string }) {
+  const t = useT()
 
   const avgMultiple =
 
@@ -189,27 +191,27 @@ export function PortfolioLedger({ roi, className }: { roi: PortfolioRoi; classNa
       <div className="flex min-w-0 flex-1 items-center justify-between gap-x-4 sm:gap-x-6 md:gap-x-8 lg:gap-x-10 xl:gap-x-14">
         <LedgerMetric
           value={compactUsd(roi.realizedToDate)}
-          label="Realized to date"
+          label={t("ledger.realized")}
           index={0}
-          reasoning="Sum of realized value from all closed missions in the portfolio ledger."
+          reasoning={t("ledger.realizedReasoning")}
         />
         <LedgerMetric
           value={`${roi.blendedRoi.toFixed(1)}x`}
-          label="Blended ROI"
+          label={t("ledger.blendedRoi")}
           index={1}
-          reasoning="Total realized value divided by total invested cost across closed missions."
+          reasoning={t("ledger.blendedReasoning")}
         />
         <LedgerMetric
           value={compactUsd(roi.inFlightProjected)}
-          label="In-flight"
+          label={t("ledger.inFlight")}
           index={2}
-          reasoning="Projected value from missions still in progress (not yet realized)."
+          reasoning={t("ledger.inFlightReasoning")}
         />
         <LedgerMetric
           value={`${avgMultiple.toFixed(1)}x`}
-          label="Avg multiple"
+          label={t("ledger.avgMultiple")}
           index={3}
-          reasoning="Average projected-value-to-cost multiple across all active missions."
+          reasoning={t("ledger.avgReasoning")}
         />
       </div>
 

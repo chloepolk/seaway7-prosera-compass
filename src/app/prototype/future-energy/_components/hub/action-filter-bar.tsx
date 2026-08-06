@@ -1,24 +1,12 @@
 "use client"
 
 import { cn } from "@/lib/utils"
+import { useT } from "../../_i18n/use-t"
 import { FilterChipBar } from "./filter-chip-bar"
 import type { StatusKey } from "./hub-types"
 
 export type HorizonKey = "immediate" | "near-term" | "long-term"
 export type AssigneeKey = "assigned-to-you"
-
-const HORIZON_OPTIONS = [
-  { key: "immediate" as const, label: "Immediate" },
-  { key: "near-term" as const, label: "Near-term" },
-  { key: "long-term" as const, label: "Long-term" },
-]
-
-const STATUS_OPTIONS = [
-  { key: "open" as const, label: "Open" },
-  { key: "completed" as const, label: "Completed" },
-]
-
-const ASSIGNEE_OPTIONS = [{ key: "assigned-to-you" as const, label: "Assigned to you" }]
 
 function FilterDivider() {
   return (
@@ -46,18 +34,33 @@ export function ActionFilterBar({
   onAssigneeChange?: (k: AssigneeKey | null) => void
   className?: string
 }) {
+  const t = useT()
+
+  const horizonOptions = [
+    { key: "immediate" as const, label: t("filters.immediate") },
+    { key: "near-term" as const, label: t("filters.nearTerm") },
+    { key: "long-term" as const, label: t("filters.longTerm") },
+  ]
+
+  const statusOptions = [
+    { key: "open" as const, label: t("filters.open") },
+    { key: "completed" as const, label: t("filters.completed") },
+  ]
+
+  const assigneeOptions = [{ key: "assigned-to-you" as const, label: t("filters.assignedToYou") }]
+
   return (
     <div className={cn("flex flex-wrap items-center gap-x-1 gap-y-2", className)}>
       <FilterChipBar
         active={horizon}
         onChange={onHorizonChange}
-        options={[{ key: null, label: "All" }, ...HORIZON_OPTIONS]}
+        options={[{ key: null, label: t("common.all") }, ...horizonOptions]}
       />
       <FilterDivider />
       <FilterChipBar
         active={status}
         onChange={onStatusChange}
-        options={[{ key: null, label: "All" }, ...STATUS_OPTIONS]}
+        options={[{ key: null, label: t("common.all") }, ...statusOptions]}
       />
       {onAssigneeChange && (
         <>
@@ -65,7 +68,7 @@ export function ActionFilterBar({
           <FilterChipBar
             active={assignee ?? null}
             onChange={onAssigneeChange}
-            options={[{ key: null, label: "All assignees" }, ...ASSIGNEE_OPTIONS]}
+            options={[{ key: null, label: t("filters.allAssignees") }, ...assigneeOptions]}
           />
         </>
       )}

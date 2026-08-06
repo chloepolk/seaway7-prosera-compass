@@ -4,6 +4,7 @@ import * as React from "react"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { cn } from "@/lib/utils"
 import { useStore } from "../_store"
+import { useT } from "../_i18n/use-t"
 import { enterMotion, listItemMotion, pcmCard } from "../_components/motion"
 import { formatCurrency, STAGE_META, type MissionStage } from "../_diamond/stages"
 import { EVAL_PACKAGE_ID, bidsForPackage } from "../data/future-energy/_bids"
@@ -14,7 +15,6 @@ import {
   TECH_MAX,
   QA_MAX,
   LEGAL_MAX,
-  GATE_LABELS,
   type BidEvaluationResult,
   type GateId,
 } from "../data/future-energy/_bid-scoring"
@@ -35,11 +35,17 @@ function evalStatusFor(pkg: TenderPackage, bidCount: number): EvalStatus {
   return "not_issued"
 }
 
-const STATUS_LABEL: Record<EvalStatus, string> = {
-  ready: "Ready to score",
-  awaiting_returns: "Awaiting returns",
-  not_issued: "Not issued",
-  awarded: "Awarded",
+const STATUS_KEYS: Record<EvalStatus, "bidEval.ready" | "bidEval.awaitingReturns" | "bidEval.notIssued" | "bidEval.awarded"> = {
+  ready: "bidEval.ready",
+  awaiting_returns: "bidEval.awaitingReturns",
+  not_issued: "bidEval.notIssued",
+  awarded: "bidEval.awarded",
+}
+
+const GATE_KEYS: Record<GateId, "bidEval.gateIso" | "bidEval.gateKfk" | "bidEval.gateDdp"> = {
+  iso9001: "bidEval.gateIso",
+  knockForKnock: "bidEval.gateKfk",
+  ddpRotterdam: "bidEval.gateDdp",
 }
 
 const STATUS_CLS: Record<EvalStatus, string> = {
@@ -86,6 +92,7 @@ function ScoreBar({
 }
 
 function GateChip({ id, passed }: { id: GateId; passed: boolean }) {
+  const t = useT()
   return (
     <span
       className={cn(
@@ -96,7 +103,7 @@ function GateChip({ id, passed }: { id: GateId; passed: boolean }) {
       )}
     >
       <SafeIcon name={passed ? "Check" : "X"} className="size-2.5" />
-      {GATE_LABELS[id]}
+      {t(GATE_KEYS[id])}
     </span>
   )
 }
@@ -127,6 +134,7 @@ function BidBaseballCard({
   onSelect: () => void
   index: number
 }) {
+  const t = useT()
   const motion = listItemMotion(index)
   const failed = result.gatingStatus === "Fail"
   const allGates: GateId[] = ["iso9001", "knockForKnock", "ddpRotterdam"]
@@ -179,10 +187,7 @@ function BidBaseballCard({
           {result.highCommercialRisk && (
             <div className="flex items-start gap-2 rounded-md bg-[var(--color-tint-warning)] px-2.5 py-2 text-[11px] text-[var(--color-accent-warning-text)]">
               <SafeIcon name="AlertTriangle" className="mt-0.5 size-3.5 shrink-0" />
-              <span>
-                High commercial risk — warranty reduced more than 25% below the 24-month Future Energy standard
-                ({result.warrantyMonths} months offered).
-              </span>
+              <span>{t("bidEval.riskBanner")}</span>
             </div>
           )}
 
@@ -194,10 +199,10 @@ function BidBaseballCard({
 
           {!failed && (
             <div className="grid gap-2 sm:grid-cols-2">
-              <ScoreBar label="Price" value={result.priceScore} max={PRICE_MAX} />
-              <ScoreBar label="Technical" value={result.techScore} max={TECH_MAX} />
-              <ScoreBar label="QA / HSEQ" value={result.qaScore} max={QA_MAX} />
-              <ScoreBar label="Legal" value={result.legalScore} max={LEGAL_MAX} />
+              <ScoreBar label={t("bidEval.price")} value={result.priceScore} max={PRICE_MAX} />
+              <ScoreBar label={t("bidEval.technical")} value={result.techScore} max={TECH_MAX} />
+              <ScoreBar label={t("bidEval.qaHseq")} value={result.qaScore} max={QA_MAX} />
+              <ScoreBar label={t("bidEval.legal")} value={result.legalScore} max={LEGAL_MAX} />
             </div>
           )}
 
@@ -273,6 +278,7 @@ function buildPackageRows(tenderStages: Record<string, MissionStage>): PackageEv
 }
 
 function EmptyPackageState({ status, pkg }: { status: EvalStatus; pkg: TenderPackage }) {
+  const t = useT()
   const copy =
     status === "awaiting_returns"
       ? "ITT is issued but no returns have been tabulated yet. Scoring unlocks when bids arrive."
@@ -284,7 +290,7 @@ function EmptyPackageState({ status, pkg }: { status: EvalStatus; pkg: TenderPac
     <div className="flex flex-col items-center justify-center rounded-[16px] border border-dashed border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] px-6 py-16 text-center">
       <SafeIcon name="Inbox" className="mb-3 size-8 text-[var(--color-text-muted)]" />
       <p className="text-[14px] font-semibold text-[var(--color-text-primary)]">
-        No bids to score yet
+        {t("bidEval.empty")}
       </p>
       <p className="mt-1 max-w-md text-[12px] text-[var(--color-text-secondary)]">{copy}</p>
     </div>
@@ -292,6 +298,7 @@ function EmptyPackageState({ status, pkg }: { status: EvalStatus; pkg: TenderPac
 }
 
 export function BidEvaluationPage() {
+  const t = useT()
   const { focusEvalPackageId, tenderStages, openBidEvaluation } = useStore()
   const rows = React.useMemo(() => buildPackageRows(tenderStages), [tenderStages])
 
@@ -338,10 +345,10 @@ export function BidEvaluationPage() {
   const returnsAcross = rows.reduce((s, r) => s + r.bidCount, 0)
 
   const weightChips = [
-    { label: "Price", max: PRICE_MAX },
-    { label: "Tech", max: TECH_MAX },
-    { label: "QA / HSEQ", max: QA_MAX },
-    { label: "Legal", max: LEGAL_MAX },
+    { label: t("bidEval.price"), max: PRICE_MAX },
+    { label: t("bidEval.tech"), max: TECH_MAX },
+    { label: t("bidEval.qaHseq"), max: QA_MAX },
+    { label: t("bidEval.legal"), max: LEGAL_MAX },
   ]
 
   const pageMotion = enterMotion(0)
@@ -351,30 +358,29 @@ export function BidEvaluationPage() {
     <div className={cn("space-y-5", pageMotion.className)} style={pageMotion.style}>
       <header className="space-y-2">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-          Bid evaluation · {PROJECT.shortName}
+          {t("bidEval.title")} · {PROJECT.shortName}
         </p>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-[22px] font-semibold tracking-tight text-[var(--color-text-primary)]">
-              ITT returns across the pipeline
+              {t("bidEval.subtitle")}
             </h1>
             <p className="mt-1 max-w-2xl text-[13px] text-[var(--color-text-secondary)]">
-              Select a package to score returns out of 100 (Price 35 · Tech 25 · QA 20 · Legal 20).
-              Hard gates run first; the same model applies to every ITT with tabulated bids.
+              {t("bidEval.scoringExplain")}
             </p>
           </div>
           <div className="flex flex-wrap gap-3 text-[12px]">
             <span className="rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-2.5 py-1.5 tabular-nums">
               <strong className="text-[var(--color-text-primary)]">{readyCount}</strong>{" "}
-              <span className="text-[var(--color-text-muted)]">ready to score</span>
+              <span className="text-[var(--color-text-muted)]">{t("bidEval.readyCount")}</span>
             </span>
             <span className="rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-2.5 py-1.5 tabular-nums">
               <strong className="text-[var(--color-text-primary)]">{returnsAcross}</strong>{" "}
-              <span className="text-[var(--color-text-muted)]">returns</span>
+              <span className="text-[var(--color-text-muted)]">{t("bidEval.returns")}</span>
             </span>
             <span className="rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-2.5 py-1.5 tabular-nums">
               <strong className="text-[var(--color-text-primary)]">{riskAcross}</strong>{" "}
-              <span className="text-[var(--color-text-muted)]">risk flags</span>
+              <span className="text-[var(--color-text-muted)]">{t("bidEval.riskFlags")}</span>
             </span>
           </div>
         </div>
@@ -385,7 +391,7 @@ export function BidEvaluationPage() {
         <aside className={cn(pcmCard, "h-fit overflow-hidden rounded-[16px] border border-[var(--color-border-default)] bg-[var(--color-bg-surface)]")}>
           <div className="border-b border-[var(--color-border-default)] px-3 py-2.5">
             <h2 className="text-[12px] font-semibold text-[var(--color-text-primary)]">
-              Packages
+              {t("bidEval.packages")}
             </h2>
             <p className="text-[10px] text-[var(--color-text-muted)]">
               Issued ITTs and upstream packages
@@ -421,11 +427,11 @@ export function BidEvaluationPage() {
                           STATUS_CLS[row.status],
                         )}
                       >
-                        {STATUS_LABEL[row.status]}
+                        {t(STATUS_KEYS[row.status])}
                       </span>
                     </div>
                     <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-[var(--color-text-muted)]">
-                      <span className="tabular-nums">{row.bidCount} returns</span>
+                      <span className="tabular-nums">{row.bidCount} {t("bidEval.returns")}</span>
                       {row.topScore != null && (
                         <span className="tabular-nums">
                           Top {row.topScore.toFixed(1)}
@@ -501,7 +507,7 @@ export function BidEvaluationPage() {
                       className="inline-flex shrink-0 items-center gap-1.5 rounded-[8px] bg-[var(--color-bg-inverse)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-text-inverse)] hover:opacity-90"
                     >
                       <SafeIcon name="Mail" className="size-3.5" />
-                      Notify bidders
+                      {t("bidEval.notifyBidders")}
                     </button>
                   )}
                 </div>
@@ -509,15 +515,15 @@ export function BidEvaluationPage() {
                   <table className="w-full min-w-[880px] border-collapse text-left">
                     <thead>
                       <tr className="border-b border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                        <th className="px-3 py-2.5">Supplier</th>
+                        <th className="px-3 py-2.5">{t("bidEval.supplier")}</th>
                         <th className="px-3 py-2.5">Total bid price</th>
-                        <th className="px-3 py-2.5">Price</th>
-                        <th className="px-3 py-2.5">Technical</th>
-                        <th className="px-3 py-2.5">QA / HSEQ</th>
-                        <th className="px-3 py-2.5">Legal</th>
+                        <th className="px-3 py-2.5">{t("bidEval.price")}</th>
+                        <th className="px-3 py-2.5">{t("bidEval.technical")}</th>
+                        <th className="px-3 py-2.5">{t("bidEval.qaHseq")}</th>
+                        <th className="px-3 py-2.5">{t("bidEval.legal")}</th>
                         <th className="px-3 py-2.5">Gating</th>
-                        <th className="px-3 py-2.5">Composite</th>
-                        <th className="px-3 py-2.5">Rank</th>
+                        <th className="px-3 py-2.5">{t("bidEval.composite")}</th>
+                        <th className="px-3 py-2.5">{t("bidEval.rank")}</th>
                         <th className="px-3 py-2.5">Risk</th>
                       </tr>
                     </thead>
@@ -550,7 +556,7 @@ export function BidEvaluationPage() {
                                     : "bg-[var(--color-tint-critical)] text-[var(--color-accent-critical-text)]",
                                 )}
                               >
-                                {r.gatingStatus === "Pass" ? "Pass" : "Fail"}
+                                {r.gatingStatus === "Pass" ? t("common.pass") : t("common.fail")}
                               </span>
                             </MatrixCell>
                             <MatrixCell className="font-semibold">

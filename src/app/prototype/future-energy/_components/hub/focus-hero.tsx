@@ -3,6 +3,7 @@
 import * as React from "react"
 import { Button } from "@/components/ui/prosera/button"
 import { cn } from "@/lib/utils"
+import { useT } from "../../_i18n/use-t"
 import { enterMotion, insightsHeroShell, pcmButton } from "../motion"
 import { BluePilotReasoningButton, ReasoningExpand, ReasoningTooltip, type ReasoningContent } from "../reasoning-disclosure"
 import { isReasoningEmpty } from "../reasoning-helpers"
@@ -50,6 +51,7 @@ export function FocusHero({
   reasoningDisclosure = "tooltip",
   className,
 }: FocusHeroProps) {
+  const t = useT()
   const enter = enterMotion(0)
   const [reasoningOpen, setReasoningOpen] = React.useState(false)
   const hasReasoning = !isReasoningEmpty(reasoning)
@@ -76,7 +78,7 @@ export function FocusHero({
               <ReasoningTooltip
                 reasoning={reasoning}
                 iconClassName="text-[#AECBDC]/70"
-                label="Why this focus"
+                label={t("focus.whyThisFocus")}
               />
             )}
           </p>
