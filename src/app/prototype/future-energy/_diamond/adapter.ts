@@ -17,6 +17,7 @@ import { componentById } from "../data/future-energy/_documents"
 import type { Locale } from "../_i18n/types"
 import { localizedClosedPackages, localizedTenderPackages } from "../_i18n/domain"
 import { createT, localeTag } from "../_i18n"
+import { formatCompactEur, formatEur } from "../_i18n/currency"
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -381,7 +382,7 @@ function missionFromPackage(pkg: TenderPackage, locale: Locale, stageOverride?: 
   const subject = locale === "fr" ? pkg.title : spec?.shortName ?? pkg.title
 
   const number = (value: number) => value.toLocaleString(localeTag(locale))
-  const money = (value: number) => new Intl.NumberFormat(localeTag(locale), { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value)
+  const money = (value: number) => formatEur(value, locale)
   const date = (value: string) => new Date(value).toLocaleDateString(localeTag(locale))
   const reasoningMeta: MissionReasoningMeta = {
     theme,
@@ -413,11 +414,11 @@ function missionFromPackage(pkg: TenderPackage, locale: Locale, stageOverride?: 
         "Sized the savings target from the budget baseline and bidder competition",
       ],
     equations: [
-      fr ? `Baseline budgétaire = ${money(pkg.budget)} (${pkg.quantity})` : `Budget baseline = $${number(pkg.budget)} (${pkg.quantity})`,
+      fr ? `Baseline budgétaire = ${money(pkg.budget)} (${pkg.quantity})` : `Budget baseline = ${money(pkg.budget)} (${pkg.quantity})`,
       realizedValue
-        ? (fr ? `Économies comptabilisées = ${money(realizedValue)} vs objectif ${money(pkg.targetSavings)}` : `Savings booked = $${number(realizedValue)} vs. target $${number(pkg.targetSavings)}`)
-        : (fr ? `Objectif d’économies = ${money(pkg.targetSavings)} (${number((pkg.targetSavings / pkg.budget) * 100)} % du budget, ${pkg.bidders} soumissionnaires)` : `Savings target = $${number(pkg.targetSavings)} (${((pkg.targetSavings / pkg.budget) * 100).toFixed(1)}% of budget across ${pkg.bidders} bidders)`),
-      fr ? `Coût de l’AO = ${money(pkg.tenderCost)} — retour ${(projectedValue / pkg.tenderCost).toLocaleString(localeTag(locale), { maximumFractionDigits: 1 })}× si l’objectif est atteint` : `Tender cost = $${number(pkg.tenderCost)} — return ${(projectedValue / pkg.tenderCost).toFixed(1)}× if target holds`,
+        ? (fr ? `Économies comptabilisées = ${money(realizedValue)} vs objectif ${money(pkg.targetSavings)}` : `Savings booked = ${money(realizedValue)} vs. target ${money(pkg.targetSavings)}`)
+        : (fr ? `Objectif d’économies = ${money(pkg.targetSavings)} (${number((pkg.targetSavings / pkg.budget) * 100)} % du budget, ${pkg.bidders} soumissionnaires)` : `Savings target = ${money(pkg.targetSavings)} (${((pkg.targetSavings / pkg.budget) * 100).toFixed(1)}% of budget across ${pkg.bidders} bidders)`),
+      fr ? `Coût de l’AO = ${money(pkg.tenderCost)} — retour ${(projectedValue / pkg.tenderCost).toLocaleString(localeTag(locale), { maximumFractionDigits: 1 })}× si l’objectif est atteint` : `Tender cost = ${money(pkg.tenderCost)} — return ${(projectedValue / pkg.tenderCost).toFixed(1)}× if target holds`,
       fr ? `Fenêtre : ouverture ${date(pkg.openedAt)}, clôture des offres ${date(pkg.submissionDeadline)} (${remaining > 0 ? `${remaining} jours restants` : "clôturée"})` : `Window: opened ${date(pkg.openedAt)}, submissions close ${date(pkg.submissionDeadline)} (${remaining > 0 ? `${remaining} days remaining` : "closed"})`,
     ],
     sources: theme === "charter"
@@ -449,7 +450,7 @@ function missionFromPackage(pkg: TenderPackage, locale: Locale, stageOverride?: 
     name: `${pkg.title} · ${pkg.quantity}`,
     objective: fr
       ? `Conduire ${pkg.packageRef} du cadrage à l’attribution pour ${PROJECT.shortName} — ${pkg.quantity}, budget de ${money(pkg.budget)}, objectif de ${money(pkg.targetSavings)} d’économies négociées.`
-      : `Take ${pkg.packageRef} from scope to award for ${PROJECT.shortName} — ${pkg.quantity} against a $${(pkg.budget / 1_000_000).toFixed(1)}M budget, targeting $${Math.round(pkg.targetSavings / 1000)}k in negotiated savings.`,
+      : `Take ${pkg.packageRef} from scope to award for ${PROJECT.shortName} — ${pkg.quantity} against a ${formatCompactEur(pkg.budget, locale)} budget, targeting ${formatCompactEur(pkg.targetSavings, locale)} in negotiated savings.`,
     source: { page: "tender-studio", label: fr ? "Ouvrir dans le Studio d’appels d’offres" : "Open in Tender Studio" },
     stage,
     status: statusForStage[stage],
@@ -469,7 +470,7 @@ function missionFromPackage(pkg: TenderPackage, locale: Locale, stageOverride?: 
       baseline: 0,
       target: projectedValue,
       current: currentMetric,
-      unit: "$",
+      unit: "€",
       direction: "increase",
     },
     openedAt: pkg.openedAt,

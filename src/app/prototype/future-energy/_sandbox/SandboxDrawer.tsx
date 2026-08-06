@@ -13,8 +13,10 @@ import { buildPortfolioContext } from "../agents/_context"
 import { useT } from "../_i18n/use-t"
 import { localeTag } from "../_i18n"
 import { activeLocaleTag, formatActiveUsd } from "../_i18n/legacy"
+import { formatEurUnit, toEur } from "../_i18n/currency"
 
 const usd = (n: number) => `${n >= 0 ? "+" : ""}${formatActiveUsd(n, false)}`
+const eurGal = (n: number, locale: "en" | "fr" = "en") => formatEurUnit(n, locale)
 const pts = (n: number) => (n >= 0 ? "+" : "") + n.toFixed(1)
 const bps = (n: number) => (n >= 0 ? "+" : "") + Math.round(n)
 
@@ -169,7 +171,7 @@ export function SandboxDrawer() {
       "── Scenario Parameters ──",
       `Customer Mix: Exit ${scenario.customerMix.exitDogs} Dogs, Add ${scenario.customerMix.addStars} Stars`,
       `Pricing: Labor ${scenario.pricing.laborMultiplier > 0 ? scenario.pricing.laborMultiplier.toFixed(1) + "x" : "unchanged"}, Material ${scenario.pricing.materialMarkupPct > 0 ? scenario.pricing.materialMarkupPct + "%" : "unchanged"}`,
-      `Fuel: $${scenario.fuel.pricePerGal.toFixed(2)}/gal`,
+      `Fuel: ${eurGal(scenario.fuel.pricePerGal)}/gal`,
       `NTE friction sensitivity: ${scenario.nte.thresholdMultiplier.toFixed(1)}x`,
       "",
       "── Projected Impact ──",
@@ -470,13 +472,13 @@ function FuelLevers({ scenario, currentPrice, onUpdate }: {
         min={2.50}
         max={6.00}
         step={0.05}
-        displayValue={`$${scenario.fuel.pricePerGal.toFixed(2)}`}
+        displayValue={eurGal(scenario.fuel.pricePerGal)}
         onChange={v => onUpdate(s => ({ ...s, fuel: { pricePerGal: v } }))}
       />
       <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-        <span>{t("sandbox.current")}: ${currentPrice.toFixed(2)}</span>
+        <span>{t("sandbox.current")}: {eurGal(currentPrice)}</span>
         <span className={cn(delta > 0 ? "text-[var(--color-accent-critical-text)]" : delta < 0 ? "text-[var(--color-accent-positive-text)]" : "")}>
-          {delta > 0 ? "+" : ""}{delta.toFixed(2)}/gal
+          {delta > 0 ? "+" : ""}{toEur(delta).toFixed(2)}/gal
         </span>
       </div>
     </>

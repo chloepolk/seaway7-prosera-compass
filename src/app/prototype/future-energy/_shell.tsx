@@ -29,6 +29,7 @@ import { useT } from "./_i18n/use-t"
 import { localeTag, type Locale } from "./_i18n"
 import { localizedClosedPackages, localizedTenderPackages } from "./_i18n/domain"
 import { localizeLegacyCopy } from "./_i18n/legacy"
+import { formatCompactEur, formatEur } from "./_i18n/currency"
 import { SandboxDrawer } from "./_sandbox/SandboxDrawer"
 import { BiDashboardDrawer } from "./_bi/BiDashboardDrawer"
 import { DOCUMENTS, CATEGORY_LABELS, CHARTER, type DocumentCategory } from "./data/future-energy/_documents"
@@ -399,7 +400,7 @@ function TopNavBar() {
  * Severity styling for the Intelligence rail deliberately avoids the hero
  * pages' BCG tier palette (Stars=amber, Cash Cows=blue, Question Marks=yellow,
  * Dogs=red) so a finding never reads as "correlated" to a tier. We use a
- * monochrome zinc ramp plus an icon + label tag â€” an ops/alert idiom distinct
+ * monochrome zinc ramp plus an icon + label tag — an ops/alert idiom distinct
  * from the hero's flat color blocks.
  */
 const severityBorder: Record<Severity, string> = {
@@ -583,33 +584,33 @@ function ReasoningPanel() {
       if (activePage === "tender-studio") {
         return {
           chain: [
-            "RÃ©solution du lot vers sa spÃ©cification technique contrÃ´lÃ©e et sa quantitÃ©",
-            "RÃ©cupÃ©ration des obligations DNV / NORSOK / ISO applicables depuis QA-MAN-2026-EPCI",
-            "Assemblage des conditions commerciales et juridiques de S7-SCM-TC-2026, avec obligations issues de la charte pour les opÃ©rations maritimes",
-            "Composition des sections de lâ€™AO et prÃ©paration de lâ€™audit contradictoire de chaque source citÃ©e",
+            "Résolution du lot vers sa spécification technique contrôlée et sa quantité",
+            "Récupération des obligations DNV / NORSOK / ISO applicables depuis QA-MAN-2026-EPCI",
+            "Assemblage des conditions commerciales et juridiques de S7-SCM-TC-2026, avec obligations issues de la charte pour les opérations maritimes",
+            "Composition des sections de l’AO et préparation de l’audit contradictoire de chaque source citée",
           ],
-          sources: [`${DOCUMENTS.length} documents contrÃ´lÃ©s au registre projet`, `${packages.length} lots actifs sur le pipeline ${PROJECT.shortName}`, "ParticularitÃ©s de la charte SUPPLYTIME 2026"],
+          sources: [`${DOCUMENTS.length} documents contrôlés au registre projet`, `${packages.length} lots actifs sur le pipeline ${PROJECT.shortName}`, "Particularités de la charte SUPPLYTIME 2026"],
         }
       }
       if (activePage === "bid-evaluation") {
         return {
           chain: [
-            "Application des portes Ã©liminatoires : ISO 9001, knock-for-knock mutuel, DDP Rotterdam",
-            "Normalisation des prix Ã©ligibles par rapport Ã  lâ€™offre conforme la plus basse (Prix 35)",
-            "Notation Technique 25, QA/HSEQ 20 et Juridique 20 â€” signalement des rÃ©ductions de garantie supÃ©rieures Ã  25 %",
-            "Classement des rÃ©ponses conformes dans une matrice de recommandation dâ€™attribution",
+            "Application des portes éliminatoires : ISO 9001, knock-for-knock mutuel, DDP Rotterdam",
+            "Normalisation des prix éligibles par rapport à l’offre conforme la plus basse (Prix 35)",
+            "Notation Technique 25, QA/HSEQ 20 et Juridique 20 — signalement des réductions de garantie supérieures à 25 %",
+            "Classement des réponses conformes dans une matrice de recommandation d’attribution",
           ],
-          sources: ["Quatre rÃ©ponses Ã  ITT-MER-SCM-2101", "S7-SCM-TC-2026 Â§4.1 â€” Incoterms et garantie de rÃ©fÃ©rence", "QA-MAN-2026-EPCI â€” alignement des prÃ©avis FAT / ITP"],
+          sources: ["Quatre réponses à ITT-MER-SCM-2101", "S7-SCM-TC-2026 §4.1 — Incoterms et garantie de référence", "QA-MAN-2026-EPCI — alignement des préavis FAT / ITP"],
         }
       }
       return {
         chain: [
-          "Chargement du registre des appels dâ€™offres et application de lâ€™avancement de session Ã  chaque lot",
-          "Calcul des jours restants pour chaque fenÃªtre dâ€™appel dâ€™offres de 21 jours",
-          "Rattachement des lots aux documents contrÃ´lÃ©s, normes et interfaces de charte",
-          "Classement par date limite de soumission, objectif dâ€™Ã©conomies et chemin critique dâ€™installation",
+          "Chargement du registre des appels d’offres et application de l’avancement de session à chaque lot",
+          "Calcul des jours restants pour chaque fenêtre d’appel d’offres de 21 jours",
+          "Rattachement des lots aux documents contrôlés, normes et interfaces de charte",
+          "Classement par date limite de soumission, objectif d’économies et chemin critique d’installation",
         ],
-        sources: [`${packages.length} lots actifs sur le pipeline ${PROJECT.shortName}`, `${closed.length} lots attribuÃ©s dans le registre des Ã©conomies`, `${DOCUMENTS.length} documents contrÃ´lÃ©s au registre projet`],
+        sources: [`${packages.length} lots actifs sur le pipeline ${PROJECT.shortName}`, `${closed.length} lots attribués dans le registre des économies`, `${DOCUMENTS.length} documents contrôlés au registre projet`],
       }
     }
     if (activePage === "tender-studio") {
@@ -632,12 +633,12 @@ function ReasoningPanel() {
         chain: [
           "Applied hard gates: ISO 9001, mutual knock-for-knock, DDP Rotterdam",
           "Normalised eligible prices against the lowest compliant bid (Price 35)",
-          "Scored Tech 25, QA/HSEQ 20 and Legal 20 â€” flagged warranty cuts above 25%",
+          "Scored Tech 25, QA/HSEQ 20 and Legal 20 — flagged warranty cuts above 25%",
           "Ranked gate-passing returns into an award recommendation matrix",
         ],
         sources: [
           "Four returns against ITT-MER-SCM-2101",
-          "S7-SCM-TC-2026 Â§4.1 Incoterms and warranty baseline",
+          "S7-SCM-TC-2026 §4.1 Incoterms and warranty baseline",
           "QA-MAN-2026-EPCI FAT / ITP notice alignment",
         ],
       }
@@ -675,7 +676,7 @@ function ReasoningPanel() {
             <SafeIcon name="Workflow" className="h-3 w-3 text-blue-500" />
             <span className="font-medium text-foreground">{t("intel.synthesis")}</span>
           </div>
-          {locale === "fr" ? "BluePilot a synthÃ©tisÃ© les analyses " : "BluePilot synthesized "}
+          {locale === "fr" ? "BluePilot a synthétisé les analyses " : "BluePilot synthesized "}
           {activeSpecialists.map((sid, i) => (
             <React.Fragment key={sid}>
               {i > 0 && (i === activeSpecialists.length - 1 ? ` ${t("intel.and")} ` : ", ")}
@@ -864,7 +865,7 @@ function ContextPanel() {
           </div>
           <div className="flex items-center justify-between text-[11px]">
             <span className="text-muted-foreground">{t("intel.hireRate")}</span>
-            <span className="font-mono font-medium">{new Intl.NumberFormat(localeTag(locale), { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(CHARTER.hireRate)}{t("intel.perDay")}</span>
+            <span className="font-mono font-medium">{formatEur(CHARTER.hireRate, locale)}{t("intel.perDay")}</span>
           </div>
           <div className="flex items-center justify-between text-[11px]">
             <span className="text-muted-foreground">{t("intel.period")}</span>
@@ -886,7 +887,7 @@ function ContextPanel() {
             {t("intel.awardedPackages", { count: localizedClosed.length, project: PROJECT.shortName })}
           </p>
           <p className="text-[11px] text-muted-foreground">
-            {t("intel.savingsBooked", { amount: `$${(realisedTotal / 1_000_000).toFixed(1)}M` })}
+            {t("intel.savingsBooked", { amount: formatCompactEur(realisedTotal, locale) })}
           </p>
           <p className="text-[11px] text-muted-foreground">
             {t("intel.livePackagesLoop", { count: localizedPackages.length })}
@@ -1067,7 +1068,7 @@ function AgentFindingCard({ finding, annotations, index }: { finding: Orchestrat
         {finding.dataSources && finding.dataSources.filter(s => s !== "Internal").length > 0 && (
           <>
             {finding.sourceSpecialists && finding.sourceSpecialists.length > 0 && (
-              <span className="text-[9px] text-muted-foreground/30 mx-0.5">Â·</span>
+              <span className="text-[9px] text-muted-foreground/30 mx-0.5">·</span>
             )}
             {finding.dataSources.filter(s => s !== "Internal").map(src => (
               <span key={src} className={cn(
@@ -1253,7 +1254,7 @@ function ChatPanel() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Intelligence Panel â€” slide-out right drawer (Silver State pattern) */
+/*  Intelligence Panel — slide-out right drawer (Silver State pattern) */
 /* ------------------------------------------------------------------ */
 
 type RailSectionKey = IntelRailSection
@@ -1368,15 +1369,14 @@ function IntelligencePanelDrawer({
 /* ------------------------------------------------------------------ */
 
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
-  const t = useT()
   const [email, setEmail] = React.useState("d.hoffmann@future-energy.com")
-  const [password, setPassword] = React.useState("â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢")
+  const [password, setPassword] = React.useState("********")
   const [error, setError] = React.useState("")
   const [loading, setLoading] = React.useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email.trim() || !password.trim()) { setError(t("common.credentialsError")); return }
+    if (!email.trim() || !password.trim()) { setError("Please enter your credentials"); return }
     setError("")
     setLoading(true)
     setTimeout(() => { setLoading(false); onLogin() }, 800)
@@ -1393,37 +1393,35 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
           <img src={FE_LOGO_FOR_DARK_UI} alt="Future Energy" className="h-11 w-auto drop-shadow-lg" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />
           <div className="text-center">
             <h1 className="text-2xl font-bold text-white tracking-tight">Future Energy Compass</h1>
-            <p className="mt-1.5 text-sm text-white/50">{t("login.subtitle")}</p>
           </div>
         </div>
         <form onSubmit={handleSubmit} className="rounded-2xl border border-white/10 bg-white/[0.06] p-8 shadow-2xl backdrop-blur-xl">
           <div className="space-y-5">
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-xs font-medium uppercase tracking-wider text-white/60">{t("common.email")}</label>
+              <label htmlFor="email" className="block text-xs font-medium uppercase tracking-wider text-white/60">Email</label>
               <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@future-energy.com" autoComplete="email" autoFocus className="w-full rounded-lg border border-white/15 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-white/40 focus:bg-white/15 focus:ring-1 focus:ring-white/20" />
             </div>
             <div className="space-y-2">
-              <label htmlFor="password" className="block text-xs font-medium uppercase tracking-wider text-white/60">{t("common.password")}</label>
-              <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" autoComplete="current-password" className="w-full rounded-lg border border-white/15 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-white/40 focus:bg-white/15 focus:ring-1 focus:ring-white/20" />
+              <label htmlFor="password" className="block text-xs font-medium uppercase tracking-wider text-white/60">Password</label>
+              <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="********" autoComplete="current-password" className="w-full rounded-lg border border-white/15 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-white/40 focus:bg-white/15 focus:ring-1 focus:ring-white/20" />
             </div>
             {error && <p className="text-xs text-red-300 text-center">{error}</p>}
             <button type="submit" disabled={loading} className="w-full rounded-lg bg-white px-4 py-3 text-sm font-semibold text-primary transition hover:bg-white/90 disabled:opacity-60">
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" /><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
-                  {t("login.loading")}
+                  Refreshing BluePilot intelligence...
                 </span>
-              ) : t("common.signIn")}
+              ) : "Sign In"}
             </button>
           </div>
         </form>
-        <p className="mt-6 text-center text-[11px] text-white/30">{t("login.footer")}</p>
+        <p className="mt-6 text-center text-[11px] text-white/30">Powered by Future Energy</p>
       </div>
     </div>
   )
 }
 
-/* ------------------------------------------------------------------ */
 /*  Layout Shell                                                       */
 /* ------------------------------------------------------------------ */
 

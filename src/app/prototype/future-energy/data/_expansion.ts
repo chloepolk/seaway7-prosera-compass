@@ -1,4 +1,4 @@
-import { activeLocaleTag } from "../_i18n/legacy"
+import {activeLocaleTag, formatActiveUsd, formatActiveEurUnit } from "../_i18n/legacy"
 /* ------------------------------------------------------------------ */
 /*  Market Expansion Prescriptions Engine                              */
 /*                                                                     */
@@ -170,7 +170,7 @@ function buildMarketSignals(region: Region, sc: StrategyScorecard, regionAgg: Re
     signals.push({
       source: "BLS",
       metric: "HVAC tech mean wage",
-      value: `$${latest?.meanAnnualWage?.toLocaleString(activeLocaleTag())}/yr`,
+      value: `${formatActiveUsd(latest?.meanAnnualWage)}/yr`,
       implication: premium > 0.05
         ? `${(premium * 100).toFixed(1)}% above national avg — labor costs compress margins, platform wage arbitrage opportunity at scale`
         : `${Math.abs(premium * 100).toFixed(1)}% ${premium >= 0 ? "above" : "below"} national avg — favorable labor economics for service delivery`,
@@ -234,7 +234,7 @@ function buildMarketSignals(region: Region, sc: StrategyScorecard, regionAgg: Re
   signals.push({
     source: "EIA",
     metric: `Fuel cost trend (${eiaFuel.paddLabel})`,
-    value: `$${eiaFuel.recentAvg.toFixed(3)}/gal (${eiaFuel.deltaPct > 0 ? "+" : ""}${(eiaFuel.deltaPct * 100).toFixed(1)}% from baseline $${eiaFuel.baselineAvg.toFixed(3)})`,
+    value: `${formatActiveEurUnit(eiaFuel.recentAvg)}/gal (${eiaFuel.deltaPct > 0 ? "+" : ""}${(eiaFuel.deltaPct * 100).toFixed(1)}% from baseline ${formatActiveEurUnit(eiaFuel.baselineAvg)})`,
     implication: eiaFuel.deltaPct > 0.25
       ? `Fuel surge in ${eiaFuel.paddLabel} compresses travel-heavy route margins — contract fuel clause implementation urgent`
       : eiaFuel.deltaPct > 0.10
@@ -307,11 +307,11 @@ function buildActions(
     if (wageProfile && wageProfile.fourYearChangePct > 0.14) {
       const latest = wageProfile.snapshots[wageProfile.snapshots.length - 1];
       actions.push({
-        action: `Corp Dev Lead: acquire 1–3 truck operators in ${name} facing ${(wageProfile.fourYearChangePct * 100).toFixed(1)}% BLS wage inflation at $${latest?.meanAnnualWage?.toLocaleString(activeLocaleTag())}/yr — consolidate overhead for 4–6× EBITDA entry`,
+        action: `Corp Dev Lead: acquire 1–3 truck operators in ${name} facing ${(wageProfile.fourYearChangePct * 100).toFixed(1)}% BLS wage inflation at ${formatActiveUsd(latest?.meanAnnualWage)}/yr — consolidate overhead for 4–6× EBITDA entry`,
         lever: "M&A",
         rationale: `Small operators (1-3 trucks) face margin compression from rising tech wages without scale economies. ACME Field Services' platform absorbs the cost through utilization leverage.`,
         expectedImpact: `Acquire at 4-6x EBITDA from margin-pressured sellers, immediately improve margins through overhead consolidation`,
-        math: `BLS 4-yr wage growth = ${(wageProfile.fourYearChangePct * 100).toFixed(1)}%; platform absorbs via utilization leverage at $${latest?.meanAnnualWage?.toLocaleString(activeLocaleTag())}/yr`,
+        math: `BLS 4-yr wage growth = ${(wageProfile.fourYearChangePct * 100).toFixed(1)}%; platform absorbs via utilization leverage at ${formatActiveUsd(latest?.meanAnnualWage)}/yr`,
         sources: ["BLS", "Internal"],
         confidence: "medium",
       });
@@ -319,11 +319,11 @@ function buildActions(
 
     if (regionAgg && regionAgg.customerCount < 30) {
       actions.push({
-        action: `Sales Director: add 1 dedicated AE in ${name} to grow from ${regionAgg.customerCount} → 50+ accounts — each new customer adds ~$${Math.round(regionAgg.validated.avgTicket).toLocaleString(activeLocaleTag())} at near-zero incremental travel`,
+        action: `Sales Director: add 1 dedicated AE in ${name} to grow from ${regionAgg.customerCount} → 50+ accounts — each new customer adds ~${formatActiveUsd(Math.round(regionAgg.validated.avgTicket))} at near-zero incremental travel`,
         lever: "Sales",
         rationale: `Current footprint is sub-scale. Route density drives technician utilization — more customers per zip code reduces windshield time.`,
-        expectedImpact: `Each additional customer in an existing service area adds ~$${Math.round(regionAgg.validated.avgTicket)} avg ticket revenue at near-zero incremental travel cost`,
-        math: `Incremental revenue/customer ≈ avgTicket = $${Math.round(regionAgg.validated.avgTicket).toLocaleString(activeLocaleTag())} (near-zero marginal travel in existing routes)`,
+        expectedImpact: `Each additional customer in an existing service area adds ~${formatActiveUsd(Math.round(regionAgg.validated.avgTicket))} avg ticket revenue at near-zero incremental travel cost`,
+        math: `Incremental revenue/customer ≈ avgTicket = ${formatActiveUsd(Math.round(regionAgg.validated.avgTicket))} (near-zero marginal travel in existing routes)`,
         sources: ["Internal"],
         confidence: "medium",
       });
@@ -333,11 +333,11 @@ function buildActions(
   if (strategy === "defend") {
     if (regionAgg && regionAgg.validated.avgMarginPct >= 0.60) {
       actions.push({
-        action: `Sales Director: lock ${Math.min(10, regionAgg.customerCount)} top ${name} accounts into 3-yr agreements at ${(regionAgg.validated.avgMarginPct * 100).toFixed(1)}% margin — protects $${Math.round(regionAgg.validated.totalMargin).toLocaleString(activeLocaleTag())}/yr from competitive displacement`,
+        action: `Sales Director: lock ${Math.min(10, regionAgg.customerCount)} top ${name} accounts into 3-yr agreements at ${(regionAgg.validated.avgMarginPct * 100).toFixed(1)}% margin — protects ${formatActiveUsd(Math.round(regionAgg.validated.totalMargin))}/yr from competitive displacement`,
         lever: "Sales",
         rationale: `High-margin regions attract competitor attention. Contractual lock-in prevents cherry-picking of best accounts.`,
-        expectedImpact: `Protect $${Math.round(regionAgg.validated.totalMargin).toLocaleString(activeLocaleTag())} in annual margin from competitive displacement`,
-        math: `Protected margin = Σ(top ${Math.min(10, regionAgg.customerCount)} accounts) = $${Math.round(regionAgg.validated.totalMargin).toLocaleString(activeLocaleTag())}/yr at ${(regionAgg.validated.avgMarginPct * 100).toFixed(1)}%`,
+        expectedImpact: `Protect ${formatActiveUsd(Math.round(regionAgg.validated.totalMargin))} in annual margin from competitive displacement`,
+        math: `Protected margin = Σ(top ${Math.min(10, regionAgg.customerCount)} accounts) = ${formatActiveUsd(Math.round(regionAgg.validated.totalMargin))}/yr at ${(regionAgg.validated.avgMarginPct * 100).toFixed(1)}%`,
         sources: ["Internal"],
         confidence: "high",
       });
@@ -346,9 +346,9 @@ function buildActions(
     if (wageProfile && wageProfile.fourYearChangePct > 0.15) {
       const latest = wageProfile.snapshots[wageProfile.snapshots.length - 1];
       actions.push({
-        action: `Regional Pricing Manager: escalate ${name} service rates ${(wageProfile.fourYearChangePct * 100 / 4).toFixed(1)}%/yr to track BLS ${(wageProfile.fourYearChangePct * 100).toFixed(1)}% wage growth ($${latest?.meanAnnualWage?.toLocaleString(activeLocaleTag())}/yr HVAC tech in ${wageProfile.metroArea})`,
+        action: `Regional Pricing Manager: escalate ${name} service rates ${(wageProfile.fourYearChangePct * 100 / 4).toFixed(1)}%/yr to track BLS ${(wageProfile.fourYearChangePct * 100).toFixed(1)}% wage growth (${formatActiveUsd(latest?.meanAnnualWage)}/yr HVAC tech in ${wageProfile.metroArea})`,
         lever: "Pricing",
-        rationale: `BLS data shows HVAC tech wages in ${wageProfile.metroArea} at $${latest?.meanAnnualWage?.toLocaleString(activeLocaleTag())}/yr, growing faster than national average.`,
+        rationale: `BLS data shows HVAC tech wages in ${wageProfile.metroArea} at ${formatActiveUsd(latest?.meanAnnualWage)}/yr, growing faster than national average.`,
         expectedImpact: `Prevents margin erosion from wage-price divergence`,
         math: `Required price escalation ≥ wage growth / 4 = ${(wageProfile.fourYearChangePct * 100 / 4).toFixed(1)}%/yr to match ${(wageProfile.fourYearChangePct * 100).toFixed(1)}% 4-yr BLS trend`,
         sources: ["BLS", "Internal"],

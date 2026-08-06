@@ -1,6 +1,6 @@
 import type { ScenarioState, ScenarioProjection, LeverCategory } from "./types";
 import type { Locale } from "../_i18n";
-import { formatActiveUsd } from "../_i18n/legacy";
+import {formatActiveUsd, formatActiveEurUnit } from "../_i18n/legacy";
 
 const usd = (n: number) => formatActiveUsd(n, false);
 const pts = (n: number) => (n >= 0 ? "+" : "") + n.toFixed(1) + " pts";
@@ -65,7 +65,7 @@ INSTRUCTIONS:
 
 function fuelPrompt(state: ScenarioState, projection: ScenarioProjection, ctx: Record<string, unknown>): string {
   const { pricePerGal } = state.fuel;
-  return `SCENARIO: Fuel price sensitivity analysis — modeling unleaded at $${pricePerGal.toFixed(2)}/gal.
+  return `SCENARIO: Fuel price sensitivity analysis — modeling unleaded at ${formatActiveEurUnit(pricePerGal)}/gal.
 
 PROJECTED IMPACT:
 ${impactBlock(projection)}
@@ -74,7 +74,7 @@ CONTEXT:
 ${JSON.stringify(ctx, null, 1)}
 
 INSTRUCTIONS:
-1. Frame this as fleet-wide exposure, not per-trip surcharge math. Reference the "every $0.10/gal = $X/yr" sensitivity metric.
+1. Frame this as fleet-wide exposure, not per-trip surcharge math. Reference the "every €0.09/gal = $X/yr" sensitivity metric.
 2. Compare the modeled price against fleet card baseline and current actuals.
 3. If the price represents an increase, quantify the margin erosion and which divisions absorb the most impact.
 4. Recommend the contract fuel clause strategy: escalation clauses pegged to fleet card actuals with quarterly review.

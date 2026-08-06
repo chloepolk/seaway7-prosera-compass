@@ -1,4 +1,4 @@
-import { activeLocaleTag } from "../_i18n/legacy"
+import {activeLocaleTag, formatActiveUsd } from "../_i18n/legacy"
 /* ------------------------------------------------------------------ */
 /*  CI-04: Composite Customer Health Scoring                           */
 /*                                                                     */
@@ -172,7 +172,7 @@ function computeFactors(c: CustomerAggregate, ctx: ScoreContext): CustomerScoreF
   const R: CustomerScoreFactor = {
     key: "R", label: "Revenue Volume & Value", weight: WEIGHTS.R, normalized: rNorm,
     weighted: WEIGHTS.R * rNorm,
-    detail: `~$${Math.round(annualized).toLocaleString(activeLocaleTag())}/yr vs. $${profile.targetAnnualValue.toLocaleString(activeLocaleTag())} ${profile.label} target x ${predictability.toFixed(2)} predictability`,
+    detail: `~${formatActiveUsd(Math.round(annualized))}/yr vs. ${formatActiveUsd(profile.targetAnnualValue)} ${profile.label} target x ${predictability.toFixed(2)} predictability`,
     mocked: false,
   }
 
@@ -181,7 +181,7 @@ function computeFactors(c: CustomerAggregate, ctx: ScoreContext): CustomerScoreF
   let sDetail: string
   if (c.customerTam && c.customerTam.totalAddressable > 0) {
     sNorm = clamp01(c.customerTam.sharePct)
-    sDetail = `${(c.customerTam.sharePct * 100).toFixed(0)}% of $${Math.round(c.customerTam.totalAddressable / 1000)}k addressable wallet captured ($${Math.round(c.customerTam.whitespace / 1000)}k whitespace)`
+    sDetail = `${(c.customerTam.sharePct * 100).toFixed(0)}% of ${formatActiveUsd(c.customerTam.totalAddressable )} addressable wallet captured (${formatActiveUsd(c.customerTam.whitespace )} whitespace)`
   } else {
     const usedLines = Object.keys(c.jobTypeMix).filter(Boolean).length
     sNorm = clamp01(usedLines / profile.serviceLineCount)

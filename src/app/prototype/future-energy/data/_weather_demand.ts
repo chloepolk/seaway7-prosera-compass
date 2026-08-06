@@ -81,7 +81,7 @@ export interface WeatherForecastPoint {
   predictedIndex: number
   predictedLiftPct: number
   incrementalJobs: number
-  /** Incremental margin dollars (point estimate). */
+  /** Incremental margin euros (point estimate). */
   opportunity: number
   low: number
   high: number

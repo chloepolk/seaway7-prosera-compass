@@ -1,4 +1,4 @@
-import { activeLocaleTag } from "../_i18n/legacy"
+import {activeLocaleTag, formatActiveUsd } from "../_i18n/legacy"
 import type { Job } from "./_transform";
 
 /* ------------------------------------------------------------------ */
@@ -143,13 +143,13 @@ export function validateJob(job: Job): ValidationResult {
       reasons.push("actual cost is zero/missing — margin cannot be computed");
     }
     if (flags.includes("IMPLAUSIBLE_MARGIN")) {
-      reasons.push(`margin of ${((job.marginPct ?? 0) * 100).toFixed(0)}% on ${job.totalAmount ? "$" + job.totalAmount.toLocaleString(activeLocaleTag()) : "N/A"} revenue is implausible — costs likely incomplete`);
+      reasons.push(`margin of ${((job.marginPct ?? 0) * 100).toFixed(0)}% on ${job.totalAmount ? formatActiveUsd(job.totalAmount) : "N/A"} revenue is implausible — costs likely incomplete`);
     }
     if (flags.includes("COST_UNDERPOST")) {
-      reasons.push(`only ${job.actualCost ? "$" + job.actualCost.toFixed(0) : "$0"} of estimated $${(job.estimatedCost ?? 0).toFixed(0)} cost posted (${job.estimatedCost && job.estimatedCost > 0 ? ((job.actualCost ?? 0) / job.estimatedCost * 100).toFixed(0) : "0"}%)`);
+      reasons.push(`only ${job.actualCost ? formatActiveUsd(job.actualCost) : formatActiveUsd(0)} of estimated ${formatActiveUsd((job.estimatedCost ?? 0))} cost posted (${job.estimatedCost && job.estimatedCost > 0 ? ((job.actualCost ?? 0) / job.estimatedCost * 100).toFixed(0) : "0"}%)`);
     }
     if (flags.includes("OPEN_UNBILLED")) {
-      reasons.push(`open job with $${(job.actualCost ?? 0).toLocaleString(activeLocaleTag())} cost posted but no revenue — work in progress, not a realized loss`);
+      reasons.push(`open job with ${formatActiveUsd((job.actualCost ?? 0))} cost posted but no revenue — work in progress, not a realized loss`);
     }
     excludeReason = reasons.join("; ");
   }

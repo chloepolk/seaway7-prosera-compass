@@ -1,4 +1,4 @@
-import { activeLocaleTag } from "../_i18n/legacy"
+import {activeLocaleTag, formatActiveUsd } from "../_i18n/legacy"
 /* ------------------------------------------------------------------ */
 /*  Customer TAM / Whitespace Intelligence                             */
 /*                                                                     */
@@ -193,7 +193,7 @@ function buildIntelPackage(
     signals.push({
       source: "recon",
       label: `Unserved ${top.line} systems`,
-      detail: `Technician observed ${top.line} systems onsite during service that are not under an ACME agreement — est. $${Math.round(top.whitespace / 1000)}k/yr addressable.`,
+      detail: `Technician observed ${top.line} systems onsite during service that are not under an ACME agreement — est. ${formatActiveUsd(top.whitespace )}/yr addressable.`,
       confidence: "high",
     })
   }

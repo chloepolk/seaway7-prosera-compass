@@ -75,7 +75,7 @@ export const materialSeries: Record<MaterialKey, MaterialSeries> = {
   copper: {
     key: "copper",
     label: "Copper (COMEX next-active)",
-    unit: "USD / lb",
+    unit: "EUR / lb",
     source: "CME/COMEX (via Trading Economics / Argus)",
     confidence: "high",
     points: series([4.45, 4.65, 4.95, 5.20, 5.55, 6.10, 5.85, 5.95, 6.20]),
@@ -84,7 +84,7 @@ export const materialSeries: Record<MaterialKey, MaterialSeries> = {
   steelHRC: {
     key: "steelHRC",
     label: "Steel (CRU US Midwest HRC)",
-    unit: "USD / short ton",
+    unit: "EUR / short ton",
     source: "CRU US Midwest Hot-Rolled Coil (via Steel Market Update)",
     confidence: "high",
     points: series([820, 850, 875, 895, 908, 945, 975, 1002, 1040]),
@@ -93,7 +93,7 @@ export const materialSeries: Record<MaterialKey, MaterialSeries> = {
   refrigerantR410A: {
     key: "refrigerantR410A",
     label: "Refrigerant R-410A (legacy, reclaimed/wholesale)",
-    unit: "USD / lb",
+    unit: "EUR / lb",
     source: "ACHR News / ACDirect 2026 (national wholesale midpoint)",
     confidence: "medium",
     points: series([14.0, 15.0, 16.5, 18.0, 19.5, 21.0, 23.0, 25.0, 27.0]),
@@ -102,7 +102,7 @@ export const materialSeries: Record<MaterialKey, MaterialSeries> = {
   refrigerantA2L: {
     key: "refrigerantA2L",
     label: "Refrigerant A2L (R-454B / R-32 service stock)",
-    unit: "USD / lb",
+    unit: "EUR / lb",
     source: "BTU Size / Call Mattioni 2026 (R-454B service-stock midpoint)",
     confidence: "medium",
     points: series([21.0, 20.5, 20.0, 19.5, 19.0, 18.5, 18.5, 18.0, 18.0]),

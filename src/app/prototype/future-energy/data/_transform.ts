@@ -1,4 +1,5 @@
 import { rawJobInfo, rawJobStats, rawJobVisit, rawJobAddress, rawJobCost, type RawJobInfo, type RawJobStats, type RawJobVisit, type RawSFQuote } from "./_raw";
+import { formatActiveUsd } from "../_i18n/legacy"
 import { rawSFQuotes } from "./_raw_quotes";
 import { deriveRegionFromAddress, normalizeCity, type Region } from "./_regions";
 import { validateJob, buildQualitySummary, type QualityFlag, type QualitySummary } from "./_validate";
@@ -759,7 +760,7 @@ function computePriceBands(sortedAmounts: number[], entries: PricedEntry[]): Pri
       bands.push({
         min,
         max: max_,
-        label: `$${fmtK(min)}–$${fmtK(max_)}`,
+        label: `${formatActiveUsd(min)}–${formatActiveUsd(max_)}`,
         totalQuotes: inBand.length,
         wins,
         losses,

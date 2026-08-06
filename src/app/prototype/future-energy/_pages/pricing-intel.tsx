@@ -703,12 +703,12 @@ function fuelSummary(data: ComputedData): ModuleSummary {
   }
   const act = fuel.actuals
   return {
-    headline: `${fmtUsd(act.totalAnnualSpend)} annual fleet fuel with a ${fmtUsd(act.spikeImpactDollars)} spike month. Every $0.10/gal moves ${fmtUsd(fuel.sensitivity.impactPerDime)}/yr.`,
+    headline: `${fmtUsd(act.totalAnnualSpend)} annual fleet fuel with a ${fmtUsd(act.spikeImpactDollars)} spike month. Every €0.09/gal moves ${fmtUsd(fuel.sensitivity.impactPerDime)}/yr.`,
     severity: "high",
     figures: [
       { value: fmtUsd(act.totalAnnualSpend), label: "annual fuel", tone: "neutral" },
       { value: `+${fmtUsd(act.spikeImpactDollars)}`, label: "spike impact", tone: "bad" },
-      { value: fmtUsd(fuel.sensitivity.impactPerDime), label: "per $0.10/gal", tone: "neutral" },
+      { value: fmtUsd(fuel.sensitivity.impactPerDime), label: "per €0.09/gal", tone: "neutral" },
     ],
   }
 }

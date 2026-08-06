@@ -1,4 +1,5 @@
-import { activeLocaleTag } from "../_i18n/legacy"
+import {activeLocaleTag, formatActiveUsd } from "../_i18n/legacy"
+import { formatCompactEur } from "../_i18n/currency"
 import type { BPFinding } from "../data/_insights"
 import type { OrchestratorFinding } from "../agents/_types"
 import type { DiamondMission } from "../_diamond/types"
@@ -50,7 +51,7 @@ const FINDING_REASONING: Record<string, FindingReasoningFactory> = {
     ],
     equations: [
       "estimatedRecovery = Σ|dollarImpact| for top drag drivers",
-      "Prescription threshold: recovery > $2,000 × 0.87 (MONETARY_SCALE)",
+      "Prescription threshold: recovery > €1,840 × 0.87 (MONETARY_SCALE)",
     ],
     sources: ["Internal — Job cost lines (_costs.ts)", "Internal — Root cause engine (_rootcause.ts)"],
   }),
@@ -97,7 +98,7 @@ const FINDING_REASONING: Record<string, FindingReasoningFactory> = {
     ],
     equations: [
       "nteUtilization = totalAmount / amountNTE",
-      "savings = eliminatedEscalations × $50 truck roll × 40% return-trip rate",
+      "savings = eliminatedEscalations × €46 truck roll × 40% return-trip rate",
     ],
     sources: ["Internal — Platform job export (_raw.ts)", "Internal — Dispatch auth (_dispatch.ts)"],
   }),
@@ -128,11 +129,11 @@ const FINDING_REASONING: Record<string, FindingReasoningFactory> = {
   "dispatch-friction-portfolio": () => ({
     steps: [
       "Tracked NTE re-authorization events and return-trip patterns",
-      "Quantified truck-roll cost per escalation at $50/visit",
+      "Quantified truck-roll cost per escalation at €46/visit",
       "Ranked customers by escalation frequency × revenue impact",
     ],
     equations: [
-      "frictionCost = escalations × $50 × returnTripRate (40%)",
+      "frictionCost = escalations × €46 × returnTripRate (40%)",
     ],
     sources: ["Internal — Dispatch auth events (_dispatch.ts)"],
   }),
@@ -246,8 +247,8 @@ export function buildActionBoardHeroReasoning(
   const evidence = active.slice(0, 5).map(
     (m) =>
       fr
-        ? `${m.name} : ${m.projectedValue.toLocaleString(localeTag(locale))} $ projetés · ${Math.round(m.confidence * 100)} % de confiance`
-        : `${m.name}: $${m.projectedValue.toLocaleString(localeTag(locale))} projected · ${Math.round(m.confidence * 100)}% confidence`,
+        ? `${m.name} : ${formatCompactEur(m.projectedValue, locale)} projetés · ${Math.round(m.confidence * 100)} % de confiance`
+        : `${m.name}: ${formatActiveUsd(m.projectedValue)} projected · ${Math.round(m.confidence * 100)}% confidence`,
   )
 
   const citations = mergeCitations(
@@ -335,7 +336,7 @@ export const KPI_REASONING = {
       "Sum of validated job revenue across the portfolio export.",
       {
         steps: ["Filtered jobs with totalAmount > 0 and not excluded by data quality rules", "Summed totalAmount across validated cohort"],
-        equations: [`Revenue = Σ(totalAmount) = $${Math.round(totalRevenue).toLocaleString(activeLocaleTag())} across ${jobCount.toLocaleString(activeLocaleTag())} jobs`],
+        equations: [`Revenue = Σ(totalAmount) = ${formatActiveUsd(Math.round(totalRevenue))} across ${jobCount.toLocaleString(activeLocaleTag())} jobs`],
         sources: ["Internal — Platform job export (_raw.ts)"],
       },
     ),
@@ -416,7 +417,7 @@ export const KPI_REASONING = {
       {
         steps: ["Identified completed jobs with no firstInvoiceCreated", "Summed totalAmount on uninvoiced backlog"],
         equations: [
-          `cashTiedUp = Σ(totalAmount) where completed AND NOT invoiced = $${Math.round(amount).toLocaleString(activeLocaleTag())}`,
+          `cashTiedUp = Σ(totalAmount) where completed AND NOT invoiced = ${formatActiveUsd(Math.round(amount))}`,
           `${count.toLocaleString(activeLocaleTag())} jobs in backlog`,
         ],
         sources: ["Internal — Platform job export (_raw.ts)"],

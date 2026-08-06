@@ -1,5 +1,5 @@
 import type { Locale } from "../_i18n/types"
-import { localeTag } from "../_i18n"
+import { formatCompactEur } from "../_i18n/currency"
 
 /* ------------------------------------------------------------------ */
 /*  Mission-to-ROI Action Centre — 5-gate geometry (generic)            */
@@ -155,18 +155,7 @@ export const isSegmentComplete = (current: MissionStage, segIndex: number): bool
   stageIndex(current) >= segIndex + 1
 
 export function formatCurrency(n: number, locale: Locale = "en"): string {
-  const suffix = locale === "fr" ? (Math.abs(n) >= 1_000_000 ? " M$" : " k$") : (Math.abs(n) >= 1_000_000 ? "M" : "k")
-  const divisor = Math.abs(n) >= 1_000_000 ? 1_000_000 : 1000
-  const digits = divisor === 1_000_000 && n % 1_000_000 !== 0 ? 1 : 0
-  const amount = (n / divisor).toLocaleString(localeTag(locale), {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  })
-  if (locale === "fr") return `${amount}${suffix}`
-  if (Math.abs(n) >= 1_000_000) {
-    return `$${amount}${suffix}`
-  }
-  return `$${amount}${suffix}`
+  return formatCompactEur(n, locale)
 }
 
 export function getInitials(name: string): string {

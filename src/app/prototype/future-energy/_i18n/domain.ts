@@ -66,12 +66,12 @@ const FR_PACKAGES: Record<string, PackageCopy> = {
   "PKG-2106": {
     title: "Charte HLCV — Exercice de l’option de 30 jours",
     quantity: "30 jours",
-    narrative: "Option de 30 jours exercée sur HeavyLift Installer I au taux de la période ferme de 85 000 $/jour, évitant le taux spot HLCV d’environ 96 000 $/jour pour la fenêtre d’achèvement des fondations. Les conditions knock-for-knock et de garantie maritime restent inchangées par rapport à la charte signée.",
+    narrative: "Option de 30 jours exercée sur HeavyLift Installer I au taux de la période ferme de 78 200 €/jour, évitant le taux spot HLCV d’environ 88 320 €/jour pour la fenêtre d’achèvement des fondations. Les conditions knock-for-knock et de garantie maritime restent inchangées par rapport à la charte signée.",
     risk: "Clôturé — option exercée dans le délai de préavis ; exposition supprimée.",
     evidence: [
-      "SUPPLYTIME 2026 Case 9 : location 85 000 USD/jour ; Case 7 : 180 jours fermes plus option de 30 jours.",
-      "Marché spot HLCV estimé à 96 000–99 500 $/jour pour le T3 2026.",
-      "Économies : 30 jours × (96 400 $ − 85 000 $) ≈ 342 k$ bruts, 311 k$ nets des coûts de préavis.",
+      "SUPPLYTIME 2026 Case 9 : location 78 200 €/jour ; Case 7 : 180 jours fermes plus option de 30 jours.",
+      "Marché spot HLCV estimé à 88 320–91 540 €/jour pour le T3 2026.",
+      "Économies : 30 jours × (88 688 € − 78 200 €) ≈ 315 k€ bruts, 286 k€ nets des coûts de préavis.",
       "Régime knock-for-knock des clauses 4.1/4.2 inchangé.",
     ],
   },

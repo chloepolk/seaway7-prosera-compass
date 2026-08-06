@@ -9,19 +9,14 @@ import { cn } from "@/lib/utils"
 import type { PortfolioRoi } from "../../_diamond/adapter"
 
 import { formatCurrency } from "../../_diamond/stages"
-
+import { formatCompactEur } from "../../_i18n/currency"
 import { useT } from "../../_i18n/use-t"
+import { useStore } from "../../_store"
 import { enterMotion, sparkDrawMotion } from "../motion"
 import { ReasoningTooltip } from "../reasoning-disclosure"
 
-
-
-function compactUsd(n: number): string {
-  const sign = n < 0 ? "-" : ""
-  const abs = Math.abs(n)
-  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(2)}M`
-  if (abs >= 1_000) return `${sign}$${Math.round(abs / 1_000)}k`
-  return `${sign}$${abs}`
+function compactUsd(n: number, locale: "en" | "fr" = "en"): string {
+  return formatCompactEur(n, locale)
 }
 
 
@@ -143,6 +138,7 @@ function LedgerMetric({
 
 export function PortfolioLedger({ roi, className }: { roi: PortfolioRoi; className?: string }) {
   const t = useT()
+  const { locale } = useStore()
 
   const avgMultiple =
 
@@ -190,7 +186,7 @@ export function PortfolioLedger({ roi, className }: { roi: PortfolioRoi; classNa
 
       <div className="flex min-w-0 flex-1 items-center justify-between gap-x-4 sm:gap-x-6 md:gap-x-8 lg:gap-x-10 xl:gap-x-14">
         <LedgerMetric
-          value={compactUsd(roi.realizedToDate)}
+          value={compactUsd(roi.realizedToDate, locale)}
           label={t("ledger.realized")}
           index={0}
           reasoning={t("ledger.realizedReasoning")}
@@ -202,7 +198,7 @@ export function PortfolioLedger({ roi, className }: { roi: PortfolioRoi; classNa
           reasoning={t("ledger.blendedReasoning")}
         />
         <LedgerMetric
-          value={compactUsd(roi.inFlightProjected)}
+          value={compactUsd(roi.inFlightProjected, locale)}
           label={t("ledger.inFlight")}
           index={2}
           reasoning={t("ledger.inFlightReasoning")}

@@ -5,7 +5,8 @@ import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { cn } from "@/lib/utils"
 import { useStore } from "../_store"
 import { useT } from "../_i18n/use-t"
-import { localeTag, type Locale } from "../_i18n"
+import { type Locale } from "../_i18n"
+import { formatEur } from "../_i18n/currency"
 import { localizedTenderPackages } from "../_i18n/domain"
 import { enterMotion, listItemMotion, pcmCard } from "../_components/motion"
 import { formatCurrency, type MissionStage } from "../_diamond/stages"
@@ -57,11 +58,7 @@ const STATUS_CLS: Record<EvalStatus, string> = {
 }
 
 function formatPriceFull(n: number, locale: Locale): string {
-  return new Intl.NumberFormat(localeTag(locale), {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(n)
+  return formatEur(n, locale)
 }
 
 function ScoreBar({

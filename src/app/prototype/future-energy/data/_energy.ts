@@ -44,7 +44,7 @@ export interface EnergyMonth {
   month: string;
   /** Average commercial electricity price, cents per kWh. */
   electricityCentsPerKwh: number;
-  /** Average commercial natural gas price, USD per thousand cubic feet (Mcf). */
+  /** Average commercial natural gas price, EUR per thousand cubic feet (Mcf). */
   gasDollarsPerMcf: number;
 }
 

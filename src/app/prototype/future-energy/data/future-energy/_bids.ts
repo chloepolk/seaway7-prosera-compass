@@ -12,7 +12,7 @@ export interface BidInput {
   supplier: string
   packageId: string
   ittRef: string
-  /** Total bid price in USD for the package scope. */
+  /** Total bid price in USD seed units (displayed as EUR) for the package scope. */
   totalPrice: number
   /** Valid ISO 9001 certificate on file. */
   hasValidIso9001: boolean

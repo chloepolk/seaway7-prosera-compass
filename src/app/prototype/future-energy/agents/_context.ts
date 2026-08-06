@@ -7,6 +7,7 @@
 /* ------------------------------------------------------------------ */
 
 import type { ComputedData } from "../data/_transform"
+import { formatActiveUsd } from "../_i18n/legacy"
 import type { DrillState, OrchestratorOutput, SpecialistOutput } from "./_types"
 import { TENDER_PACKAGES, CLOSED_PACKAGES, PROJECT, TODAY, tenderById } from "../data/future-energy/_tenders"
 import {
@@ -236,11 +237,11 @@ function formatBidEvaluationBriefing(): string {
   const blocks = packages.map((p) => {
     const lines = p.evaluations.map((e) => {
       if (e.gatingStatus === "Fail") {
-        return `  - ${e.supplier}: DISQUALIFIED (${e.gateFailures.join("; ")}); bid $${e.totalPriceUsd.toLocaleString()}. ${e.calculation}`
+        return `  - ${e.supplier}: DISQUALIFIED (${e.gateFailures.join("; ")}); bid ${formatActiveUsd(e.totalPriceUsd)}. ${e.calculation}`
       }
-      return `  - ${e.supplier}: Rank #${e.finalRank}, composite ${e.compositeScore}/100 (Price ${e.priceScore}/${PRICE_MAX}, Tech ${e.techScore}/${TECH_MAX}, QA ${e.qaScore}/${QA_MAX}, Legal ${e.legalScore}/${LEGAL_MAX}); bid $${e.totalPriceUsd.toLocaleString()}${e.highCommercialRisk ? "; HIGH COMMERCIAL RISK" : ""}. Calculation: ${e.calculation}`
+      return `  - ${e.supplier}: Rank #${e.finalRank}, composite ${e.compositeScore}/100 (Price ${e.priceScore}/${PRICE_MAX}, Tech ${e.techScore}/${TECH_MAX}, QA ${e.qaScore}/${QA_MAX}, Legal ${e.legalScore}/${LEGAL_MAX}); bid ${formatActiveUsd(e.totalPriceUsd)}${e.highCommercialRisk ? "; HIGH COMMERCIAL RISK" : ""}. Calculation: ${e.calculation}`
     })
-    return `${p.packageId} ${p.title} (${p.ittRef}): P_min eligible $${(p.lowestEligiblePriceUsd ?? 0).toLocaleString()}\n${lines.join("\n")}`
+    return `${p.packageId} ${p.title} (${p.ittRef}): P_min eligible ${formatActiveUsd((p.lowestEligiblePriceUsd ?? 0))}\n${lines.join("\n")}`
   })
 
   const pending = (ctx.packagesWithoutReturns as Array<{ packageId: string; title: string; status: string }>)
@@ -412,7 +413,7 @@ export function buildVerifierContext(
 
 export function buildChatBriefing(_data: ComputedData): string {
   const pipeline = TENDER_PACKAGES.map(p =>
-    `- ${p.id} ${p.title} (${p.quantity}): stage ${p.stage}, budget $${p.budget.toLocaleString()}, savings target $${p.targetSavings.toLocaleString()}, ${p.bidders} bidders, submissions close ${p.submissionDeadline}, owner ${p.ownerRole}.`,
+    `- ${p.id} ${p.title} (${p.quantity}): stage ${p.stage}, budget ${formatActiveUsd(p.budget)}, savings target ${formatActiveUsd(p.targetSavings)}, ${p.bidders} bidders, submissions close ${p.submissionDeadline}, owner ${p.ownerRole}.`,
   ).join("\n")
 
   const docs = DOCUMENTS.map(d => `- ${d.docRef} — ${d.title} (${d.revision})`).join("\n")
@@ -430,7 +431,7 @@ WORKSPACE SURFACES:
 TENDER PIPELINE:
 ${pipeline}
 
-SAVINGS LEDGER: ${ledger.closedPackages} packages awarded to date, $${ledger.realisedSavingsUsd.toLocaleString()} realised savings against $${ledger.tenderCostsUsd.toLocaleString()} of tender costs (${ledger.blendedReturn}× blended return).
+SAVINGS LEDGER: ${ledger.closedPackages} packages awarded to date, ${formatActiveUsd(ledger.realisedSavingsUsd)} realised savings against ${formatActiveUsd(ledger.tenderCostsUsd)} of tender costs (${ledger.blendedReturn}× blended return).
 
 CONTROLLED DOCUMENT REGISTER:
 ${docs}
@@ -439,7 +440,7 @@ STANDARDS MATRIX (QA-MAN-2026-EPCI §3): ${STANDARDS_MATRIX.map(s => `${s.ref} (
 
 GOVERNING TERMS (S7-SCM-TC-2026-v1.0): DDP Incoterms 2020 to the mobilisation port; knock-for-knock maritime indemnities; 24-month warranty from commissioning or 36 from delivery; fixed firm pricing; 60-day payment; English law with LCIA arbitration.
 
-CHARTER: ${CHARTER.vessel} (${CHARTER.vesselType}) on ${CHARTER.codeName} terms — ${CHARTER.charterPeriod} at $${CHARTER.hireRate.toLocaleString()}/day.
+CHARTER: ${CHARTER.vessel} (${CHARTER.vesselType}) on ${CHARTER.codeName} terms — ${CHARTER.charterPeriod} at ${formatActiveUsd(CHARTER.hireRate)}/day.
 
 ${bidEval}`
 }
