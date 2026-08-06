@@ -400,7 +400,7 @@ function TopNavBar() {
  * Severity styling for the Intelligence rail deliberately avoids the hero
  * pages' BCG tier palette (Stars=amber, Cash Cows=blue, Question Marks=yellow,
  * Dogs=red) so a finding never reads as "correlated" to a tier. We use a
- * monochrome zinc ramp plus an icon + label tag — an ops/alert idiom distinct
+ * monochrome zinc ramp plus an icon + label tag â€” an ops/alert idiom distinct
  * from the hero's flat color blocks.
  */
 const severityBorder: Record<Severity, string> = {
@@ -584,33 +584,33 @@ function ReasoningPanel() {
       if (activePage === "tender-studio") {
         return {
           chain: [
-            "Résolution du lot vers sa spécification technique contrôlée et sa quantité",
-            "Récupération des obligations DNV / NORSOK / ISO applicables depuis QA-MAN-2026-EPCI",
-            "Assemblage des conditions commerciales et juridiques de S7-SCM-TC-2026, avec obligations issues de la charte pour les opérations maritimes",
-            "Composition des sections de l’AO et préparation de l’audit contradictoire de chaque source citée",
+            "RÃ©solution du lot vers sa spÃ©cification technique contrÃ´lÃ©e et sa quantitÃ©",
+            "RÃ©cupÃ©ration des obligations DNV / NORSOK / ISO applicables depuis QA-MAN-2026-EPCI",
+            "Assemblage des conditions commerciales et juridiques de S7-SCM-TC-2026, avec obligations issues de la charte pour les opÃ©rations maritimes",
+            "Composition des sections de lâ€™AO et prÃ©paration de lâ€™audit contradictoire de chaque source citÃ©e",
           ],
-          sources: [`${DOCUMENTS.length} documents contrôlés au registre projet`, `${packages.length} lots actifs sur le pipeline ${PROJECT.shortName}`, "Particularités de la charte SUPPLYTIME 2026"],
+          sources: [`${DOCUMENTS.length} documents contrÃ´lÃ©s au registre projet`, `${packages.length} lots actifs sur le pipeline ${PROJECT.shortName}`, "ParticularitÃ©s de la charte SUPPLYTIME 2026"],
         }
       }
       if (activePage === "bid-evaluation") {
         return {
           chain: [
-            "Application des portes éliminatoires : ISO 9001, knock-for-knock mutuel, DDP Rotterdam",
-            "Normalisation des prix éligibles par rapport à l’offre conforme la plus basse (Prix 35)",
-            "Notation Technique 25, QA/HSEQ 20 et Juridique 20 — signalement des réductions de garantie supérieures à 25 %",
-            "Classement des réponses conformes dans une matrice de recommandation d’attribution",
+            "Application des portes Ã©liminatoires : ISO 9001, knock-for-knock mutuel, DDP Rotterdam",
+            "Normalisation des prix Ã©ligibles par rapport Ã  lâ€™offre conforme la plus basse (Prix 35)",
+            "Notation Technique 25, QA/HSEQ 20 et Juridique 20 â€” signalement des rÃ©ductions de garantie supÃ©rieures Ã  25 %",
+            "Classement des rÃ©ponses conformes dans une matrice de recommandation dâ€™attribution",
           ],
-          sources: ["Quatre réponses à ITT-MER-SCM-2101", "S7-SCM-TC-2026 §4.1 — Incoterms et garantie de référence", "QA-MAN-2026-EPCI — alignement des préavis FAT / ITP"],
+          sources: ["Quatre rÃ©ponses Ã  ITT-MER-SCM-2101", "S7-SCM-TC-2026 Â§4.1 â€” Incoterms et garantie de rÃ©fÃ©rence", "QA-MAN-2026-EPCI â€” alignement des prÃ©avis FAT / ITP"],
         }
       }
       return {
         chain: [
-          "Chargement du registre des appels d’offres et application de l’avancement de session à chaque lot",
-          "Calcul des jours restants pour chaque fenêtre d’appel d’offres de 21 jours",
-          "Rattachement des lots aux documents contrôlés, normes et interfaces de charte",
-          "Classement par date limite de soumission, objectif d’économies et chemin critique d’installation",
+          "Chargement du registre des appels dâ€™offres et application de lâ€™avancement de session Ã  chaque lot",
+          "Calcul des jours restants pour chaque fenÃªtre dâ€™appel dâ€™offres de 21 jours",
+          "Rattachement des lots aux documents contrÃ´lÃ©s, normes et interfaces de charte",
+          "Classement par date limite de soumission, objectif dâ€™Ã©conomies et chemin critique dâ€™installation",
         ],
-        sources: [`${packages.length} lots actifs sur le pipeline ${PROJECT.shortName}`, `${closed.length} lots attribués dans le registre des économies`, `${DOCUMENTS.length} documents contrôlés au registre projet`],
+        sources: [`${packages.length} lots actifs sur le pipeline ${PROJECT.shortName}`, `${closed.length} lots attribuÃ©s dans le registre des Ã©conomies`, `${DOCUMENTS.length} documents contrÃ´lÃ©s au registre projet`],
       }
     }
     if (activePage === "tender-studio") {
@@ -633,12 +633,12 @@ function ReasoningPanel() {
         chain: [
           "Applied hard gates: ISO 9001, mutual knock-for-knock, DDP Rotterdam",
           "Normalised eligible prices against the lowest compliant bid (Price 35)",
-          "Scored Tech 25, QA/HSEQ 20 and Legal 20 — flagged warranty cuts above 25%",
+          "Scored Tech 25, QA/HSEQ 20 and Legal 20 â€” flagged warranty cuts above 25%",
           "Ranked gate-passing returns into an award recommendation matrix",
         ],
         sources: [
           "Four returns against ITT-MER-SCM-2101",
-          "S7-SCM-TC-2026 §4.1 Incoterms and warranty baseline",
+          "S7-SCM-TC-2026 Â§4.1 Incoterms and warranty baseline",
           "QA-MAN-2026-EPCI FAT / ITP notice alignment",
         ],
       }
@@ -676,7 +676,7 @@ function ReasoningPanel() {
             <SafeIcon name="Workflow" className="h-3 w-3 text-blue-500" />
             <span className="font-medium text-foreground">{t("intel.synthesis")}</span>
           </div>
-          {locale === "fr" ? "BluePilot a synthétisé les analyses " : "BluePilot synthesized "}
+          {locale === "fr" ? "BluePilot a synthÃ©tisÃ© les analyses " : "BluePilot synthesized "}
           {activeSpecialists.map((sid, i) => (
             <React.Fragment key={sid}>
               {i > 0 && (i === activeSpecialists.length - 1 ? ` ${t("intel.and")} ` : ", ")}
@@ -1068,7 +1068,7 @@ function AgentFindingCard({ finding, annotations, index }: { finding: Orchestrat
         {finding.dataSources && finding.dataSources.filter(s => s !== "Internal").length > 0 && (
           <>
             {finding.sourceSpecialists && finding.sourceSpecialists.length > 0 && (
-              <span className="text-[9px] text-muted-foreground/30 mx-0.5">·</span>
+              <span className="text-[9px] text-muted-foreground/30 mx-0.5">Â·</span>
             )}
             {finding.dataSources.filter(s => s !== "Internal").map(src => (
               <span key={src} className={cn(
@@ -1254,7 +1254,7 @@ function ChatPanel() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Intelligence Panel — slide-out right drawer (Silver State pattern) */
+/*  Intelligence Panel â€” slide-out right drawer (Silver State pattern) */
 /* ------------------------------------------------------------------ */
 
 type RailSectionKey = IntelRailSection
