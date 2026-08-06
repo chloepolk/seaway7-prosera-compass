@@ -397,7 +397,7 @@ function TopNavBar() {
  * Severity styling for the Intelligence rail deliberately avoids the hero
  * pages' BCG tier palette (Stars=amber, Cash Cows=blue, Question Marks=yellow,
  * Dogs=red) so a finding never reads as "correlated" to a tier. We use a
- * monochrome zinc ramp plus an icon + label tag ù an ops/alert idiom distinct
+ * monochrome zinc ramp plus an icon + label tag ‚Äî an ops/alert idiom distinct
  * from the hero's flat color blocks.
  */
 const severityBorder: Record<Severity, string> = {
@@ -583,12 +583,12 @@ function ReasoningPanel() {
         chain: [
           "Applied hard gates: ISO 9001, mutual knock-for-knock, DDP Rotterdam",
           "Normalised eligible prices against the lowest compliant bid (Price 35)",
-          "Scored Tech 25, QA/HSEQ 20 and Legal 20 ù flagged warranty cuts above 25%",
+          "Scored Tech 25, QA/HSEQ 20 and Legal 20 ‚Äî flagged warranty cuts above 25%",
           "Ranked gate-passing returns into an award recommendation matrix",
         ],
         sources: [
           "Four returns against ITT-MER-SCM-2101",
-          "S7-SCM-TC-2026 ù4.1 Incoterms and warranty baseline",
+          "S7-SCM-TC-2026 ¬ß4.1 Incoterms and warranty baseline",
           "QA-MAN-2026-EPCI FAT / ITP notice alignment",
         ],
       }
@@ -712,7 +712,7 @@ function ReasoningPanel() {
         {agentPhase === "verifying" ? (
           <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-            <span style={{ backgroundImage: "linear-gradient(90deg, var(--color-muted-foreground) 25%, var(--color-foreground) 50%, var(--color-muted-foreground) 75%)", backgroundSize: "200% 100%", animation: "shimmer 2s ease-in-out infinite", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Verifying claims against source dataù</span>
+            <span style={{ backgroundImage: "linear-gradient(90deg, var(--color-muted-foreground) 25%, var(--color-foreground) 50%, var(--color-muted-foreground) 75%)", backgroundSize: "200% 100%", animation: "shimmer 2s ease-in-out infinite", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Verifying claims against source data‚Ä¶</span>
           </div>
         ) : verifierResult ? (
           <div className="space-y-1.5">
@@ -746,7 +746,7 @@ function ReasoningPanel() {
         ) : (
           <div className="flex items-center gap-2 text-[11px] text-muted-foreground/50">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-muted" />
-            Static analysis ù verification not applicable
+            Static analysis ‚Äî verification not applicable
           </div>
         )}
       </div>
@@ -1003,7 +1003,7 @@ function AgentFindingCard({ finding, annotations, index }: { finding: Orchestrat
         {finding.dataSources && finding.dataSources.filter(s => s !== "Internal").length > 0 && (
           <>
             {finding.sourceSpecialists && finding.sourceSpecialists.length > 0 && (
-              <span className="text-[9px] text-muted-foreground/30 mx-0.5">ù</span>
+              <span className="text-[9px] text-muted-foreground/30 mx-0.5">¬∑</span>
             )}
             {finding.dataSources.filter(s => s !== "Internal").map(src => (
               <span key={src} className={cn(
@@ -1189,7 +1189,7 @@ function ChatPanel() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Intelligence Panel ù slide-out right drawer (Silver State pattern) */
+/*  Intelligence Panel ‚Äî slide-out right drawer (Silver State pattern) */
 /* ------------------------------------------------------------------ */
 
 type RailSectionKey = IntelRailSection
@@ -1306,7 +1306,7 @@ function IntelligencePanelDrawer({
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const t = useT()
   const [email, setEmail] = React.useState("d.hoffmann@future-energy.com")
-  const [password, setPassword] = React.useState("ùùùùùùùù")
+  const [password, setPassword] = React.useState("‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢")
   const [error, setError] = React.useState("")
   const [loading, setLoading] = React.useState(false)
 
@@ -1340,14 +1340,14 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
             </div>
             <div className="space-y-2">
               <label htmlFor="password" className="block text-xs font-medium uppercase tracking-wider text-white/60">{t("common.password")}</label>
-              <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="ùùùùùùùù" autoComplete="current-password" className="w-full rounded-lg border border-white/15 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-white/40 focus:bg-white/15 focus:ring-1 focus:ring-white/20" />
+              <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢" autoComplete="current-password" className="w-full rounded-lg border border-white/15 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-white/40 focus:bg-white/15 focus:ring-1 focus:ring-white/20" />
             </div>
             {error && <p className="text-xs text-red-300 text-center">{error}</p>}
             <button type="submit" disabled={loading} className="w-full rounded-lg bg-white px-4 py-3 text-sm font-semibold text-primary transition hover:bg-white/90 disabled:opacity-60">
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" /><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
-                  Refreshing BluePilot intelligenceù
+                  Refreshing BluePilot intelligence‚Ä¶
                 </span>
               ) : t("common.signIn")}
             </button>
