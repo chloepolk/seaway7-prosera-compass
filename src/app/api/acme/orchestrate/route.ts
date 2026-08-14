@@ -1,7 +1,7 @@
 import { getClient, getGeminiClient, callWithRetry, extractJson, MODELS, fallbackResponse, errorResponse } from "@/lib/compass/engine"
 import { ORCHESTRATOR_SCHEMA } from "@/app/prototype/prosera-compass/agents/_types"
 import { ORCHESTRATOR_PROMPT } from "@/app/prototype/prosera-compass/agents/_prompts"
-import { outputLanguageInstruction } from "@/lib/compass/data-grounded-language"
+import { outputLanguageInstruction, sanitizeOrchestratorOutput } from "@/lib/compass/data-grounded-language"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -129,6 +129,8 @@ ${JSON.stringify(orchestratorContext.fuelExposure, null, 1)}`
 
     const userContent = `${languageInstruction}Synthesize the following specialist analyses into a unified intelligence briefing.
 
+HERO HEADLINE: headline.title and headline.narrative appear on Today's Focus. Write them as a calm fact plus the next action. Name the package, the days or date, and the dollar figure. Do not use threaten, jeopardise, expedite, crisis, or "Critical …" in the title.
+
 Navigation Context: ${JSON.stringify(drillState)}
 Active Page: ${pageContext}
 Available Specialists: ${specialistSummary}
@@ -157,7 +159,7 @@ ${JSON.stringify(availableSpecialists, null, 1)}${knowledgeBaseSection}${rootCau
     const content = response.choices[0]?.message?.content
     if (!content) return errorResponse(new Error("Empty response from orchestrator"))
 
-    const parsed = extractJson(content)
+    const parsed = sanitizeOrchestratorOutput(extractJson(content))
     return Response.json({ fallback: false, data: parsed })
   } catch (err) {
     return errorResponse(err)

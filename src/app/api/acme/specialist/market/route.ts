@@ -1,7 +1,7 @@
 import { hasAnyProvider, callWithFallback, extractJson, MODELS, fallbackResponse, errorResponse } from "@/lib/compass/engine"
 import { SPECIALIST_SCHEMA } from "@/app/prototype/prosera-compass/agents/_types"
 import { MARKET_SPECIALIST_PROMPT } from "@/app/prototype/prosera-compass/agents/_prompts"
-import { outputLanguageInstruction } from "@/lib/compass/data-grounded-language"
+import { outputLanguageInstruction, sanitizeSpecialistOutput } from "@/lib/compass/data-grounded-language"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     const content = response.choices[0]?.message?.content
     if (!content) return errorResponse(new Error("Empty response from model"))
 
-    const parsed = extractJson(content) as Record<string, unknown>
+    const parsed = sanitizeSpecialistOutput(extractJson(content) as Record<string, unknown>)
     parsed.specialistId = "market"
 
     return Response.json({ fallback: false, data: parsed })

@@ -29,6 +29,7 @@ import {
   buildChatBriefing,
   buildBidEvaluationContext,
 } from "./agents/_context"
+import { sanitizeOrchestratorOutput } from "@/lib/compass/data-grounded-language"
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -818,11 +819,14 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
     const useStaticFallback = agentState.agentError !== null
     const isVerified = agentState.verifierResult !== null && agentState.verifierResult.verified === true
 
-    const bpHeadline = agentState.orchestratorResult?.headline ?? null
+    const orch = agentState.orchestratorResult
+      ? sanitizeOrchestratorOutput(agentState.orchestratorResult)
+      : null
+    const bpHeadline = orch?.headline?.title?.trim() ? orch.headline : null
 
-    const bpFindings = agentState.orchestratorResult?.findings ?? []
+    const bpFindings = orch?.findings ?? []
 
-    const bpReasoning = agentState.orchestratorResult?.reasoning ?? []
+    const bpReasoning = orch?.reasoning ?? []
 
     return {
       data,
@@ -1235,7 +1239,9 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
       authenticated,
       login,
       agentPhase: agentState.agentPhase,
-      orchestratorResult: agentState.orchestratorResult,
+      orchestratorResult: agentState.orchestratorResult
+        ? sanitizeOrchestratorOutput(agentState.orchestratorResult)
+        : null,
       verifierResult: agentState.verifierResult,
       agentError: agentState.agentError,
       chatMessages,

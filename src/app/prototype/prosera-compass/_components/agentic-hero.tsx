@@ -5,6 +5,7 @@ import { useStore } from "../_store"
 import { BluePilotSkeleton } from "./bluepilot-summary"
 import { FocusHero, type FocusHeroProps } from "./hub/focus-hero"
 import type { ReasoningContent } from "./reasoning-disclosure"
+import { copyUsesAlarmistLanguage } from "@/lib/compass/data-grounded-language"
 
 export type AgenticFocusHeroProps = Omit<FocusHeroProps, "headline" | "body" | "reasoning"> & {
   staticHeadline: string
@@ -36,10 +37,14 @@ export function AgenticFocusHero({
     return <BluePilotSkeleton label={phaseText} />
   }
 
-  const headline = useStaticFallback ? staticHeadline : (bpHeadline?.title ?? staticHeadline)
+  const generatedTitle = bpHeadline?.title?.trim() || staticHeadline
+  const generatedBody = bpHeadline?.narrative?.trim() || staticBody
+  const alarmist = copyUsesAlarmistLanguage(generatedTitle) || copyUsesAlarmistLanguage(generatedBody)
+  const useCalm = useStaticFallback || alarmist || !bpHeadline?.title?.trim()
+  const headline = useCalm ? staticHeadline : generatedTitle
   const body =
     bodyOverride ??
-    (useStaticFallback ? staticBody : (bpHeadline?.narrative ?? staticBody))
+    (useCalm ? staticBody : generatedBody)
   const reasoning: ReasoningContent | undefined = reasoningContent
     ?? (useStaticFallback
       ? staticReasoning

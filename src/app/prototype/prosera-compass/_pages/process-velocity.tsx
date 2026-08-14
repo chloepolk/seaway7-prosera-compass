@@ -589,7 +589,7 @@ const PROCESS_MODULES: IntelModule[] = [
     category: "weather",
     Detail: WeatherCapacityDetail,
     summary: (): ModuleSummary => ({
-      headline: "Forecast demand surges that could strain crew capacity and slow the completion-to-invoice handoff.",
+      headline: "Forecast demand that could slow the completion-to-invoice handoff if crew capacity is already tight.",
       severity: "info",
       figures: [{ label: "Signal", value: "Weather", tone: "neutral" }],
     }),
@@ -761,7 +761,7 @@ export function ProcessVelocityPage() {
     <div className="space-y-7">
       <AgenticFocusHero
         eyebrow="Operations focus · from BluePilot"
-        staticHeadline="Slow invoicing is holding up your cash."
+        staticHeadline={`${(ci05.withinTargetPct * 100).toFixed(0)}% of invoiced jobs hit the two-day first-invoice target.`}
         staticBody={heroBody}
         staticReasoning={{
           summary: "Invoice lag computed from completion-to-first-invoice timestamps across all validated jobs.",

@@ -119,7 +119,7 @@ export const BIDS_ITT_MER_SCM_2101: BidInput[] = [
     acceptsStandardWarranty: false,
     pdfPath: "/future-energy/Viking_Response_ITT-MER-SCM-2101.pdf",
     insight:
-      "Passes hard gates with solid tech, but warranty cut to 12 months post-installation (>25% below the 24-month standard) — high commercial risk even if composite remains competitive.",
+      "Passes hard gates with full tech scores. Warranty is 12 months post-installation vs the 24-month standard (>25% below). Composite can still rank, but the commercial-risk flag is set.",
   },
 ]
 

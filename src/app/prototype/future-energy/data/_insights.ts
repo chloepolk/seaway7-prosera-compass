@@ -1167,9 +1167,9 @@ function procurementFindings(): BPFinding[] {
       id: "s7-cable-critical-path",
       category: "deadline-risk",
       severity: "critical",
-      title: "66kV array cable ITT is the programme critical path",
+      title: "66kV array cable ITT is on the programme critical path",
       narrative:
-        "PKG-2101 must open its 21-day tender window this week to hold the Q2 2027 cable-lay campaign. Cable lead times drive the installation sequence — every week of tender slippage compresses the lay window directly.",
+        "PKG-2101 has a 21-day tender window. Issue it this week so the Q2 2027 cable-lay campaign still holds. Cable lead times set the installation sequence: each week of tender slip moves the lay window by the same amount.",
       evidence: [
         "Submission deadline 03 Aug 2026 — 21 days from issue.",
         "Five pre-qualified suppliers confirmed capacity for Q1 2027 delivery.",
@@ -1185,7 +1185,7 @@ function procurementFindings(): BPFinding[] {
       severity: "high",
       title: "European TP fabrication slots are contested",
       narrative:
-        "PKG-2102 (24 transition pieces) holds a reserved Q1 2027 fabrication slot. A late ITT risks losing the slot to a competing developer; the Batch 1 benchmark of $1.99M per unit landed DDP anchors the negotiation.",
+        "PKG-2102 (24 transition pieces) holds a reserved Q1 2027 fabrication slot. If the ITT is late, that slot can go to another developer. The Batch 1 benchmark of $1.99M per unit landed DDP anchors the negotiation.",
       evidence: [
         "Batch 1 award benchmark: $1.99M per unit landed DDP.",
         "Three yards on the bidder list, submission deadline 17 Aug 2026.",
@@ -1215,7 +1215,7 @@ function procurementFindings(): BPFinding[] {
       severity: "high",
       title: "Charter flow-downs required on vessel-side packages",
       narrative:
-        "Packages with vessel operations (cable, transition pieces, hook block) must carry the SUPPLYTIME 2026 knock-for-knock regime and offshore marine warranty into Section 4.0. Omitting the flow-down leaves an uninsured liability gap at the vessel interface.",
+        "Packages with vessel operations (cable, transition pieces, hook block) carry the SUPPLYTIME 2026 knock-for-knock regime and offshore marine warranty in Section 4.0. Without that flow-down, vessel-interface liability is uninsured.",
       evidence: [
         "SUPPLYTIME 2026 Clauses 4.1/4.2 — mutual knock-for-knock indemnities.",
         "Clause 2.2 — SOLAS/MARPOL marine warranty and classification requirement.",

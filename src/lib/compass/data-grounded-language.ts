@@ -31,6 +31,8 @@ Every claim of size, direction, or importance must be traceable to a specific nu
 
 8. NEVER INVENT TERMINOLOGY. Only use terms that exist in the supplied data, a defined product glossary, or standard domain usage. Do not coin compound nouns or labels for a pattern, event, or category. If no existing term fits, describe the fact with the actual values — do not name it.
 
+9. NO ALARMIST OR HIGH-STRESS FRAMING. Headlines and bodies state the fact and the next action. Banned in user-facing copy: threaten, jeopardise, jeopardize, crisis, catastrophic, dire, alarming, looming, endanger, expedite, urgently. Do not open a headline with "Critical" (keep "critical path" as a programme term). Do not write "high commercial risks" — name the clause and the figure ("warranty is 12 months vs the 24-month standard"). Calm: "PKG-2104 award is due in 11 days." Not: "Critical deadlines threaten the programme."
+
 CHECK BEFORE OUTPUT: scan for banned words; replace each with the data point or delete it; every claim sentence must contain a number, date, or named comparison.`
 
 /** French counterpart — inject whenever locale is `fr`. */
@@ -52,6 +54,8 @@ Toute affirmation de taille, de direction ou d’importance doit renvoyer à un 
 7. STYLE. Voix active. Phrases courtes. Une affirmation par phrase. Le chiffre d’abord, pas l’interprétation. N’éditorialisez pas « bon » ou « mauvais » sauf demande explicite de verdict. Pas de point d’exclamation. Pas d’émoji. Pas de « nous sommes ravis de… ».
 
 8. N’INVENTEZ PAS DE TERMES. Utilisez uniquement les termes des données, d’un glossaire produit, ou de l’usage métier standard. Ne créez pas d’étiquette pour un motif. Décrivez les valeurs.
+
+9. PAS DE TON ALARMISTE. Les titres disent le fait et l’action. Interdits : menacer, compromettre, crise, catastrophique, alarmant, urgemment, mettre en péril. N’ouvrez pas un titre par « Critique ». Ne dites pas « risques commerciaux élevés » — citez la clause et le chiffre (« garantie de 12 mois contre le standard de 24 mois »). Calme : « L’attribution de PKG-2104 est due dans 11 jours. » Pas : « Des échéances critiques menacent le programme. »
 
 CONTRÔLE AVANT SORTIE : cherchez les mots interdits ; remplacez-les par le chiffre ou supprimez-les ; chaque phrase d’affirmation doit contenir un nombre, une date ou une comparaison nommée.
 Rédigez pour un lecteur de lycée / premier cycle universitaire : clair pour un junior comme pour un dirigeant.`
@@ -75,4 +79,113 @@ export function outputLanguageInstruction(
     ? ' Use "Next:" for the final action line.'
     : ""
   return `Respond exclusively in English.${next}\n\n${DATA_GROUNDED_LANGUAGE_RULES}`
+}
+
+const ALARMIST_BODY_RE =
+  /\b(threaten|threatens|threatening|jeopardis(?:e|es|ed|ing)|jeopardiz(?:e|es|ed|ing)|jeopardy|crisis|catastrophic|dire|alarming|looming|endanger(?:s|ed|ing)?|expedite|urgently|immediate action|rapidly(?:\s+approaching)?|risking|slot risk|path risk|high commercial risks?|weak competition|approval bottlenecks?|this is critical|is critical)\b|\b(menace|menacent|menacer|menaç(?:e|ent)|compromettre|compromettent|péril|crise|catastrophique|alarmant|urgemment|action immédiate|risques? commerciaux? élevés?)\b/i
+
+/** True when copy uses drama instead of a fact + next action. */
+export function copyUsesAlarmistLanguage(text: string | null | undefined): boolean {
+  if (!text) return false
+  const t = text.trim()
+  if (!t) return false
+  if (/^(critical|immediate|urgent|critique)\b/i.test(t)) return true
+  return ALARMIST_BODY_RE.test(t)
+}
+
+/** Strip drama wording. Does not blank the line. */
+export function softenGeneratedText(text: string | null | undefined): string {
+  if (!text) return ""
+  let s = text
+    .replace(/\bImmediate action is required on\b/gi, "Next:")
+    .replace(/\bImmediate action is required\b/gi, "Next step:")
+    .replace(/\brapidly approaching\b/gi, "upcoming")
+    .replace(/\brisking\b/gi, "and may miss")
+    .replace(/\bhigh commercial risks?\b/gi, "warranty below the 24-month standard")
+    .replace(/\bWeak competition\b/g, "Two or fewer bidders")
+    .replace(/\bFabrication slot risk for (\S+) is critical\.?/gi, "$1 fabrication slot still needs a decision.")
+    .replace(/\bCritical Path Risk for\b/gi, "")
+    .replace(/\bCritical Deadlines and Approval Bottlenecks Threaten Key Packages\b/gi, "")
+    .replace(/\b(threaten|threatens|threatening|jeopardise|jeopardize|endanger|expedite)\b/gi, "")
+    .replace(/\b(menace|menacent|menacer|compromettent|urgemment)\b/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([,.;:])/g, "$1")
+    .trim()
+  return s.replace(/^(critical|immediate|urgent|critique)\b[:,]?\s*/i, "").trim()
+}
+
+/** Soften, then blank the line if it is still alarmist (callers fall back). */
+export function sanitizeGeneratedText(text: string | null | undefined): string {
+  const s = softenGeneratedText(text)
+  if (copyUsesAlarmistLanguage(s)) return ""
+  return s
+}
+
+type OrchestratorLike = {
+  headline: { title: string; narrative: string; severity: string }
+  executiveSummary: { sentences: string[]; bullets: string[] } | null
+  findings: Array<{
+    title: string
+    narrative: string
+    recommendation: string
+    evidence: string[]
+    [key: string]: unknown
+  }>
+  reasoning: Array<{ text: string; [key: string]: unknown }>
+  [key: string]: unknown
+}
+
+function sanitizeLineKeep(text: string): string {
+  return softenGeneratedText(text) || text.replace(/\s{2,}/g, " ").trim()
+}
+
+/** Run on every orchestrator payload before it reaches the UI or cache. */
+export function sanitizeOrchestratorOutput<T>(output: T): T {
+  const o = output as OrchestratorLike
+  const title = sanitizeGeneratedText(o.headline.title)
+  const narrative = sanitizeGeneratedText(o.headline.narrative)
+  const headlineOk = Boolean(title) && Boolean(narrative)
+  return {
+    ...o,
+    headline: {
+      ...o.headline,
+      title: headlineOk ? title : "",
+      narrative: headlineOk ? narrative : "",
+    },
+    executiveSummary: o.executiveSummary
+      ? {
+          sentences: o.executiveSummary.sentences.map(sanitizeLineKeep),
+          bullets: o.executiveSummary.bullets.map(sanitizeLineKeep),
+        }
+      : null,
+    findings: o.findings.map((f) => ({
+      ...f,
+      title: sanitizeLineKeep(f.title),
+      narrative: sanitizeLineKeep(f.narrative),
+      recommendation: sanitizeLineKeep(f.recommendation),
+      evidence: f.evidence.map(sanitizeLineKeep),
+    })),
+    reasoning: o.reasoning.map((r) => ({ ...r, text: sanitizeLineKeep(r.text) })),
+  } as T
+}
+
+type SpecialistLike = {
+  analysis?: string
+  signals?: Array<{ signal: string; evidence: string; [key: string]: unknown }>
+  [key: string]: unknown
+}
+
+export function sanitizeSpecialistOutput<T>(output: T): T {
+  const o = output as SpecialistLike
+  return {
+    ...o,
+    analysis: typeof o.analysis === "string" ? sanitizeLineKeep(o.analysis) : o.analysis,
+    signals: Array.isArray(o.signals)
+      ? o.signals.map((sig) => ({
+          ...sig,
+          signal: sanitizeLineKeep(sig.signal),
+          evidence: sanitizeLineKeep(sig.evidence),
+        }))
+      : o.signals,
+  } as T
 }
