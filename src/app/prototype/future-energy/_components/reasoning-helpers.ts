@@ -69,7 +69,7 @@ const FINDING_REASONING: Record<string, FindingReasoningFactory> = {
   }),
   "pricing-ceilings": () => ({
     steps: [
-      "Grouped quote outcomes by job type and dynamic price band percentiles",
+      "Grouped quote outcomes by job type and price-band percentiles",
       "Computed win rate per band; identified ceiling where win rate < 40%",
       "Identified sweet spot bands with win rate ≥ 50%",
     ],

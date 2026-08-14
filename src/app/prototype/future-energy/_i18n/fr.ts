@@ -72,7 +72,7 @@ const fr: EnMessages = {
   },
   agent: {
     analyzing: "Analyse…",
-    synthesizing: "Synthèse de l'intelligence…",
+    synthesizing: "Synthèse…",
     verifying: "Vérification des affirmations…",
     verifyingClaims: "Vérification des affirmations par rapport aux sources…",
     pipelineAnalysis: "Analyse du pipeline…",
@@ -133,10 +133,10 @@ const fr: EnMessages = {
   askSuggestions: {
     standards: "Quelles normes s'appliquent au câble d'array 66 kV ?",
     charter: "Quelles clauses découlent de la charte du navire ?",
-    fat: "Que exige le manuel QA pour le témoignage FAT ?",
+    fat: "Qu’exige le manuel QA pour l’assistance au FAT ?",
     warranty: "Résumez les conditions de paiement et de garantie fournisseurs",
     jtechScore: "Montrez le calcul de score d'offre pour J-Tech",
-    readyToScore: "Quels appels d'offres sont prêts à être scorés ?",
+    readyToScore: "Quels appels d’offres sont prêts à être notés ?",
     ranksFirst: "Qui est premier sur le lot câble d'array ?",
     riskFlag: "Quelles réponses portent un risque commercial élevé ?",
     criticalPath: "Quel lot est sur le chemin critique cette semaine ?",
@@ -163,9 +163,9 @@ const fr: EnMessages = {
     valueProtection: "Protection de valeur",
     valueCreation: "Création de valeur",
     heroHeadline:
-      "{amount} d'économies négociées sont en jeu sur le pipeline d'appels d'offres Meridian.",
+      "{amount} d’économies négociées sont en jeu sur le pipeline d’appels d’offres Meridian.",
     heroBody:
-      "{count} lots sont actifs. Quatre réponses sont reçues sur l'AO câble d'array 66 kV — lancez l'évaluation à portes avant la recommandation d'attribution.",
+      "{count} lots sont actifs. Quatre réponses ont été reçues sur l’AO câble d’array 66 kV — lancez l’évaluation (portes d’entrée, puis notation) avant la recommandation d’attribution.",
     heroReasoningSummary:
       "BluePilot a priorisé le pipeline selon l'échéance de soumission, l'objectif d'économies et le chemin critique d'installation.",
     ingestingEdit: "Prise en compte de votre modification…",
@@ -209,8 +209,7 @@ const fr: EnMessages = {
     searchPeople: "Rechercher par nom ou fonction…",
     noMatches: "Aucun résultat",
     recommendation: "Recommandation BluePilot",
-    recommendationReason:
-      "BluePilot recommande cette personne selon sa fonction, son expertise et sa disponibilité pour l’étape actuelle.",
+    recommendationReason: "{reason}",
   },
   health: {
     on_track: "Dans les temps",
@@ -292,7 +291,7 @@ const fr: EnMessages = {
     Understanding: "Compréhension",
     "Decision Gate": "Porte de décision",
     Executing: "Exécution",
-    Scored: "Scoré",
+    Scored: "Noté",
   },
   ledger: {
     realized: "Réalisé à ce jour",
@@ -310,7 +309,7 @@ const fr: EnMessages = {
     scoringExplain:
       "Portes dures d'abord, puis Prix 35 · Tech 25 · QA/HSEQ 20 · Juridique 20. Les prix éligibles sont normalisés par rapport à l'offre conforme la plus basse.",
     packages: "Lots",
-    ready: "Prêt à scorer",
+    ready: "Prêt à noter",
     awaitingReturns: "En attente de réponses",
     notIssued: "Non émis",
     awarded: "Attribué",
@@ -319,7 +318,7 @@ const fr: EnMessages = {
     tech: "Tech",
     qaHseq: "QA / HSEQ",
     legal: "Juridique",
-    empty: "Sélectionnez un lot avec des réponses pour scorer les offres.",
+    empty: "Sélectionnez un lot avec des réponses pour noter les offres.",
     notifyBidders: "Notifier les soumissionnaires",
     riskBanner:
       "Risque commercial élevé : la réduction de garantie dépasse 25 % de la norme Future Energy. Signaler avant attribution.",
@@ -441,9 +440,9 @@ const fr: EnMessages = {
     awardSubject: "Notification d’attribution — {ittRef}",
     outcomeSubject: "Résultat de votre offre — {ittRef}",
     signOff: "Veuillez agréer nos salutations distinguées,\n{name}\n{role}\nFuture Energy — Gestion de la chaîne d’approvisionnement",
-    awardBody: "Madame, Monsieur, équipe appels d’offres de {supplier},\n\nÀ la suite de l’évaluation des réponses reçues pour {ittRef} — {packageTitle} — dans le cadre de {project}, j’ai le plaisir de confirmer que Future Energy prévoit d’attribuer ce lot à {supplier}.\n\nVotre soumission a obtenu le meilleur score composite selon notre modèle d’évaluation publié (Prix, Technique, QA/HSEQ et Juridique) et satisfait à toutes les exigences éliminatoires obligatoires.\n\nNotre équipe commerciale vous contactera prochainement pour établir le bon de commande et confirmer les modalités de livraison DDP Rotterdam (Incoterms 2020).\n\nNous vous remercions pour le travail considérable consacré à votre proposition et nous réjouissons de collaborer avec vous sur ce programme.\n\n{signOff}",
-    disqualifiedBody: "Madame, Monsieur, équipe appels d’offres de {supplier},\n\nNous vous remercions pour votre réponse à {ittRef} — {packageTitle} — dans le cadre de {project}.\n\nÀ la suite de notre examen de conformité, nous devons vous informer que votre offre n’a pas pu accéder à l’évaluation commerciale, car elle ne satisfait pas à une ou plusieurs exigences obligatoires de l’appel d’offres{gates}.\n\nNous serions heureux de recevoir une offre pleinement conforme de {supplier} lors de futures consultations et restons disponibles pour échanger sur ce résultat.\n\n{signOff}",
-    unsuccessfulBody: "Madame, Monsieur, équipe appels d’offres de {supplier},\n\nNous vous remercions pour votre réponse à {ittRef} — {packageTitle} — dans le cadre de {project}.\n\nAprès une évaluation approfondie de toutes les offres conformes selon nos critères publiés (Prix, Technique, QA/HSEQ et Juridique), nous avons le regret de vous informer que votre offre n’a pas été retenue pour attribution cette fois-ci.\n\nNous apprécions vivement le temps et les efforts consacrés à votre proposition et vous encourageons à participer aux futurs appels d’offres du programme. Nous restons à votre disposition si vous souhaitez un retour sur votre soumission.\n\n{signOff}",
+    awardBody: "Madame, Monsieur, équipe appels d’offres de {supplier},\n\nÀ la suite de l’évaluation des réponses reçues pour {ittRef} — {packageTitle} — dans le cadre de {project}, Future Energy prévoit d’attribuer ce lot à {supplier}.\n\nVotre soumission a obtenu le meilleur score composite selon le modèle d’évaluation publié (Prix, Technique, QA/HSEQ et Juridique) et satisfait à toutes les exigences éliminatoires obligatoires.\n\nL’équipe commerciale vous contactera pour établir le bon de commande et confirmer les modalités de livraison DDP Rotterdam (Incoterms 2020).\n\nNous vous remercions pour votre soumission.\n\n{signOff}",
+    disqualifiedBody: "Madame, Monsieur, équipe appels d’offres de {supplier},\n\nNous vous remercions pour votre réponse à {ittRef} — {packageTitle} — dans le cadre de {project}.\n\nÀ la suite de l’examen de conformité, votre offre n’a pas pu accéder à l’évaluation commerciale, car elle ne satisfait pas à une ou plusieurs exigences obligatoires de l’appel d’offres{gates}.\n\nUne offre pleinement conforme de {supplier} pourra être examinée lors de futures consultations. Nous restons disponibles pour échanger sur ce résultat.\n\n{signOff}",
+    unsuccessfulBody: "Madame, Monsieur, équipe appels d’offres de {supplier},\n\nNous vous remercions pour votre réponse à {ittRef} — {packageTitle} — dans le cadre de {project}.\n\nAprès évaluation des offres conformes selon les critères publiés (Prix, Technique, QA/HSEQ et Juridique), votre offre n’a pas été retenue pour attribution.\n\nNous restons à votre disposition si vous souhaitez un retour sur votre soumission.\n\n{signOff}",
   },
   reasoning: {
     viewSources: "Voir les sources ({count})",
@@ -464,7 +463,7 @@ const fr: EnMessages = {
   },
   login: {
     subtitle: "Centre de commandement de la chaîne d’approvisionnement",
-    loading: "Actualisation de l’intelligence BluePilot…",
+    loading: "Actualisation des analyses BluePilot…",
     footer: "Propulsé par Future Energy",
   },
   sandbox: {
@@ -530,11 +529,11 @@ const fr: EnMessages = {
     missions: "{count} missions",
     priorityItems: "Éléments prioritaires",
     signals: "Signaux",
-    signalCount: "{count} signal(aux) transversal(aux) pour la cohorte actuelle",
-    noSignals: "Aucun signal significatif dans la cohorte actuelle.",
+    signalCount: "{count} signal(s) d’autres pages pour la cohorte actuelle",
+    noSignals: "Aucun signal dans la cohorte actuelle.",
     narrative: "Narratif de direction",
     briefing: "Note de synthèse",
-    intelligence: "Intelligence BluePilot",
+    intelligence: "Analyses BluePilot",
     confidential: "Confidentiel",
     emptyTitle: "Générer une note de synthèse",
     emptyBody: "BluePilot transforme les signaux à gauche en une synthèse priorisée et chiffrée. Les signaux sont déjà disponibles.",
@@ -567,7 +566,7 @@ const fr: EnMessages = {
     missionConfirmation: "Confirmation de la mission",
     recommendation: "Recommandation",
     emailBody:
-      "Bonjour,\n\nJe vous contacte au sujet de {name}, actuellement actif dans le Centre d’actions.\n\n{narrative}\n\nL’objectif est de {target}, avec une échéance au {date}.\n\nMerci d’examiner ces éléments et de confirmer les prochaines étapes dès que possible. N’hésitez pas à me contacter pour toute information complémentaire.\n\nCordialement,\n[Votre nom]",
+      "Bonjour,\n\nJe vous contacte au sujet de {name}, actuellement en cours dans le Centre d’actions.\n\n{narrative}\n\nL’objectif est {target}, échéance le {date}.\n\nMerci d’examiner ces éléments et de confirmer les prochaines étapes. Vous pouvez me contacter pour toute information complémentaire.\n\nCordialement,\n[Votre nom]",
   },
   focus: {
     whyThisFocus: "Pourquoi ce focus",
@@ -653,7 +652,7 @@ const fr: EnMessages = {
     loading: "Chargement des données marché…",
     eyebrow: "Intelligence des marchés régionaux · BluePilot",
     headline: "Où investir, défendre et récolter dans six régions.",
-    body: "Central est le moteur de croissance avec la meilleure marge — développez-la. Trois régions doivent être défendues face à la hausse des salaires et du carburant. Mountain reste sous surveillance ; récoltez South et redéployez ce capital.",
+    body: "Notez chaque région sur la construction, les salaires, le carburant et la marge actuelle. Investissez lorsque le composite est d’au moins 70 avec une implantation existante. Récoltez lorsque le composite est inférieur à 45 et redéployez ce capital.",
     reasoning: "Stratégie régionale notée à partir des salaires BLS, de la construction Census, du carburant EIA et des données internes de marge et d’implantation.",
     step1: "Score pondéré : croissance de la construction (25 %), marge (20 %), salaires (15 %), implantation (15 %), carburant (15 %), main-d’œuvre (10 %)",
     step2: "Affectation du score composite à une posture investir / défendre / récolter / explorer par région",
@@ -685,7 +684,7 @@ const fr: EnMessages = {
     score: "Score",
     externalData: "Données externes",
     platformExport: "Export de la plateforme",
-    whyMetric: "Pourquoi {name} est pertinent",
+    whyMetric: "Pourquoi {name} compte",
   },
 }
 

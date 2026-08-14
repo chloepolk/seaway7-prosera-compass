@@ -171,8 +171,8 @@ function buildMarketSignals(region: Region, sc: StrategyScorecard, regionAgg: Re
       metric: "HVAC tech mean wage",
       value: `$${latest?.meanAnnualWage?.toLocaleString()}/yr`,
       implication: premium > 0.05
-        ? `${(premium * 100).toFixed(1)}% above national avg — labor costs compress margins, platform wage arbitrage opportunity at scale`
-        : `${Math.abs(premium * 100).toFixed(1)}% ${premium >= 0 ? "above" : "below"} national avg — favorable labor economics for service delivery`,
+        ? `${(premium * 100).toFixed(1)}% above the national mean`
+        : `${Math.abs(premium * 100).toFixed(1)}% ${premium >= 0 ? "above" : "below"} the national mean`,
     });
 
     if (latest?.locationQuotient) {
@@ -181,10 +181,10 @@ function buildMarketSignals(region: Region, sc: StrategyScorecard, regionAgg: Re
         metric: "Tech location quotient",
         value: latest.locationQuotient.toFixed(2),
         implication: latest.locationQuotient < 0.90
-          ? "Tech supply is structurally short — competitors struggle to staff, platform with recruiting leverage wins"
+          ? `Location quotient ${latest.locationQuotient.toFixed(2)} is below 0.90. Tech supply is short of the national mean.`
           : latest.locationQuotient >= 1.05
-          ? "Adequate tech supply — hiring is less constrained, focus on retention over recruitment"
-          : "Moderate tech availability — selective recruiting advantage",
+          ? `Location quotient ${latest.locationQuotient.toFixed(2)} is at or above 1.05. Hiring is less constrained than in short-supply metros.`
+          : `Location quotient ${latest.locationQuotient.toFixed(2)} is between 0.90 and 1.05.`,
       });
     }
 
@@ -193,8 +193,8 @@ function buildMarketSignals(region: Region, sc: StrategyScorecard, regionAgg: Re
       metric: "4-year wage growth",
       value: `${(wageProfile.fourYearChangePct * 100).toFixed(1)}%`,
       implication: wageProfile.fourYearChangePct > 0.15
-        ? "Rapid wage inflation — pricing must outpace or margins erode structurally"
-        : "Moderate wage growth — manageable within standard price escalation",
+        ? `Wages are up ${(wageProfile.fourYearChangePct * 100).toFixed(1)}% over four years. Price escalation needs to match that rate or margin falls.`
+        : `Wages are up ${(wageProfile.fourYearChangePct * 100).toFixed(1)}% over four years.`,
     });
   }
 
@@ -210,22 +210,14 @@ function buildMarketSignals(region: Region, sc: StrategyScorecard, regionAgg: Re
       source: "Census",
       metric: "Building permits (top metro)",
       value: `${latestPermits.toLocaleString()} units (${topPermit.metroArea})`,
-      implication: topPermit.constructionActivityLevel === "high"
-        ? "High new-construction activity = steady pipeline of new HVAC installations converting to service contracts"
-        : topPermit.constructionActivityLevel === "declining"
-        ? "Declining new construction — pivot strategy to retrofit/service revenue over new installation"
-        : "Moderate construction — balanced growth opportunity",
+      implication: `${latestPermits.toLocaleString()} permits/yr in ${topPermit.metroArea} (dataset activity level: ${topPermit.constructionActivityLevel}).`,
     });
 
     signals.push({
       source: "Census",
       metric: "2-year permit trend",
       value: `${(constructionSignal.twoYearChange * 100).toFixed(1)}%`,
-      implication: constructionSignal.twoYearChange > -0.05
-        ? "Construction nearly recovered or growing — expanding market for commercial HVAC"
-        : constructionSignal.twoYearChange > -0.15
-        ? "Modest pullback from peak — market normalizing, not declining"
-        : "Significant construction decline — new installation revenue contracting",
+      implication: `Permits are ${(constructionSignal.twoYearChange * 100).toFixed(1)}% vs. two years ago.`,
     });
   }
 
@@ -235,10 +227,10 @@ function buildMarketSignals(region: Region, sc: StrategyScorecard, regionAgg: Re
     metric: `Fuel cost trend (${eiaFuel.paddLabel})`,
     value: `$${eiaFuel.recentAvg.toFixed(3)}/gal (${eiaFuel.deltaPct > 0 ? "+" : ""}${(eiaFuel.deltaPct * 100).toFixed(1)}% from baseline $${eiaFuel.baselineAvg.toFixed(3)})`,
     implication: eiaFuel.deltaPct > 0.25
-      ? `Fuel surge in ${eiaFuel.paddLabel} compresses travel-heavy route margins — contract fuel clause implementation urgent`
+      ? `${eiaFuel.paddLabel} fuel is ${(eiaFuel.deltaPct * 100).toFixed(1)}% above baseline. Add a contract fuel clause.`
       : eiaFuel.deltaPct > 0.10
-      ? `Rising fuel costs in ${eiaFuel.paddLabel} — embed fuel escalation clauses before further erosion`
-      : `${eiaFuel.paddLabel} fuel costs stable — no immediate action needed`,
+      ? `${eiaFuel.paddLabel} fuel is ${(eiaFuel.deltaPct * 100).toFixed(1)}% above baseline. Embed fuel escalation in new contracts.`
+      : `${eiaFuel.paddLabel} fuel is ${(eiaFuel.deltaPct * 100).toFixed(1)}% vs. baseline.`,
   });
 
   if (regionAgg) {
@@ -247,10 +239,10 @@ function buildMarketSignals(region: Region, sc: StrategyScorecard, regionAgg: Re
       metric: "Current margin",
       value: `${(regionAgg.validated.avgMarginPct * 100).toFixed(1)}%`,
       implication: regionAgg.validated.avgMarginPct >= 0.60
-        ? "Outperforming — protect this margin leadership and replicate the operational model"
+        ? `Margin is ${(regionAgg.validated.avgMarginPct * 100).toFixed(1)}%, at or above the 60% cut.`
         : regionAgg.validated.avgMarginPct >= 0.50
-        ? "Performing within benchmark — incremental improvements available"
-        : "Below benchmark — pricing intervention or operational restructuring needed",
+        ? `Margin is ${(regionAgg.validated.avgMarginPct * 100).toFixed(1)}%, between the 50% and 60% cuts.`
+        : `Margin is ${(regionAgg.validated.avgMarginPct * 100).toFixed(1)}%, below the 50% cut.`,
     });
 
     signals.push({
@@ -258,10 +250,10 @@ function buildMarketSignals(region: Region, sc: StrategyScorecard, regionAgg: Re
       metric: "Customer base",
       value: `${regionAgg.customerCount} customers, ${regionAgg.jobCount} jobs`,
       implication: regionAgg.customerCount >= 50
-        ? "Established market presence — leverage existing relationships for expansion"
+        ? `${regionAgg.customerCount} customers and ${regionAgg.jobCount} jobs. Use the existing book to add density.`
         : regionAgg.customerCount >= 15
-        ? "Growing presence — invest in sales to build density"
-        : "Nascent footprint — evaluate M&A for accelerated market entry",
+        ? `${regionAgg.customerCount} customers and ${regionAgg.jobCount} jobs. Add sales coverage to raise density.`
+        : `${regionAgg.customerCount} customers and ${regionAgg.jobCount} jobs. Evaluate M&A for market entry.`,
     });
   }
 
@@ -361,7 +353,7 @@ function buildActions(
       actions.push({
         action: `Regional Operations Director: consolidate ${name} — ${regionAgg.customerCount} customers / ${regionAgg.jobCount} jobs is sub-scale; redeploy ${Math.max(1, Math.round(regionAgg.jobCount / 100))} FTE to higher-ROI invest/expand regions`,
         lever: "Operations",
-        rationale: `Low composite score driven by declining construction, unfavorable wage economics, or thin footprint.`,
+        rationale: `Construction ${sc.constructionGrowth}/100, wages ${sc.wageFavorability}/100, footprint ${sc.footprintStrength}/100.`,
         expectedImpact: `Redeploy freed resources to invest/expand regions with higher ROI`,
         sources: ["Census", "BLS", "Internal"],
         confidence: "medium",
@@ -373,8 +365,8 @@ function buildActions(
     actions.push({
       action: `Corp Dev Lead: run deal screen on ${name} — composite ${sc.constructionGrowth}/100 construction, ${sc.wageFavorability}/100 wage score; target beachhead at ≤ 5× EBITDA if seller pressure exists`,
       lever: "M&A",
-      rationale: `Market conditions are neither strongly positive nor negative. Right acquisition at right price could establish beachhead.`,
-      expectedImpact: `Potential market entry at favorable valuation if seller pressure exists`,
+      rationale: `Construction ${sc.constructionGrowth}/100, wages ${sc.wageFavorability}/100. Price any entry off those scores.`,
+      expectedImpact: `Market entry if a seller is available. No valuation multiple is in this dataset.`,
       sources: ["Census", "BLS", "Internal"],
       confidence: "low",
     });
@@ -433,14 +425,14 @@ function buildStrategyRationale(
   const name = regionLabels[region];
   switch (strategy) {
     case "invest":
-      return `${name} combines strong margins (${regionAgg ? (regionAgg.validated.avgMarginPct * 100).toFixed(1) : "N/A"}%), established footprint, and favorable market dynamics. Priority: scale through M&A and sales to maximize platform leverage.`;
+      return `${name} margin is ${regionAgg ? (regionAgg.validated.avgMarginPct * 100).toFixed(1) : "N/A"}%. Priority: scale through M&A and sales.`;
     case "expand":
-      return `${name} shows strong market fundamentals (construction, labor economics) but ACME Field Services' footprint is underdeveloped. Priority: accelerated market entry through targeted acquisition.`;
+      return `${name} construction score is ${sc.constructionGrowth}/100 and wage score is ${sc.wageFavorability}/100. Footprint score is ${sc.footprintStrength}/100. Priority: market entry through targeted acquisition.`;
     case "defend":
-      return `${name} is a profitable market with rising external pressures (wage growth, fuel costs). Priority: protect margins through pricing discipline and contract lock-in.`;
+      return `${name} margin is ${regionAgg ? (regionAgg.validated.avgMarginPct * 100).toFixed(1) : "N/A"}%. Wage score ${sc.wageFavorability}/100, fuel score ${sc.fuelExposure}/100. Priority: hold pricing and lock contracts.`;
     case "harvest":
-      return `${name} faces unfavorable market conditions or sub-scale operations. Priority: extract maximum value from existing book, redeploy growth capital elsewhere.`;
+      return `${name} scorecard is below the invest/expand cut. Priority: extract value from the existing book and redeploy growth capital elsewhere.`;
     case "explore":
-      return `${name} presents mixed signals — evaluate opportunistically rather than committing dedicated growth resources.`;
+      return `${name} construction ${sc.constructionGrowth}/100, wages ${sc.wageFavorability}/100, footprint ${sc.footprintStrength}/100. Evaluate each case before committing growth capital.`;
   }
 }

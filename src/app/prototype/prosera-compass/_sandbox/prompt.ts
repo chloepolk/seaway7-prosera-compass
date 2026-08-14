@@ -1,4 +1,5 @@
 import type { ScenarioState, ScenarioProjection, LeverCategory } from "./types";
+import { DATA_GROUNDED_LANGUAGE_RULES } from "@/lib/compass/data-grounded-language";
 
 const usd = (n: number) => (n >= 0 ? "$" : "-$") + Math.abs(Math.round(n)).toLocaleString();
 const pts = (n: number) => (n >= 0 ? "+" : "") + n.toFixed(1) + " pts";
@@ -75,7 +76,7 @@ INSTRUCTIONS:
 2. Compare the modeled price against fleet card baseline and current actuals.
 3. If the price represents an increase, quantify the margin erosion and which divisions absorb the most impact.
 4. Recommend the contract fuel clause strategy: escalation clauses pegged to fleet card actuals with quarterly review.
-5. Do NOT recommend per-trip surcharges — they are immaterial at this portfolio scale.
+5. Do NOT recommend per-trip surcharges. Use the dollar figures in the projected-impact block; do not add a per-trip surcharge recommendation.
 6. Reference industry practice: how do top PE-backed field services companies handle fuel exposure in their contracts?`;
 }
 
@@ -99,14 +100,20 @@ INSTRUCTIONS:
 }
 
 export function buildSandboxPrompt(input: PromptInput): string {
+  let prompt: string;
   switch (input.lever) {
     case "customer-mix":
-      return customerMixPrompt(input.state, input.projection, input.portfolioContext);
+      prompt = customerMixPrompt(input.state, input.projection, input.portfolioContext);
+      break;
     case "pricing":
-      return pricingPrompt(input.state, input.projection, input.portfolioContext);
+      prompt = pricingPrompt(input.state, input.projection, input.portfolioContext);
+      break;
     case "fuel":
-      return fuelPrompt(input.state, input.projection, input.portfolioContext);
+      prompt = fuelPrompt(input.state, input.projection, input.portfolioContext);
+      break;
     case "nte":
-      return ntePrompt(input.state, input.projection, input.portfolioContext);
+      prompt = ntePrompt(input.state, input.projection, input.portfolioContext);
+      break;
   }
+  return `${DATA_GROUNDED_LANGUAGE_RULES}\n\n${prompt}`;
 }

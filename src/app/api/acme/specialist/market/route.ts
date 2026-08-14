@@ -1,6 +1,7 @@
 import { hasAnyProvider, callWithFallback, extractJson, MODELS, fallbackResponse, errorResponse } from "@/lib/compass/engine"
 import { SPECIALIST_SCHEMA } from "@/app/prototype/prosera-compass/agents/_types"
 import { MARKET_SPECIALIST_PROMPT } from "@/app/prototype/prosera-compass/agents/_prompts"
+import { outputLanguageInstruction } from "@/lib/compass/data-grounded-language"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -10,7 +11,7 @@ export async function POST(req: Request) {
 
   try {
     const { context, drillState, locale } = await req.json()
-    const language = locale === "fr" ? "Rédigez tous les champs textuels en français ; conservez les noms, normes, identifiants et références inchangés.\n\n" : ""
+    const language = `${outputLanguageInstruction(locale)}\n\n`
 
     const response = await callWithFallback({
       model: MODELS.openai,

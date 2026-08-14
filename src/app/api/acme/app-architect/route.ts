@@ -1,6 +1,7 @@
 import { getClient, getGeminiClient, callWithRetry, extractJson, MODELS, fallbackResponse, errorResponse } from "@/lib/compass/engine"
 import { APP_ARCHITECT_PROMPT } from "@/app/prototype/prosera-compass/agents/_prompts"
 import { buildCatalogPromptContext } from "@/app/prototype/prosera-compass/_modules/catalog"
+import { outputLanguageInstruction } from "@/lib/compass/data-grounded-language"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -78,9 +79,7 @@ export async function POST(req: Request) {
         : "The user has no specific intent — surface the highest-value apps for this commercial field-services business.",
       "",
       buildCatalogPromptContext(),
-      locale === "fr"
-        ? "IMPORTANT: Return every user-visible log, app title, rationale, source label and method in French. Preserve brand names, source names, IDs and technical acronyms."
-        : "Return all user-visible copy in English.",
+      outputLanguageInstruction(locale),
     ].join("\n")
 
     const response = await callWithRetry(

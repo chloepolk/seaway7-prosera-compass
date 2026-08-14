@@ -259,7 +259,7 @@ function useExecutiveBrief(
         severity: cityExitCount >3 ? "high" : vRegion< -0.05 ? "medium" : "info",
         sentences: [
           `${selectedCity} services ${filteredCity.customerCount} customers across ${filteredCity.jobCount} jobs generating ${fmtUsd(filteredCity.totalRevenue)} revenue at ${fmtPct(cityMargin)} gross margin.`,
-          `This market runs ${Math.abs(vRegion * 100).toFixed(1)} percentage points ${vRegion >= 0 ? "above" : "below"} ${regionLabel}'s ${fmtPct(regionMargin)} state average, ${vRegion >= 0 ? "indicating premium pricing power or favorable service mix" : "signaling pricing misalignment or cost overruns relative to the state"}.`,
+          `This market runs ${Math.abs(vRegion * 100).toFixed(1)} percentage points ${vRegion >= 0 ? "above" : "below"} ${regionLabel}'s ${fmtPct(regionMargin)} state average.`,
           `${cityCloneCount > 0 ? `${cityCloneCount} Stars accounts anchor profitability` : "No Stars accounts are present"}, while ${cityExitCount} Dogs accounts ${cityExitCount > 0 ? `are consuming resources at negative returns costing ${fmtUsd(Math.abs(exitLoss))}` : "have been identified"}.`,
           `${nteEscalations.length > 0 ? `${nteEscalations.length} NTE scope escalation events portfolio-wide add dispatch friction when jobs exceed customer-set authorization caps.` : "NTE escalation levels appear low — minimal re-authorization overhead detected."}`,
           `${cityExitCount > 0 ? `Adjust future pricing or divest the ${cityExitCount} negative-margin accounts` : "Protect existing margin"} and ${cityCloneCount > 0 ? `replicate the Stars DNA across acquisition targets in ${regionLabel}` : `develop Stars candidates through service mix optimization`}.`,
@@ -291,7 +291,7 @@ function useExecutiveBrief(
         sentences: [
           `${localizeActiveCopy(label)} processes ${filteredRegion.validated.jobCount.toLocaleString(activeLocaleTag())} jobs across ${filteredRegion.customerCount} customers in ${cities.length} markets, generating ${fmtUsd(filteredRegion.validated.totalRevenue)} revenue at ${fmtPct(regionMargin)} gross margin.`,
           `The state runs ${Math.abs(delta * 100).toFixed(1)} percentage points ${delta >= 0 ? "above" : "below"} the portfolio average of ${fmtPct(portfolioSummary.validated.avgMarginPct)}, ${delta >= 0 ? "contributing positive margin uplift" : "dragging overall portfolio performance"}.`,
-          `${bestCity && worstCity && bestCity.city !== worstCity.city ? `Intra-state variance is significant: ${bestCity.city} leads at ${fmtPct(bestCity.avgMarginPct)} while ${worstCity.city} trails at ${fmtPct(worstCity.avgMarginPct)} — a ${((bestCity.avgMarginPct - worstCity.avgMarginPct) * 100).toFixed(1)}pt spread requiring investigation.` : `Market performance is relatively uniform across ${cities.length} cities.`}`,
+          `${bestCity && worstCity && bestCity.city !== worstCity.city ? `${bestCity.city} leads at ${fmtPct(bestCity.avgMarginPct)} while ${worstCity.city} trails at ${fmtPct(worstCity.avgMarginPct)} — a ${((bestCity.avgMarginPct - worstCity.avgMarginPct) * 100).toFixed(1)}pt spread.` : `No city-to-city margin comparison for ${cities.length} ${cities.length === 1 ? "city" : "cities"}.`}`,
           `${regionExitCount} Dogs accounts are destroying ${fmtUsd(Math.abs(exitLoss))} in margin through negative-margin jobs, predominantly driven by pricing misalignment or unbilled labor.`,
           `Prioritize Dogs cleanup ${worstCity ? `starting in ${worstCity.city}` : ""} and replicate ${regionCloneCount > 0 ? `the ${regionCloneCount} Stars accounts` : "proven margin models"} to establish acquisition DNA for PE scaling in ${localizeActiveCopy(label)}.`,
         ],
@@ -315,8 +315,8 @@ function useExecutiveBrief(
       severity: exitCustomers.length > 10 ? "high" : "medium",
       sentences: [
         `ACME Field Services operates ${portfolioSummary.totalCustomers} customers across ${regions.length} states generating ${fmtUsd(portfolioSummary.validated.totalRevenue)} in revenue at ${fmtPct(portfolioSummary.validated.avgMarginPct)} blended gross margin.`,
-        `Margin concentration is acute — the top ${portfolioSummary.topMarginCustomerPct.toFixed(0)}% of customers deliver ${portfolioSummary.topMarginSharePct}% of total margin, creating single-point-of-failure exposure across the portfolio.`,
-        `${bestRegion && worstRegion ? `Regional performance varies sharply: ${regionLabels[bestRegion.region] ?? bestRegion.region} leads at ${fmtPct(bestRegion.validated.avgMarginPct)} while ${regionLabels[worstRegion.region] ?? worstRegion.region} trails at ${fmtPct(worstRegion.validated.avgMarginPct)} — a ${regionSpread}pt spread signaling pricing or operational misalignment.` : `Regional performance data is limited.`}`,
+        `The top ${portfolioSummary.topMarginCustomerPct.toFixed(0)}% of customers deliver ${portfolioSummary.topMarginSharePct}% of total margin.`,
+        `${bestRegion && worstRegion ? `${regionLabels[bestRegion.region] ?? bestRegion.region} leads at ${fmtPct(bestRegion.validated.avgMarginPct)} while ${regionLabels[worstRegion.region] ?? worstRegion.region} trails at ${fmtPct(worstRegion.validated.avgMarginPct)} — a ${regionSpread}pt spread.` : `No prior-period data to compare regional performance.`}`,
         `${exitCustomers.length} Dogs accounts are destroying ${fmtUsd(Math.abs(exitLoss))} in margin, while ${nteEscalations.length} NTE scope escalation events add dispatch friction when jobs exceed customer-set authorization caps.`,
         `Prioritize Dogs cleanup, replicate Stars DNA (${cloneCustomers.length} accounts averaging ${fmtPct(cloneCustomers.length > 0 ? cloneCustomers.reduce((s, c) => s + c.validated.avgMarginPct, 0) / cloneCustomers.length : 0)} margin) into acquisition targeting, and close the ${regionSpread ?? "0"}pt regional margin gap.`,
       ],
@@ -326,7 +326,7 @@ function useExecutiveBrief(
         `${bestRegion ? `Protect ${regionLabels[bestRegion.region] ?? bestRegion.region}'s ${fmtPct(bestRegion.validated.avgMarginPct)} margin leadership across ${bestRegion.validated.jobCount} jobs.` : `Benchmark top-performing region for margin replication.`}`,
         `${worstRegion ? `Investigate ${regionLabels[worstRegion.region] ?? worstRegion.region}'s ${fmtPct(worstRegion.validated.avgMarginPct)} margin gap for pricing intervention.` : `Review lowest-performing region for pricing intervention.`}`,
         `${atRiskHigh.length > 0 ? `Review ${atRiskHigh.length} at-risk quotes exceeding pricing ceilings before conversion loss.` : `No high-risk quotes currently flagged for pricing review.`}`,
-        `${nteEscalations.length > 0 ? `Streamline re-auth workflow for top-friction customers — ${nteEscalations.length} scope escalation events generating unnecessary dispatch overhead.` : `NTE escalation levels are low — no re-authorization friction detected.`}`,
+        `${nteEscalations.length > 0 ? `Review the re-auth workflow for top-friction customers — ${nteEscalations.length} scope escalation events.` : `NTE escalation count is 0 in the current view.`}`,
         `${fuelDelta != null ? `Monitor fuel costs ${fuelDelta > 0 ? "up" : "down"} ${Math.abs(fuelDelta).toFixed(1)}% over the past 6 weeks for contract fuel clause adjustment.` : `Track EIA fuel pricing for contract clause recalibration triggers.`}`,
       ],
     }

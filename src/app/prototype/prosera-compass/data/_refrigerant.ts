@@ -79,8 +79,8 @@ export const aimTimeline: AimMilestone[] = [
     effectiveDate: "2024-01-01",
     category: "phasedown-cap",
     title: "HFC supply cut to 60% of baseline",
-    detail: "Allowed HFC production & consumption steps down from 90% to 60% of the historic baseline — a 30-point cut that anchors the steepest part of the phasedown.",
-    demandImplication: "Virgin R-410A supply tightens sharply; distributor prices begin a sustained climb that raises the cost of every legacy-system recharge.",
+    detail: "Allowed HFC production & consumption steps down from 90% to 60% of the historic baseline — a 30-point cut, the largest step in this timeline.",
+    demandImplication: "Virgin R-410A supply is cut to 60% of baseline; distributor prices begin a sustained climb that raises the cost of every legacy-system recharge.",
   },
   {
     year: 2025,
@@ -141,7 +141,7 @@ export interface RetrofitOutlookYear {
 }
 
 export const retrofitOutlook: RetrofitOutlookYear[] = [
-  { year: 2025, legacyConversionRate: 0.06, r410aCostPressure: "rising", note: "First full year of A2L-only new equipment; conversions still mostly failure-driven replacements." },
+  { year: 2025, legacyConversionRate: 0.06, r410aCostPressure: "rising", note: "First full year of A2L-only new equipment; conversion rate 6%, failure-driven replacements." },
   { year: 2026, legacyConversionRate: 0.08, r410aCostPressure: "steep", note: "R-410A wholesale up ~50-100% over 2024; chiller restriction widens commercial retrofit pipeline." },
   { year: 2027, legacyConversionRate: 0.10, r410aCostPressure: "steep", note: "A2L premiums easing as production scales, but legacy recharge cost keeps tilting toward replacement." },
   { year: 2028, legacyConversionRate: 0.12, r410aCostPressure: "steep", note: "Final sector restrictions land; planned A2L replacement projects accelerate." },

@@ -299,7 +299,7 @@ function BPHeadline({ title, narrative, severity }: { title: string; narrative: 
       reasoning={
         useStaticFallback
           ? {
-              summary: "Computed from quote outcomes, dynamic price bands, and win-rate curves by job type.",
+              summary: "Computed from quote outcomes, price bands, and win-rate curves by job type.",
               steps: [
                 "Grouped quotes by job type and price band",
                 "Identified ceiling bands where win rate drops below 40%",
@@ -811,7 +811,7 @@ function MacroView() {
     }
     if (pricingBandInsights.length > 0) {
       const topInsight = pricingBandInsights[0]
-      return `Across ${majorTypes.length} job types, average win rate is ${fmtPct(avgWin)}. ${topInsight.jobType} leads at ${Math.round(topInsight.sweetSpotWinRate * 100)}% win rate in its ${fmtUsd(topInsight.sweetSpot?.min ?? 0)}–${fmtUsd(topInsight.sweetSpot?.max ?? 0)} sweet spot. Price new quotes within these bands to maximize conversion probability.`
+      return `Across ${majorTypes.length} job types, average win rate is ${fmtPct(avgWin)}. ${topInsight.jobType} leads at ${Math.round(topInsight.sweetSpotWinRate * 100)}% win rate in its ${fmtUsd(topInsight.sweetSpot?.min ?? 0)}–${fmtUsd(topInsight.sweetSpot?.max ?? 0)} sweet spot. Price new quotes within these bands.`
     }
     return `Across ${majorTypes.length} job types with sufficient quote history, average win rate is ${fmtPct(avgWin)}.`
   }, [majorTypes, pricingBandInsights])

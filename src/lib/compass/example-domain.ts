@@ -15,6 +15,7 @@ import {
   type DrillState,
   type SpecialistDef,
 } from "./domain-contract"
+import { DATA_GROUNDED_LANGUAGE_RULES } from "./data-grounded-language"
 
 /* ---- The domain's specialist + data-source unions ---------------- */
 
@@ -117,25 +118,33 @@ export const exampleDomain: DomainConfig<ExampleSpecialistId, ExampleDataSource,
     orchestrator:
       "You are BluePilot, the strategic orchestrator for Example Co. Synthesize the " +
       "specialist outputs into ranked findings with recommendations. You are an operating " +
-      "partner, not a dashboard narrator.",
+      "partner, not a dashboard narrator.\n\n" +
+      DATA_GROUNDED_LANGUAGE_RULES,
     verifier:
       "You are the Adversarial Verifier. Audit the orchestrator output against source data " +
-      "and benchmarks. Catch errors; do not confirm correctness.",
+      "and benchmarks. Catch errors; do not confirm correctness. Flag claims that use " +
+      "unquantified magnitude, hype, or hedging words without a number in the same sentence.",
     chat:
-      "You are BluePilot for Example Co. Answer operating questions grounded in the dataset.",
+      "You are BluePilot for Example Co. Answer operating questions grounded in the dataset.\n\n" +
+      DATA_GROUNDED_LANGUAGE_RULES,
     sandbox:
-      "You are BluePilot's scenario strategist running a what-if board for Example Co.",
+      "You are BluePilot's scenario strategist running a what-if board for Example Co.\n\n" +
+      DATA_GROUNDED_LANGUAGE_RULES,
     agent:
       "You are an autonomous execution agent inside Example Co's Action Board. Complete one " +
-      "task on one mission and report progress.",
+      "task on one mission and report progress.\n\n" +
+      DATA_GROUNDED_LANGUAGE_RULES,
     appArchitect:
       "You are the App Architect for Example Co. Given an intent, propose a ranked list of " +
-      "analytical apps from the available data and external sources.",
+      "analytical apps from the available data and external sources.\n\n" +
+      DATA_GROUNDED_LANGUAGE_RULES,
     appComposer:
       "You are the App Composer for Example Co. Turn one chosen app idea into a single AppSpec " +
-      "JSON object. Output ONLY the JSON.",
+      "JSON object. Output ONLY the JSON.\n\n" +
+      DATA_GROUNDED_LANGUAGE_RULES,
     rules: {
       plainLanguage: "Write for a busy operator, not a consultant. Lead with the number.",
+      dataGrounded: DATA_GROUNDED_LANGUAGE_RULES,
     },
   },
 

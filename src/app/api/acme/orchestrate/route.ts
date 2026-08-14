@@ -1,6 +1,7 @@
 import { getClient, getGeminiClient, callWithRetry, extractJson, MODELS, fallbackResponse, errorResponse } from "@/lib/compass/engine"
 import { ORCHESTRATOR_SCHEMA } from "@/app/prototype/prosera-compass/agents/_types"
 import { ORCHESTRATOR_PROMPT } from "@/app/prototype/prosera-compass/agents/_prompts"
+import { outputLanguageInstruction } from "@/lib/compass/data-grounded-language"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -17,9 +18,7 @@ export async function POST(req: Request) {
 
   try {
     const { specialistOutputs, drillState, pageContext, orchestratorContext, locale } = await req.json()
-    const languageInstruction = locale === "fr"
-      ? "\nLANGUE OBLIGATOIRE : rédigez tous les champs de texte en français. Conservez inchangés les noms propres, marques, normes, identifiants et références documentaires.\n"
-      : "\nREQUIRED LANGUAGE: write all text fields in English.\n"
+    const languageInstruction = `\n${outputLanguageInstruction(locale)}\n`
 
     const availableSpecialists = (specialistOutputs || []).filter(Boolean)
     if (availableSpecialists.length === 0) {

@@ -1,6 +1,7 @@
 import { hasAnyProvider, callWithFallback, extractJson, MODELS, fallbackResponse, errorResponse } from "@/lib/compass/engine"
 import { VERIFIER_SCHEMA } from "@/app/prototype/prosera-compass/agents/_types"
 import { VERIFIER_PROMPT } from "@/app/prototype/prosera-compass/agents/_prompts"
+import { outputLanguageInstruction } from "@/lib/compass/data-grounded-language"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -10,9 +11,7 @@ export async function POST(req: Request) {
 
   try {
     const { orchestratorOutput, sourceData, drillState, verifiableBenchmarks, locale } = await req.json()
-    const language = locale === "fr"
-      ? "Rédigez tous les champs textuels en français ; conservez les noms, normes, identifiants et références inchangés.\n\n"
-      : ""
+    const language = `${outputLanguageInstruction(locale)}\n\n`
 
     if (!orchestratorOutput?.findings?.length) {
       return Response.json({

@@ -83,7 +83,7 @@ function portfolioFindings(data: ComputedData): BPFinding[] {
     category: "portfolio-health",
     severity: singleMaxPct > whaleCurve.concentrationRisk.singleCustomerThreshold ? "critical" : "high",
     title: `Top ${portfolioSummary.topMarginCustomerPct.toFixed(0)}% of customers generate ${portfolioSummary.topMarginSharePct}% of margin`,
-    narrative: `Portfolio concentration is significant. ${portfolioSummary.negativeMarginCustomers} customers are currently net value destroyers with negative realized margins. The validated portfolio margin stands at ${pct(v.avgMarginPct)} across ${v.jobCount} validated jobs. Industry whale curve analysis shows top 20-30% of customers typically generate 150-200% of profit while the bottom 20% destroy 50-80%. ${singleMaxPct > whaleCurve.concentrationRisk.singleCustomerThreshold ? `WARNING: Top customer represents ${pct(singleMaxPct)} of revenue, exceeding the ${pct(whaleCurve.concentrationRisk.singleCustomerThreshold)} concentration risk threshold. Highly concentrated firms trade at 4.5x EBITDA vs. 5.5x for diversified peers.` : ""}`,
+    narrative: `Top ${portfolioSummary.topMarginCustomerPct.toFixed(0)}% of customers generate ${portfolioSummary.topMarginSharePct}% of margin. ${portfolioSummary.negativeMarginCustomers} customers currently have negative realized margins. Validated portfolio margin is ${pct(v.avgMarginPct)} across ${v.jobCount} validated jobs. Industry whale-curve analysis shows the top 20-30% of customers typically generate 150-200% of profit while the bottom 20% destroy 50-80%. ${singleMaxPct > whaleCurve.concentrationRisk.singleCustomerThreshold ? `WARNING: Top customer represents ${pct(singleMaxPct)} of revenue, exceeding the ${pct(whaleCurve.concentrationRisk.singleCustomerThreshold)} concentration risk threshold. Firms above that threshold trade at 4.5x EBITDA vs. 5.5x for diversified peers.` : ""}`,
     evidence: [
       `${portfolioSummary.totalCustomers} total customers across ${data.regions.length} regions`,
       `${portfolioSummary.tierCounts.Stars} Stars (top tier), ${portfolioSummary.tierCounts.Dogs} Dogs (exit candidates)`,
@@ -210,7 +210,7 @@ function portfolioFindings(data: ComputedData): BPFinding[] {
       category: "portfolio-health",
       severity: "info",
       title: `${improvingDogs.length} Dogs ${improvingDogs.length === 1 ? "customer is" : "customers are"} trending toward profitability`,
-      narrative: `These accounts are currently in the Dogs tier but their margin trend is improving. They may warrant reclassification if the trend continues, rather than exit.`,
+      narrative: `These accounts are currently in the Dogs tier but their margin trend is improving. They may warrant reclassification if the trend continues, instead of exit.`,
       evidence: improvingDogs.slice(0, 5).map(c =>
         `${c.customerName.split(",")[0]}: ${pct(c.trend!.priorMonthlyMargin)} → ${pct(c.trend!.recentMonthlyMargin)} (${c.trend!.monthCount} months)`
       ),
@@ -286,8 +286,8 @@ function regionFindings(data: ComputedData): BPFinding[] {
         id: `region-${r.region}-stars`,
         category: "acquisition-signal",
         severity: "info",
-        title: `${regionLabels[r.region]}: ${topPerformers.map(c => c.customerName.split(" ").slice(0, 2).join(" ")).join(", ")} driving premium margins`,
-        narrative: `These accounts consistently yield margins above 40% in the ${regionLabels[r.region]} market. Their service mix and property profiles represent the ideal acquisition target for this region.`,
+        title: `${regionLabels[r.region]}: ${topPerformers.map(c => c.customerName.split(" ").slice(0, 2).join(" ")).join(", ")} at margins above 40%`,
+        narrative: `These accounts yield margins above 40% in the ${regionLabels[r.region]} market. Use this service mix and property profile to find similar prospects in the region.`,
         evidence: topPerformers.map(c =>
           `${c.customerName}: ${c.jobCount} jobs, ${pct(c.validated.avgMarginPct)} margin, ${usd(c.validated.avgTicket)} avg ticket`
         ),
@@ -312,7 +312,7 @@ function regionFindings(data: ComputedData): BPFinding[] {
           category: "margin-alert",
           severity: spread > 0.25 ? "high" : "medium",
           title: `${regionLabels[r.region]}: ${bestCity.city} at ${pct(bestCity.avgMarginPct)} vs ${worstCity.city} at ${pct(worstCity.avgMarginPct)}`,
-          narrative: `Within ${regionLabels[r.region]}, a ${pct(spread)} margin spread between cities suggests localized pricing, labor cost, or service mix differences. ${bestCity.city} processes ${bestCity.jobCount} jobs at premium margins while ${worstCity.city}'s ${worstCity.jobCount} jobs yield significantly less.`,
+          narrative: `Within ${regionLabels[r.region]}, a ${pct(spread)} margin spread between cities suggests localized pricing, labor cost, or service mix differences. ${bestCity.city} processes ${bestCity.jobCount} jobs at ${pct(bestCity.avgMarginPct)} margin while ${worstCity.city}'s ${worstCity.jobCount} jobs sit at ${pct(worstCity.avgMarginPct)}.`,
           evidence: sortedCities
             .filter(c => c.jobCount >= 2)
             .slice(0, 6)
@@ -398,7 +398,7 @@ function pricingFindings(data: ComputedData): BPFinding[] {
       id: "pricing-ceilings",
       category: "pricing-signal",
       severity: "high",
-      title: `Win rate drops sharply above computed ceilings in ${withCeiling.map(a => a.jobType).join(", ")}`,
+      title: `Win rate drops below 40% above computed ceilings in ${withCeiling.map(a => a.jobType).join(", ")}`,
       narrative: `Price band analysis reveals inflection points where quote acceptance drops below 40%. ${aboveCeilingCount} pending quotes are currently priced above their job-type ceiling.`,
       evidence: withCeiling.map(a =>
         `${a.jobType}: ceiling at ${usd(a.ceilingAmount!)}, ${a.wins}W/${a.losses}L overall (${pct(a.overallWinRate)} win rate)`
@@ -490,7 +490,7 @@ function fuelFindings(): BPFinding[] {
     category: "risk-flag",
     severity: worst.deltaPct > 0.15 ? "critical" : worst.deltaPct > 0.05 ? "high" : "info",
     title: `Fuel up ${pct(worst.deltaPct)} in ${worst.paddLabel}, ${pct(best.deltaPct)} in ${best.paddLabel}`,
-    narrative: `Regional fuel costs diverge sharply. ${worst.paddLabel} averages ${formatActiveEurUnit(worst.recentAvg)}/gal (+${(worst.deltaPct * 100).toFixed(1)}% from baseline), while ${best.paddLabel} sits at ${formatActiveEurUnit(best.recentAvg)}/gal (+${(best.deltaPct * 100).toFixed(1)}%). ${worst.deltaPct > 0.15 ? `NV/AZ/CA face steeper fuel cost exposure than TX. Contract fuel clauses should be calibrated by region, not applied portfolio-wide at a flat rate.` : "Regional differences are currently modest."}`,
+    narrative: `${worst.paddLabel} averages ${formatActiveEurUnit(worst.recentAvg)}/gal (+${(worst.deltaPct * 100).toFixed(1)}% from baseline). ${best.paddLabel} averages ${formatActiveEurUnit(best.recentAvg)}/gal (+${(best.deltaPct * 100).toFixed(1)}%). ${worst.deltaPct > 0.15 ? `Contract fuel clauses should be calibrated by region, not applied portfolio-wide at a flat rate.` : `The gap between ${worst.paddLabel} and ${best.paddLabel} is ${((worst.deltaPct - best.deltaPct) * 100).toFixed(1)} percentage points.`}`,
     evidence: summaries.map(s =>
       `${s.paddLabel}: ${formatActiveEurUnit(s.recentAvg)}/gal (baseline ${formatActiveEurUnit(s.baselineAvg)}, +${(s.deltaPct * 100).toFixed(1)}%)`
     ),
@@ -716,7 +716,7 @@ function dataQualityFindings(data: ComputedData): BPFinding[] {
         const postPct = j.estimatedCost && j.estimatedCost > 0 ? ((j.actualCost ?? 0) / j.estimatedCost * 100).toFixed(0) : "0";
         return `Job ${j.jobNumber} (${j.customerName}): estimated cost ${usd(j.estimatedCost ?? 0)}, posted ${usd(j.actualCost ?? 0)} (${postPct}% of estimate)`;
       }),
-      recommendation: "Review these quoted jobs in the field service platform. The cost estimate from the approved quote confirms that actual costs should be significantly higher than what is currently posted.",
+      recommendation: "Review these quoted jobs in the field service platform. Posted actual cost is under 15% of the approved-quote estimate on each of these jobs.",
       page: "customer-intel",
       drillLevel: "macro",
     });
@@ -763,7 +763,7 @@ function dataQualityFindings(data: ComputedData): BPFinding[] {
       category: "data-quality",
       severity: "medium",
       title: `${openInvoicedJobs.length} jobs are marked Open but fully invoiced and paid`,
-      narrative: `These jobs have been invoiced and paid in full but remain in Open status in the field service platform. This typically indicates the project manager hasn't closed the job because cost posting is still pending. These are strong candidates for incomplete cost data.`,
+      narrative: `These jobs have been invoiced and paid in full but remain in Open status in the field service platform. This typically indicates the project manager hasn't closed the job because cost posting is still pending. They match the incomplete-cost pattern.`,
       evidence: openInvoicedJobs.slice(0, 5).map(j =>
         `Job ${j.jobNumber} (${j.customerName}): invoiced ${usd(j.totalAmount ?? 0)}, paid ${usd(j.totalAmountPaid ?? 0)}, status: ${j.jobStatus}`
       ),
@@ -880,7 +880,7 @@ function costIntelFindings(data: ComputedData): BPFinding[] {
         category: "pricing-signal",
         severity: "medium",
         title: `${c.customerName.split(",")[0]}: material markup at ${avgMarkup.toFixed(0)}% vs portfolio median ${medianMarkup.toFixed(0)}%`,
-        narrative: `This account's material markup is well below the portfolio standard. At current material spend of ${usd(totalMaterialCost)}, repricing to ${repriceTarget.toFixed(0)}% would add ${usd(additionalMargin)} in margin.`,
+        narrative: `This account's material markup is ${avgMarkup.toFixed(0)}% vs the portfolio median of ${medianMarkup.toFixed(0)}%. At current material spend of ${usd(totalMaterialCost)}, repricing to ${repriceTarget.toFixed(0)}% would add ${usd(additionalMargin)} in margin.`,
         evidence: [
           `Average material markup: ${avgMarkup.toFixed(1)}%`,
           `Portfolio median markup: ${medianMarkup.toFixed(1)}%`,

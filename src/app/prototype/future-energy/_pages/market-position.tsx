@@ -15,10 +15,10 @@ import { localizeLegacyCopy } from "../_i18n/legacy"
 
 const strategyConfig: Record<ExpansionStrategy, { label: string; color: string; bg: string; icon: string; description: string }> = {
   invest:  { label: "Invest",   color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20", icon: "TrendingUp",  description: "Scale through M&A and sales" },
-  expand:  { label: "Expand",   color: "text-blue-600 dark:text-blue-400",       bg: "bg-blue-500/10 border-blue-500/20",       icon: "ArrowUpRight", description: "Accelerate market entry" },
+  expand:  { label: "Expand",   color: "text-blue-600 dark:text-blue-400",       bg: "bg-blue-500/10 border-blue-500/20",       icon: "ArrowUpRight", description: "Enter the market" },
   defend:  { label: "Defend",   color: "text-amber-600 dark:text-amber-400",     bg: "bg-amber-500/10 border-amber-500/20",     icon: "Shield",       description: "Protect margins and lock-in" },
   harvest: { label: "Harvest",  color: "text-slate-500 dark:text-slate-400",     bg: "bg-slate-500/10 border-slate-500/20",     icon: "ArrowDownRight", description: "Extract value, redeploy capital" },
-  explore: { label: "Explore",  color: "text-purple-600 dark:text-purple-400",   bg: "bg-purple-500/10 border-purple-500/20",   icon: "Search",       description: "Evaluate opportunistically" },
+  explore: { label: "Explore",  color: "text-purple-600 dark:text-purple-400",   bg: "bg-purple-500/10 border-purple-500/20",   icon: "Search",       description: "Evaluate case by case" },
 }
 
 const sourceColors: Record<string, string> = {

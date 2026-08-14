@@ -19,7 +19,7 @@ ${narrative}
 
 The target is ${formatCurrency(mission.projectedValue)}, due by ${new Date(mission.targetCompletionAt).toLocaleDateString("en-GB")}.
 
-I should be grateful if you could review this and confirm the next steps at your earliest convenience. Please do not hesitate to contact me should you require any further information.
+Please review this and confirm the next steps. You can contact me if you need more information.
 
 Kind regards,
 [Your name]`

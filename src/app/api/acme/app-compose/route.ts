@@ -1,6 +1,7 @@
 import { getClient, getGeminiClient, callWithRetry, extractJson, MODELS, fallbackResponse, errorResponse } from "@/lib/compass/engine"
 import { APP_COMPOSER_PROMPT } from "@/app/prototype/prosera-compass/agents/_prompts"
 import { buildCatalogPromptContext } from "@/app/prototype/prosera-compass/_modules/catalog"
+import { outputLanguageInstruction } from "@/lib/compass/data-grounded-language"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -22,9 +23,7 @@ export async function POST(req: Request) {
       `\nEnabled features: ${JSON.stringify(features ?? {})}`,
       `\n${buildCatalogPromptContext()}`,
       `\nCompose the AppSpec JSON now. Output ONLY the JSON object.`,
-      locale === "fr"
-        ? "\nWrite every user-visible title, label, narrative, recommendation, chart legend, table heading, tooltip and empty state in French. Preserve IDs, selectors, source names, standards and brands."
-        : "\nWrite all user-visible copy in English.",
+      `\n${outputLanguageInstruction(locale)} Write every user-visible title, label, narrative, recommendation, chart legend, table heading, tooltip and empty state in that language. Preserve IDs, selectors, source names, standards and brands.`,
     ].join("\n")
 
     const response = await callWithRetry(

@@ -1,6 +1,7 @@
 import type { ScenarioState, ScenarioProjection, LeverCategory } from "./types";
 import type { Locale } from "../_i18n";
 import {formatActiveUsd, formatActiveEurUnit } from "../_i18n/legacy";
+import { outputLanguageInstruction } from "@/lib/compass/data-grounded-language";
 
 const usd = (n: number) => formatActiveUsd(n, false);
 const pts = (n: number) => (n >= 0 ? "+" : "") + n.toFixed(1) + " pts";
@@ -78,7 +79,7 @@ INSTRUCTIONS:
 2. Compare the modeled price against fleet card baseline and current actuals.
 3. If the price represents an increase, quantify the margin erosion and which divisions absorb the most impact.
 4. Recommend the contract fuel clause strategy: escalation clauses pegged to fleet card actuals with quarterly review.
-5. Do NOT recommend per-trip surcharges — they are immaterial at this portfolio scale.
+5. Do NOT recommend per-trip surcharges. Use the dollar figures in the projected-impact block; do not add a per-trip surcharge recommendation.
 6. Reference industry practice: how do top PE-backed field services companies handle fuel exposure in their contracts?`;
 }
 
@@ -102,9 +103,7 @@ INSTRUCTIONS:
 }
 
 export function buildSandboxPrompt(input: PromptInput): string {
-  const language = input.locale === "fr"
-    ? "LANGUE OBLIGATOIRE : répondez exclusivement en français. Conservez inchangés les noms propres, marques, normes, identifiants et références.\n\n"
-    : "";
+  const language = outputLanguageInstruction(input.locale) + "\n\n";
   let prompt: string;
   switch (input.lever) {
     case "customer-mix":

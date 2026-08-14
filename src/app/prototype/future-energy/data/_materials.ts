@@ -97,7 +97,7 @@ export const materialSeries: Record<MaterialKey, MaterialSeries> = {
     source: "ACHR News / ACDirect 2026 (national wholesale midpoint)",
     confidence: "medium",
     points: series([14.0, 15.0, 16.5, 18.0, 19.5, 21.0, 23.0, 25.0, 27.0]),
-    notes: "GWP-2088 HFC blend, banned for new equipment manufacture under the AIM Act. Service-only supply tightening rapidly — distributor price roughly doubled in ~2 years and is expected to keep rising as allocation caps tighten. Wide dispersion ($15-$45/lb across markets).",
+    notes: "GWP-2088 HFC blend, banned for new equipment manufacture under the AIM Act. Series midpoint moved from $14/lb to $27/lb. Dispersion $15–$45/lb across markets.",
   },
   refrigerantA2L: {
     key: "refrigerantA2L",
@@ -126,12 +126,12 @@ export const regionMaterialAdjustment: Record<Region, number> = {
 };
 
 export const regionMaterialNotes: Record<Region, string> = {
-  RW: "Moderate freight premium; West-coast distribution and import-tariff exposure.",
-  RS: "Highest landed cost — dense coastal market, freight + regulatory overhead.",
-  RC: "Near-national; strong distribution density from data-center/fab build-out.",
-  RE: "Lowest landed cost — proximity to Gulf-coast supply and domestic mills.",
-  RN: "Slight premium from longer haul distances to mountain-corridor metros.",
-  RM: "Remote-market freight premium on a thinner distributor footprint.",
+  RW: "Landed-cost multiplier 1.04 vs national 1.00.",
+  RS: "Landed-cost multiplier 1.08, the highest in this set.",
+  RC: "Landed-cost multiplier 1.02 vs national 1.00.",
+  RE: "Landed-cost multiplier 0.98, the lowest in this set.",
+  RN: "Landed-cost multiplier 1.03 vs national 1.00.",
+  RM: "Landed-cost multiplier 1.05 vs national 1.00.",
 };
 
 /* ------------------------------------------------------------------ */

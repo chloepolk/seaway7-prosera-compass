@@ -52,7 +52,7 @@ export const metroWageProfiles: MetroWageProfile[] = [
       { year: 2023, meanAnnualWage: 61200, medianAnnualWage: 58900, pct10: 37400, pct90: 87200, employment: 4510, locationQuotient: 1.06 },
     ],
     fourYearChangePct: 0.109,
-    notes: "Labor tied to hospitality and institutional infrastructure. Moderate growth reflects stable demand.",
+    notes: "Four-year wage change 10.9% vs national 15.9%. LQ 1.06. Employment 4,120 (2019) to 4,510 (2023).",
   },
   {
     metroArea: "Metro West-2",
@@ -65,7 +65,7 @@ export const metroWageProfiles: MetroWageProfile[] = [
       { year: 2023, meanAnnualWage: 60500, medianAnnualWage: 57800, pct10: 36800, pct90: 86400, employment: 1040, locationQuotient: 1.10 },
     ],
     fourYearChangePct: 0.146,
-    notes: "Surge in industrial demand tightening tech pool. Fastest growth in Region West.",
+    notes: "Employment 870 (2019) to 1,040 (2023). Four-year wage change 14.6% vs Metro West-1 10.9%.",
   },
   {
     metroArea: "Metro South-1",
@@ -78,7 +78,7 @@ export const metroWageProfiles: MetroWageProfile[] = [
       { year: 2023, meanAnnualWage: 72160, medianAnnualWage: 68400, pct10: 43800, pct90: 105200, employment: 11800, locationQuotient: 0.52 },
     ],
     fourYearChangePct: 0.207,
-    notes: "Highest wage market. Strong union presence, high regulatory costs, high cost of living. LQ of 0.52 means technician workforce is spread thin across massive population.",
+    notes: "2023 mean wage $72,160, the highest in this dataset. LQ 0.52. Four-year wage change 20.7%.",
   },
   {
     metroArea: "Metro South-2",
@@ -91,7 +91,7 @@ export const metroWageProfiles: MetroWageProfile[] = [
       { year: 2023, meanAnnualWage: 55800, medianAnnualWage: 53100, pct10: 34200, pct90: 79600, employment: 590, locationQuotient: 0.87 },
     ],
     fourYearChangePct: 0.158,
-    notes: "Significantly lower than Metro South-1 despite same region. Smaller market with less competition for techs.",
+    notes: "2023 mean wage $55,800 vs Metro South-1 $72,160. Employment 590.",
   },
   {
     metroArea: "Metro Central-1",
@@ -104,7 +104,7 @@ export const metroWageProfiles: MetroWageProfile[] = [
       { year: 2023, meanAnnualWage: 56400, medianAnnualWage: 53200, pct10: 34500, pct90: 81600, employment: 7120, locationQuotient: 0.95 },
     ],
     fourYearChangePct: 0.165,
-    notes: "Fastest-growing metro for HVAC demand. Data center and semiconductor expansion driving tech competition. +16.5% wage growth outpaces national.",
+    notes: "Four-year wage change 16.5% vs national 15.9%. 2023 mean wage $56,400.",
   },
   {
     metroArea: "Metro Central-2",
@@ -117,7 +117,7 @@ export const metroWageProfiles: MetroWageProfile[] = [
       { year: 2023, meanAnnualWage: 51200, medianAnnualWage: 48800, pct10: 31600, pct90: 73800, employment: 1550, locationQuotient: 0.91 },
     ],
     fourYearChangePct: 0.143,
-    notes: "Lower cost market within Region Central. Growing steadily but less competitive pressure than Metro Central-1.",
+    notes: "2023 mean wage $51,200 vs Metro Central-1 $56,400. Four-year wage change 14.3%.",
   },
   {
     metroArea: "Metro East-1",
@@ -130,7 +130,7 @@ export const metroWageProfiles: MetroWageProfile[] = [
       { year: 2023, meanAnnualWage: 55400, medianAnnualWage: 52400, pct10: 33600, pct90: 80200, employment: 9200, locationQuotient: 0.83 },
     ],
     fourYearChangePct: 0.140,
-    notes: "Large market. Energy sector creates competition for mechanical trades. No state income tax attracts techs.",
+    notes: "2023 mean wage $55,400. Four-year wage change 14.0%. Employment 8,900 (2019) to 9,200 (2023).",
   },
   {
     metroArea: "Metro North-1",
@@ -143,7 +143,7 @@ export const metroWageProfiles: MetroWageProfile[] = [
       { year: 2023, meanAnnualWage: 57600, medianAnnualWage: 54800, pct10: 35200, pct90: 83400, employment: 2680, locationQuotient: 1.06 },
     ],
     fourYearChangePct: 0.171,
-    notes: "Strong construction boom driving demand. Higher-than-national growth rate. Tech corridor expansion adding commercial HVAC demand.",
+    notes: "Four-year wage change 17.1% vs national 15.9%. Employment 2,340 (2019) to 2,680 (2023).",
   },
   {
     metroArea: "Metro Mountain-1",
@@ -156,7 +156,7 @@ export const metroWageProfiles: MetroWageProfile[] = [
       { year: 2023, meanAnnualWage: 51800, medianAnnualWage: 49200, pct10: 32000, pct90: 74600, employment: 1210, locationQuotient: 0.89 },
     ],
     fourYearChangePct: 0.136,
-    notes: "Smallest market in ACME footprint. National lab presence creates some specialized demand.",
+    notes: "2023 mean wage $51,800. Employment 1,210, the lowest in this metro set. Four-year wage change 13.6%.",
   },
 ];
 

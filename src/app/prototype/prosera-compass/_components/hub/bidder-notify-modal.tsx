@@ -46,13 +46,13 @@ function bodyFor(r: BidEvaluationResult, ittRef: string, packageTitle: string): 
   if (outcome === "award") {
     return `Dear ${s} Tender Team,
 
-Further to the evaluation of the returns received against ${ittRef} — ${packageTitle} — for the ${PROJECT.name}, I am pleased to confirm that Seaway7 intends to award this package to ${s}.
+Further to the evaluation of the returns received against ${ittRef} — ${packageTitle} — for the ${PROJECT.name}, Seaway7 intends to award this package to ${s}.
 
-Your submission achieved the leading composite score under our published evaluation model (Price, Technical, QA/HSEQ and Legal) and satisfied each of the mandatory gating requirements.
+Your submission achieved the leading composite score under the published evaluation model (Price, Technical, QA/HSEQ and Legal) and met each mandatory gating requirement.
 
-Our commercial team will make contact shortly to progress the purchase order and to confirm delivery arrangements on a DDP Rotterdam basis (Incoterms 2020).
+The commercial team will contact you to progress the purchase order and confirm DDP Rotterdam delivery (Incoterms 2020).
 
-We thank you for the considerable effort invested in your proposal and look forward to working with you on this programme.
+Thank you for your submission.
 
 ${SIGN_OFF}`
   }
@@ -63,9 +63,9 @@ ${SIGN_OFF}`
 
 Thank you for your submission in response to ${ittRef} — ${packageTitle} — for the ${PROJECT.name}.
 
-Following our compliance review, I must advise you that your tender could not be progressed to commercial evaluation, as it did not satisfy one or more of the mandatory requirements of the invitation to tender${gates ? ` (${gates})` : ""}.
+Following the compliance review, your tender could not be progressed to commercial evaluation because it did not meet one or more mandatory requirements of the invitation to tender${gates ? ` (${gates})` : ""}.
 
-We would welcome a fully compliant submission from ${s} in future procurement exercises, and remain available should you wish to discuss this outcome.
+A fully compliant submission from ${s} can be considered in future procurement exercises. Contact us if you want to discuss this outcome.
 
 ${SIGN_OFF}`
   }
@@ -74,9 +74,9 @@ ${SIGN_OFF}`
 
 Thank you for your submission in response to ${ittRef} — ${packageTitle} — for the ${PROJECT.name}.
 
-Following a careful evaluation of all compliant returns against our published criteria (Price, Technical, QA/HSEQ and Legal), I regret to inform you that your tender has not been selected for award on this occasion.
+After evaluation of compliant returns against the published criteria (Price, Technical, QA/HSEQ and Legal), your tender has not been selected for award.
 
-We greatly appreciate the time and effort invested in your proposal and would encourage you to participate in future tenders for the programme. Should you wish to receive feedback on your submission, please do not hesitate to contact us.
+Contact us if you want feedback on your submission.
 
 ${SIGN_OFF}`
 }

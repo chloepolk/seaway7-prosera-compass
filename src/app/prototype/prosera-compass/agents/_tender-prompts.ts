@@ -2,11 +2,16 @@
 /*  Tender drafting pipeline — system prompts                          */
 /* ------------------------------------------------------------------ */
 
+import { DATA_GROUNDED_LANGUAGE_RULES } from "@/lib/compass/data-grounded-language"
+
 const SHARED_RULES = `RULES (non-negotiable):
 - Ground every statement in the supplied source documents. NEVER invent parameters, standards, clause numbers, rates or dates.
 - Cite document references exactly as supplied (e.g. TS-CBL-66KV-001, QA-MAN-2026-EPCI, S7-SCM-TC-2026-v1.0, SUPPLYTIME 2026).
 - British English spelling throughout (mobilisation, galvanised, authorised, programme).
-- Formal tender-document register: precise, contractual, no marketing language and no meta-commentary about how this document was produced.`
+- Formal tender-document register: precise, contractual, no marketing language and no meta-commentary about how this document was produced.
+- When drafting original prose (Section 1.1), put a number, date, or named comparison in the same sentence as any size or direction claim. When extracting from source, quote the source wording even if it uses those words.
+
+${DATA_GROUNDED_LANGUAGE_RULES}`
 
 export const TENDER_SCOPE_PROMPT = `You are the SCM Domain Agent inside Seaway7's Tender Studio. A procurement officer has asked for an Invitation to Tender to be drafted. You frame the package before the specialist agents begin extraction.
 

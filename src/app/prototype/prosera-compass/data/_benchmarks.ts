@@ -145,7 +145,7 @@ export const ftfrBenchmarks = {
   },
   aberdeenHighPerformance: {
     rate: 0.98,
-    notes: "Organizations resolving 98% of issues in single visit achieve significantly higher satisfaction.",
+    notes: "Organizations resolving 98% of issues in a single visit. No satisfaction delta is reported in this source.",
     source: "Aberdeen Group via Expansive FM",
   },
   trainingHoursPerYear: {
@@ -204,7 +204,7 @@ export const pricingElasticity = {
     source: "Essegaier, Gupta & Zhang — Marketing Science (2002)",
   },
   emergencySurcharge: {
-    category: "highly elastic" as const,
+    category: "elastic" as const,
     driver: "Criticality of uptime",
     impact: "Brand reputation and perception",
   },
@@ -225,7 +225,7 @@ export const pricingElasticity = {
   },
   landAndExpand: {
     strategy: "Set base contract fee at competitive level for high acquisition / low initial churn. Capture margin through high-usage reliability and parts management.",
-    rationale: "Access fee is inelastic (<0.5), usage rate is elastic (>0.8). Optimize ratio to maximize revenue while minimizing churn.",
+    rationale: "Access fee elasticity is below 0.5; usage-rate elasticity is above 0.8. Set the access/usage mix from those two figures.",
     source: "Essegaier, Gupta & Zhang — Marketing Science (2002)",
   },
 };
@@ -238,13 +238,13 @@ export const whaleCurve = {
   profitMakers: {
     pctOfCustomers: [0.20, 0.30] as [number, number],
     pctOfProfitGenerated: [1.50, 2.00] as [number, number],
-    action: "High-intensity retention and resource allocation",
+    action: "Retention and resource allocation for the profit-making cohort",
     source: "NAW / Wilson Perumal / Pragmatic Institute",
   },
   profitNeutrals: {
     pctOfCustomers: 0.60,
     contribution: "Break-even",
-    action: "Streamline for efficiency, standardize service delivery",
+    action: "Standardize service delivery and cut cost-to-serve",
   },
   profitTakers: {
     pctOfCustomers: 0.20,
@@ -271,7 +271,7 @@ export const whaleCurve = {
   },
   lrfmModel: {
     dimensions: ["Length (tenure)", "Recency", "Frequency", "Monetary"],
-    keyFinding: "Length (relationship tenure) is the most significant predictor of stability. Older accounts are more profitable because acquisition costs are amortized and provider has tacit facility knowledge.",
+    keyFinding: "Length (relationship tenure) is the cited study's top predictor of stability. Older accounts are more profitable because acquisition costs are amortized and the provider has tacit facility knowledge.",
     source: "LRFM Segmentation Research — ResearchGate",
   },
 };
@@ -417,13 +417,13 @@ export const strategicFrameworks: StrategicFramework[] = [
   {
     name: "PE Portfolio Co 13/60/80 Framework",
     description: "Target 13%+ EBITDA margin, 60% revenue from recurring inspection/service, 80% free cash flow conversion.",
-    application: "Benchmark ACME Field Services's current service-vs-project revenue mix, EBITDA margin, and FCF conversion against these targets. Identify gap and path to close.",
+    application: "Benchmark ACME Field Services' current service-vs-project revenue mix, EBITDA margin, and FCF conversion against these targets. Identify gap and path to close.",
     source: "PE Portfolio Co Annual Reports 2024-2025",
   },
   {
     name: "Land and Expand Pricing",
     description: "Set base contract fee at competitive level (inelastic, <0.5 elasticity). Capture margin through usage rates (elastic, >0.8). Optimize access-to-usage fee ratio.",
-    application: "Evaluate ACME Field Services's PM contract pricing vs. reactive T&M pricing. Recommend access fee adjustments that maximize acquisition without margin sacrifice.",
+    application: "Evaluate ACME Field Services' PM contract pricing vs. reactive T&M pricing. Recommend access-fee changes that raise acquisition while holding margin.",
     source: "Essegaier, Gupta & Zhang — Marketing Science (2002)",
   },
   {
@@ -435,31 +435,31 @@ export const strategicFrameworks: StrategicFramework[] = [
   {
     name: "PE Overhead Leverage Model",
     description: "Consolidating $2M firms into $10M+ platform drops overhead from ~30% to ~20% of revenue, expanding net margin from single digits to ~20%.",
-    application: "Position ACME Field Services's current overhead structure against this trajectory. Quantify expected overhead improvement from scale achieved through acquisitions.",
+    application: "Position ACME Field Services' current overhead structure against this trajectory. Quantify expected overhead improvement from scale achieved through acquisitions.",
     source: "Profitability Partners / Kaplan & Strömberg (2009)",
   },
   {
     name: "Concentration Risk Thresholds",
     description: "Single customer >20-25% of revenue = high risk. Top 5 customers >50% of revenue = portfolio risk. Concentrated firms trade at 4.5x vs. 5.5x EBITDA.",
-    application: "Calculate ACME Field Services's concentration ratios. If above thresholds, prescribe diversification strategy with timeline and dollar targets.",
+    application: "Calculate ACME Field Services' concentration ratios. If above thresholds, prescribe diversification strategy with timeline and dollar targets.",
     source: "Nuvera Partners / Corporate Finance Institute",
   },
   {
     name: "Customer Acquisition Quality",
     description: "Customers acquired through price-based promotions have CLV 59% lower than value-based acquisition. Price-based acquisition sets low reference price, attracting fundamentally price-sensitive customers.",
-    application: "Evaluate how ACME Field Services's newest customers were acquired. Flag accounts with pricing patterns consistent with discount-acquired profiles.",
+    application: "Evaluate how ACME Field Services' newest customers were acquired. Flag accounts with pricing patterns consistent with discount-acquired profiles.",
     source: "Reinartz, Thomas & Kumar (2005)",
   },
   {
     name: "Reactive-to-Preventive Shift",
     description: "Reactive maintenance costs 3-5x more than preventive. Equipment downtime costs up to 10% of monthly sales for commercial kitchens.",
-    application: "Analyze ACME Field Services's PM vs. reactive job mix. Quantify margin improvement from shifting reactive-heavy customers to PM contracts.",
+    application: "Analyze ACME Field Services' PM vs. reactive job mix. Quantify margin improvement from shifting reactive-heavy customers to PM contracts.",
     source: "SAH Kitchen Equipment / RON Group",
   },
   {
     name: "Account Pruning for Margin Expansion",
     description: "PE Portfolio Co intentionally exited large, low-margin project accounts → 140bp EBITDA expansion. Selection-first strategy: rank by Dynamic Customer Equity, not current revenue.",
-    application: "Identify ACME Field Services's Dogs tier accounts. Calculate EBITDA impact of exiting bottom N accounts. Present as a strategic recommendation with quantified upside.",
+    application: "Identify ACME Field Services' Dogs tier accounts. Calculate EBITDA impact of exiting bottom N accounts. Present as a strategic recommendation with quantified upside.",
     source: "PE Portfolio Co Q1 2025 Earnings / Reinartz & Kumar (2005)",
   },
   {

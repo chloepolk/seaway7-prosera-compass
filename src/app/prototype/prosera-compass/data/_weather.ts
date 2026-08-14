@@ -83,7 +83,7 @@ const PROFILES: Record<Region, RegionWeatherProfile> = {
       { month: "2025-09", type: "Late-season heat wave", demandImpact: "Refrigeration + condenser failures spike; emergency HVAC calls up." },
       { month: "2026-03", type: "Atmospheric river / wind event", demandImpact: "Rooftop unit damage; access delays raise dispatch cost." },
     ],
-    demandNote: "Cooling-led demand; refrigeration reliability is the year-round revenue floor.",
+    demandNote: "Peak CDD 230; peak HDD 320 in this Aug 2025–Apr 2026 series.",
   },
   RC: {
     region: "RC",
@@ -99,7 +99,7 @@ const PROFILES: Record<Region, RegionWeatherProfile> = {
       { month: "2025-08", type: "Extended >100F heat", demandImpact: "Peak cooling load; compressor burnout drives premium emergency tickets." },
       { month: "2026-03", type: "Early heat onset", demandImpact: "Pulls PM/seasonal changeover demand forward into Q1." },
     ],
-    demandNote: "Strong summer cooling peak; extreme heat is the dominant emergency-revenue driver.",
+    demandNote: "Peak CDD 520 in Aug 2025. Peak HDD 360.",
   },
   RS: {
     region: "RS",
@@ -115,7 +115,7 @@ const PROFILES: Record<Region, RegionWeatherProfile> = {
       { month: "2025-09", type: "Tropical storm / humidity surge", demandImpact: "Latent-load failures; coil + drainage service calls climb." },
       { month: "2026-03", type: "Severe thunderstorm outbreak", demandImpact: "Power events damage rooftop units; surge of emergency dispatches." },
     ],
-    demandNote: "Longest cooling season in the portfolio; humidity sustains refrigeration/AC demand year-round.",
+    demandNote: "Peak CDD 560 in Aug 2025. CDD stays at or above 40 in every month of this series.",
   },
   RE: {
     region: "RE",
@@ -131,7 +131,7 @@ const PROFILES: Record<Region, RegionWeatherProfile> = {
       { month: "2026-01", type: "Arctic cold snap", demandImpact: "Heating-system failures; no-heat emergency calls peak." },
       { month: "2026-03", type: "Late-winter ice storm", demandImpact: "Access + safety delays inflate dispatch cost during the fuel-price spike." },
     ],
-    demandNote: "Heating-led demand; winter cold snaps are the dominant emergency-revenue driver.",
+    demandNote: "Peak HDD 780. Peak CDD 340.",
   },
   RN: {
     region: "RN",
@@ -147,7 +147,7 @@ const PROFILES: Record<Region, RegionWeatherProfile> = {
       { month: "2025-12", type: "Blizzard / deep freeze", demandImpact: "Heating + frozen-line failures; multi-day emergency backlog." },
       { month: "2026-03", type: "Prolonged sub-zero stretch", demandImpact: "Sustained no-heat calls coincide with the regional fuel-cost spike." },
     ],
-    demandNote: "Coldest region; heating reliability dominates and winter extremes drive premium emergency tickets.",
+    demandNote: "Peak HDD 1,180, the highest in this set. Peak CDD 220.",
   },
   RM: {
     region: "RM",
@@ -163,7 +163,7 @@ const PROFILES: Record<Region, RegionWeatherProfile> = {
       { month: "2025-10", type: "Early hard freeze", demandImpact: "Abrupt heat-changeover demand; PM compression into a short window." },
       { month: "2026-03", type: "Spring snow + thaw cycling", demandImpact: "Freeze-thaw stresses rooftop units; mixed heat/cool emergency mix." },
     ],
-    demandNote: "Dual-peak (shoulder) demand from wide day-night swings; both heating and cooling matter.",
+    demandNote: "Peak HDD 660 and peak CDD 360 in this series.",
   },
 }
 

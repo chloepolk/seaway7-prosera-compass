@@ -47,7 +47,7 @@ export const metroPermitProfiles: MetroPermitProfile[] = [
     ],
     twoYearChangePct: -0.116,
     constructionActivityLevel: "high",
-    notes: "Pulled back from 2022 peak but still strong. Multifamily declining faster than single-family. Hospitality-adjacent commercial construction remains robust.",
+    notes: "Permits fell from 22,840 in 2022 to 20,180 in 2024 (−11.6%). Multifamily five-plus units fell from 6,940 to 4,820. Single-family fell from 15,620 to 15,100. No hospitality-construction series is in this dataset.",
   },
   {
     metroArea: "Metro West-2",
@@ -61,7 +61,7 @@ export const metroPermitProfiles: MetroPermitProfile[] = [
     ],
     twoYearChangePct: -0.105,
     constructionActivityLevel: "moderate",
-    notes: "Industrial corridor growth sustaining activity. Warehouse/logistics construction not captured in residential permits but drives HVAC demand.",
+    notes: "Permits fell from 5,420 in 2022 to 4,850 in 2024 (−10.5%). 2024 is up from 4,180 in 2023. No warehouse/logistics permit series is in this dataset.",
   },
   {
     metroArea: "Metro South-1",
@@ -75,7 +75,7 @@ export const metroPermitProfiles: MetroPermitProfile[] = [
     ],
     twoYearChangePct: -0.282,
     constructionActivityLevel: "declining",
-    notes: "Sharp decline driven by high interest rates, restrictive zoning, construction labor shortages. Single-family especially constrained. Retrofit/renovation activity outpacing new construction as an HVAC revenue source.",
+    notes: "Permits fell from 31,200 in 2022 to 22,400 in 2024 (−28.2%). Single-family fell from 8,400 to 6,800. Multifamily five-plus fell from 21,600 to 14,700. No interest-rate or zoning series is in this dataset.",
   },
   {
     metroArea: "Metro South-2",
@@ -89,7 +89,7 @@ export const metroPermitProfiles: MetroPermitProfile[] = [
     ],
     twoYearChangePct: -0.143,
     constructionActivityLevel: "moderate",
-    notes: "Agricultural region with steady but modest growth. Lower regulatory burden than coastal metros.",
+    notes: "Permits fell from 4,200 in 2022 to 3,600 in 2024 (−14.3%). 2024 is up from 3,400 in 2023.",
   },
   {
     metroArea: "Metro Central-1",
@@ -103,7 +103,7 @@ export const metroPermitProfiles: MetroPermitProfile[] = [
     ],
     twoYearChangePct: -0.033,
     constructionActivityLevel: "high",
-    notes: "Recovering rapidly. Semiconductor expansion creating massive commercial HVAC demand not captured in residential permits. Single-family already above pre-correction levels. Top 3 US metro for new construction.",
+    notes: "Permits fell from 47,800 in 2022 to 46,200 in 2024 (−3.3%). 2024 is up from 42,600 in 2023. Single-family rose from 30,200 to 31,800. No US metro rank is in this dataset.",
   },
   {
     metroArea: "Metro Central-2",
@@ -117,7 +117,7 @@ export const metroPermitProfiles: MetroPermitProfile[] = [
     ],
     twoYearChangePct: -0.049,
     constructionActivityLevel: "moderate",
-    notes: "Steady metro. University medical center expansion and defense sector provide consistent commercial HVAC demand.",
+    notes: "Permits fell from 8,200 in 2022 to 7,800 in 2024 (−4.9%). 2024 is up from 7,100 in 2023.",
   },
   {
     metroArea: "Metro East-1",
@@ -131,7 +131,7 @@ export const metroPermitProfiles: MetroPermitProfile[] = [
     ],
     twoYearChangePct: -0.047,
     constructionActivityLevel: "high",
-    notes: "Consistently one of the top 2 US metros for building permits. Energy sector diversification and population growth sustaining activity. LNG export facility construction creating commercial HVAC opportunities.",
+    notes: "Permits fell from 68,400 in 2022 to 65,200 in 2024 (−4.7%). 2024 is the highest total in this metro set. No LNG or population series is in this dataset.",
   },
   {
     metroArea: "Metro North-1",
@@ -145,7 +145,7 @@ export const metroPermitProfiles: MetroPermitProfile[] = [
     ],
     twoYearChangePct: -0.042,
     constructionActivityLevel: "high",
-    notes: "Tech corridor driving strong growth. Recovering faster than national average. Data center construction creating large-scale commercial HVAC demand.",
+    notes: "Permits fell from 14,200 in 2022 to 13,600 in 2024 (−4.2%). 2024 is up from 11,800 in 2023. No national-average comparison is in this dataset.",
   },
   {
     metroArea: "Metro Mountain-1",
@@ -159,7 +159,7 @@ export const metroPermitProfiles: MetroPermitProfile[] = [
     ],
     twoYearChangePct: -0.083,
     constructionActivityLevel: "moderate",
-    notes: "Government contracts provide steady baseline. Film industry expansion adding commercial HVAC demand.",
+    notes: "Permits fell from 4,800 in 2022 to 4,400 in 2024 (−8.3%). 2024 is up from 4,100 in 2023. No government-contract or film series is in this dataset.",
   },
 ];
 

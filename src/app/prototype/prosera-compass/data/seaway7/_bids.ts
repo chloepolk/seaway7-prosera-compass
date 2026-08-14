@@ -142,7 +142,7 @@ export const BIDS_ITT_MER_SCM_2104: BidInput[] = [
     acceptsStandardWarranty: true,
     pdfPath: null,
     insight:
-      "Full electrochemical capacity certificates (≥2,500 Ah/kg) and clean DDP landing. Strong award candidate on anodes.",
+      "Full electrochemical capacity certificates (≥2,500 Ah/kg) and DDP Rotterdam accepted.",
   },
   {
     id: "bid-2104-marinecast",
