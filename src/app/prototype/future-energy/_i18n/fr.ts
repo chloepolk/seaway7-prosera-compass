@@ -486,7 +486,7 @@ const fr: EnMessages = {
     materialMarkup: "Objectif de marge sur les matériaux",
     off: "Désactivé",
     fuelScenario: "Scénario de prix du carburant",
-    unleadedPrice: "Prix de l’essence par gallon",
+    unleadedPrice: "Prix de l’essence au litre",
     current: "Actuel",
     nteTitle: "Friction d’escalade NTE",
     counterfactual: "Sensibilité contrefactuelle",
@@ -565,6 +565,7 @@ const fr: EnMessages = {
     noChanges: "Aucune modification enregistrée.",
     missionConfirmation: "Confirmation de la mission",
     recommendation: "Recommandation",
+    awardGovernance: "Gouvernance d’attribution",
     emailBody:
       "Bonjour,\n\nJe vous contacte au sujet de {name}, actuellement en cours dans le Centre d’actions.\n\n{narrative}\n\nL’objectif est {target}, échéance le {date}.\n\nMerci d’examiner ces éléments et de confirmer les prochaines étapes. Vous pouvez me contacter pour toute information complémentaire.\n\nCordialement,\n[Votre nom]",
   },

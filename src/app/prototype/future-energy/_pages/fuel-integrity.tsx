@@ -1,6 +1,6 @@
 "use client"
 
-import {activeLocaleTag, formatActivePercent, formatActiveUsd, localizeActiveCopy, formatActiveEurUnit } from "../_i18n/legacy"
+import {activeLocaleTag, formatActivePercent, formatActiveUsd, localizeActiveCopy, formatActiveFuelUnit, formatActiveFuelVolume, formatActiveFuelSensitivityStep, formatActiveFuelEconomy } from "../_i18n/legacy"
 
 import * as React from "react"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
@@ -100,7 +100,7 @@ function FleetSpendChart({ data, spikeMonth }: { data: CombinedFuelMonth[]; spik
           <div>
             <h3 className="text-sm font-semibold">{localizeActiveCopy("Monthly Fleet Fuel Spend")}</h3>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              Fleet card transactions — 15-month series with unleaded $/gal overlay
+              Fleet card transactions — 15-month series with unleaded price/L overlay
             </p>
           </div>
           <div className="flex items-center gap-4 text-[10px]">
@@ -110,7 +110,7 @@ function FleetSpendChart({ data, spikeMonth }: { data: CombinedFuelMonth[]; spik
             </span>
             <span className="flex items-center gap-1.5">
               <span className="inline-block h-0.5 w-6 bg-red-500" />
-              Unleaded $/gal
+              Unleaded £/L
             </span>
           </div>
         </div>
@@ -135,7 +135,7 @@ function FleetSpendChart({ data, spikeMonth }: { data: CombinedFuelMonth[]; spik
               yAxisId="price"
               orientation="right"
               tick={{ fontSize: 9 }}
-              tickFormatter={(v: number) => `${formatActiveEurUnit(v)}`}
+              tickFormatter={(v: number) => `${formatActiveFuelUnit(v)}`}
               domain={[2.5, 6]}
               width={44}
             />
@@ -152,7 +152,7 @@ function FleetSpendChart({ data, spikeMonth }: { data: CombinedFuelMonth[]; spik
                       <span className="font-mono font-medium">{fmtUsdExact(d?.totalSpend ?? 0)}</span>
                     </div>
                     <div className="flex items-center justify-between gap-4">
-                      <span className="text-muted-foreground">{localizeActiveCopy("Unleaded $/gal")}</span>
+                      <span className="text-muted-foreground">{localizeActiveCopy("Unleaded £/L")}</span>
                       <span className="font-mono font-medium">${(d?.unleadedPPG ?? 0).toFixed(2)}</span>
                     </div>
                     {(d?.spikeImpact ?? 0) !== 0 && (
@@ -213,7 +213,7 @@ function EiaReferenceChart({ data, spikeWeek }: { data: PortfolioFuelExposure["w
           <AreaChart data={formatted} margin={{ top: 4, right: 12, bottom: 0, left: 4 }}>
             <CartesianGrid strokeDasharray="2 4" strokeOpacity={0.1} vertical={false} />
             <XAxis dataKey="weekLabel" tick={{ fontSize: 8 }} interval={6} />
-            <YAxis tick={{ fontSize: 8 }} tickFormatter={(v: number) => `${formatActiveEurUnit(v)}`} domain={["auto", "auto"]} width={36} />
+            <YAxis tick={{ fontSize: 8 }} tickFormatter={(v: number) => `${formatActiveFuelUnit(v)}`} domain={["auto", "auto"]} width={36} />
             <Area type="monotone" dataKey="gulfCoast" stroke={PADD_COLORS.gulfCoast} fill="transparent" strokeWidth={1.5} dot={false} />
             <Area type="monotone" dataKey="rockyMountain" stroke={PADD_COLORS.rockyMountain} fill="transparent" strokeWidth={1.5} dot={false} />
             <Area type="monotone" dataKey="westCoast" stroke={PADD_COLORS.westCoast} fill="transparent" strokeWidth={1.5} dot={false} />
@@ -263,11 +263,11 @@ function DivisionCard({ div }: { div: DivisionFuelSummary }) {
             <p className="font-mono text-xs font-medium">{fmtUsd(div.avgMonthlySpend)}</p>
           </div>
           <div>
-            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">{localizeActiveCopy("Total gallons")}</p>
-            <p className="font-mono text-xs font-medium">{Math.round(div.totalAnnualGallons).toLocaleString(activeLocaleTag())}</p>
+            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">{localizeActiveCopy("Total litres")}</p>
+            <p className="font-mono text-xs font-medium">{formatActiveFuelVolume(div.totalAnnualGallons)}</p>
           </div>
           <div>
-            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">{localizeActiveCopy("Unleaded $/gal trend")}</p>
+            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">{localizeActiveCopy("Unleaded £/L trend")}</p>
             <p className="font-mono text-xs font-medium">
               ${div.baselineAvgPricePerGal.toFixed(2)} → <span className={div.priceDeltaPct > 0 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}>
                 ${div.currentAvgPricePerGal.toFixed(2)}
@@ -303,7 +303,7 @@ function FuelSensitivityCard({ sensitivity }: { sensitivity: FuelSensitivityAnal
         <div className="mb-4">
           <h3 className="text-sm font-semibold">{localizeActiveCopy("Fuel Price Sensitivity")}</h3>
           <p className="text-[11px] text-muted-foreground mt-0.5">
-            {localizeActiveCopy("Fleet burns")} {Math.round(sensitivity.annualGallons).toLocaleString(activeLocaleTag())} {localizeActiveCopy("gal/yr")} — {localizeActiveCopy("every $0.10/gal move")} = {fmtUsd(sensitivity.impactPerDime)}/{localizeActiveCopy("yr impact")}
+            {localizeActiveCopy("Fleet burns")} {formatActiveFuelVolume(sensitivity.annualGallons)}/yr — {formatActiveFuelSensitivityStep()} = {fmtUsd(sensitivity.impactPerDime)}/{localizeActiveCopy("yr impact")}
           </p>
         </div>
 
@@ -314,11 +314,11 @@ function FuelSensitivityCard({ sensitivity }: { sensitivity: FuelSensitivityAnal
           </div>
           <div className="text-center">
             <p className="font-mono text-2xl font-bold text-foreground">{fmtUsd(sensitivity.impactPerDime)}</p>
-            <p className="text-[10px] text-muted-foreground mt-1">{localizeActiveCopy("annual fleet cost impact per $0.10/gal price move")}</p>
+            <p className="text-[10px] text-muted-foreground mt-1">{localizeActiveCopy("annual fleet cost impact per $0.10/gal price move").replace("$0.10/gal", formatActiveFuelSensitivityStep())}</p>
           </div>
           <div className="flex items-center justify-between mt-3 text-[10px] text-muted-foreground">
-            <span>{Math.round(sensitivity.annualGallons).toLocaleString(activeLocaleTag())} {localizeActiveCopy("gal/yr")}</span>
-            <span>${sensitivity.baselinePricePerGal.toFixed(2)} {localizeActiveCopy("baseline")} → ${sensitivity.currentPricePerGal.toFixed(2)} {localizeActiveCopy("current")}</span>
+            <span>{formatActiveFuelVolume(sensitivity.annualGallons)}/yr</span>
+            <span>{formatActiveFuelUnit(sensitivity.baselinePricePerGal)} {localizeActiveCopy("baseline")} → {formatActiveFuelUnit(sensitivity.currentPricePerGal)} {localizeActiveCopy("current")}</span>
           </div>
         </div>
 
@@ -461,7 +461,7 @@ export function FuelIntegritySection() {
         <SafeIcon name="Fuel" className="h-4 w-4 text-red-600 dark:text-red-400" />
         <h3 className="text-sm font-semibold">{localizeActiveCopy("Fuel &amp; Fleet Cost Intelligence")}</h3>
         <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
-          {fmtUsd(act.totalAnnualSpend)} annual fleet fuel · {(act.unleadedPctOfVolume * 100).toFixed(0)}% unleaded · {localizeActiveCopy("every $0.10/gal move")} = {fmtUsd(fuel.sensitivity.impactPerDime)}/{localizeActiveCopy("yr")}
+          {fmtUsd(act.totalAnnualSpend)} annual fleet fuel · {(act.unleadedPctOfVolume * 100).toFixed(0)}% unleaded · {formatActiveFuelSensitivityStep()} = {fmtUsd(fuel.sensitivity.impactPerDime)}/{localizeActiveCopy("yr")}
         </span>
       </div>
 
@@ -488,7 +488,7 @@ export function FuelIntegritySection() {
         <KpiCard
           label={localizeActiveCopy("Fleet Fuel Mix")}
           value={`${(act.unleadedPctOfVolume * 100).toFixed(0)}% unleaded`}
-          sublabel={`${(100 - act.unleadedPctOfVolume * 100).toFixed(0)}% other (incl. diesel) · ${SERVICE_VAN_MPG_LABEL} MPG avg`}
+          sublabel={`${(100 - act.unleadedPctOfVolume * 100).toFixed(0)}% other (incl. diesel) · ${formatActiveFuelEconomy(SERVICE_VAN_MPG_LABEL)} avg`}
           severity="info"
         />
       </div>

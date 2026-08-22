@@ -1,77 +1,59 @@
 import type { Locale } from "./types"
+import {
+  USD_TO_EUR as SHARED_USD_TO_EUR,
+  displayAmount as sharedDisplayAmount,
+  currencyCode as sharedCurrencyCode,
+  formatMoney as sharedFormatMoney,
+  formatCompactMoney as sharedFormatCompactMoney,
+  formatMoneyUnit as sharedFormatMoneyUnit,
+  money as sharedMoney,
+  type DisplayLocale,
+} from "@/lib/compass/locale-display"
 
 /**
- * Seed amounts in Future Energy are USD-denominated.
- * English locale displays USD; French converts to EUR at a fixed demo FX rate.
+ * Seed amounts are USD-denominated.
+ * English displays GBP; French displays EUR. Prototype FX is in locale-display.ts.
  */
-export const USD_TO_EUR = 0.92
+export const USD_TO_EUR = SHARED_USD_TO_EUR
 
-function tag(locale: Locale): string {
-  return locale === "fr" ? "fr-FR" : "en-US"
+function asDisplay(locale: Locale): DisplayLocale {
+  return locale === "fr" ? "fr" : "en"
 }
 
 export function toEur(usdAmount: number): number {
   return usdAmount * USD_TO_EUR
 }
 
-/** Amount to display for the active locale (USD seed → EUR when fr). */
+/** Amount to display for the active locale (USD seed → GBP when en, EUR when fr). */
 export function displayAmount(usdAmount: number, locale: Locale = "en"): number {
-  return locale === "fr" ? toEur(usdAmount) : usdAmount
+  return sharedDisplayAmount(usdAmount, asDisplay(locale))
 }
 
-export function currencyCode(locale: Locale = "en"): "USD" | "EUR" {
-  return locale === "fr" ? "EUR" : "USD"
+export function currencyCode(locale: Locale = "en"): "GBP" | "EUR" {
+  return sharedCurrencyCode(asDisplay(locale))
 }
 
-/** Full currency format. EN: $229,632 · FR: 229 632 € */
+/** Full currency format. EN: £229,632 · FR: 229 632 € */
 export function formatMoney(
   usdAmount: number,
   locale: Locale = "en",
   opts?: { maximumFractionDigits?: number; minimumFractionDigits?: number },
 ): string {
-  return new Intl.NumberFormat(tag(locale), {
-    style: "currency",
-    currency: currencyCode(locale),
-    maximumFractionDigits: opts?.maximumFractionDigits ?? 0,
-    minimumFractionDigits: opts?.minimumFractionDigits ?? 0,
-  }).format(displayAmount(usdAmount, locale))
+  return sharedFormatMoney(usdAmount, asDisplay(locale), opts)
 }
 
 /**
  * Compact money for chips/KPIs.
- * EN: $230k / $1.2M
+ * EN: £230k / £1.2m
  * FR: 230 k€ / 1,2 M€
  */
 export function formatCompactMoney(usdAmount: number, locale: Locale = "en"): string {
-  const amount = displayAmount(usdAmount, locale)
-  const sign = amount < 0 ? "-" : ""
-  const abs = Math.abs(amount)
-
-  if (abs >= 1_000_000) {
-    const digits = abs % 1_000_000 === 0 ? 0 : 1
-    const n = (abs / 1_000_000).toLocaleString(tag(locale), {
-      minimumFractionDigits: digits,
-      maximumFractionDigits: digits,
-    })
-    return locale === "fr" ? `${sign}${n} M€` : `${sign}$${n}M`
-  }
-
-  if (abs >= 1_000) {
-    const n = Math.round(abs / 1_000).toLocaleString(tag(locale), {
-      maximumFractionDigits: 0,
-    })
-    return locale === "fr" ? `${sign}${n} k€` : `${sign}$${n}k`
-  }
-
-  const n = Math.round(abs).toLocaleString(tag(locale), {
-    maximumFractionDigits: 0,
-  })
-  return locale === "fr" ? `${sign}${n} €` : `${sign}$${n}`
+  return sharedFormatCompactMoney(usdAmount, asDisplay(locale))
 }
 
-/** Unit prices (e.g. per gallon) with two decimals. */
+/** Unit prices (e.g. per hour) with two decimals. */
 export function formatMoneyUnit(usdAmount: number, locale: Locale = "en"): string {
-  return formatMoney(usdAmount, locale, { maximumFractionDigits: 2, minimumFractionDigits: 2 })
+  return sharedFormatMoneyUnit(usdAmount, asDisplay(locale))
 }
 
 /** @deprecated Prefer formatMoney — kept for call-site compatibility. */
@@ -82,5 +64,5 @@ export const formatCompactEur = formatCompactMoney
 export const formatEurUnit = formatMoneyUnit
 
 export function money(usdAmount: number, locale: Locale = "en", compact = true): string {
-  return compact ? formatCompactMoney(usdAmount, locale) : formatMoney(usdAmount, locale)
+  return sharedMoney(usdAmount, asDisplay(locale), compact)
 }

@@ -1,4 +1,4 @@
-import {activeLocaleTag, formatActiveUsd, formatActiveEurUnit } from "../_i18n/legacy"
+import {activeLocaleTag, formatActiveUsd, formatActiveFuelUnit } from "../_i18n/legacy"
 import type { ComputedData, CustomerAggregate, RegionAggregate, JobTypeQuoteAnalysis, DispatchAuthEvent } from "./_transform";
 import type { DispatchEfficiencyReport, CustomerEscalationProfile } from "./_dispatch";
 import { regionLabels, type Region } from "./_regions";
@@ -96,7 +96,7 @@ function portfolioFindings(data: ComputedData): BPFinding[] {
     ].filter(Boolean),
     recommendation: singleMaxPct > whaleCurve.concentrationRisk.singleCustomerThreshold
       ? `Diversification is critical. Target ${Math.ceil(singleMaxPct / 0.05)} new accounts to bring top-customer concentration below ${pct(whaleCurve.concentrationRisk.singleCustomerThreshold)}. Focus on Stars DNA profile: ${topJobTypesInList(customers.filter(c => c.tier === "Stars"))} in commercial properties. PE Portfolio Co's precedent: intentionally exiting low-margin accounts drove ${peMetrics.apiAccountPruning.ebitdaExpansionBps}bp EBITDA expansion.`
-      : `Prioritize Stars retention and conduct pricing reviews for all ${portfolioSummary.negativeMarginCustomers} negative-margin accounts. PE Portfolio Co's 13/60/80 framework targets ${pct(peMetrics.api1360Framework.ebitdaMarginTarget)} EBITDA, ${pct(peMetrics.api1360Framework.serviceRevenuePctTarget)} service revenue, ${pct(peMetrics.api1360Framework.fcfConversionTarget)} FCF conversion.`,
+      : `Prioritise Stars retention and conduct pricing reviews for all ${portfolioSummary.negativeMarginCustomers} negative-margin accounts. PE Portfolio Co's 13/60/80 framework targets ${pct(peMetrics.api1360Framework.ebitdaMarginTarget)} EBITDA, ${pct(peMetrics.api1360Framework.serviceRevenuePctTarget)} service revenue, ${pct(peMetrics.api1360Framework.fcfConversionTarget)} FCF conversion.`,
     page: "customer-intel",
     drillLevel: "macro",
   });
@@ -157,7 +157,7 @@ function portfolioFindings(data: ComputedData): BPFinding[] {
         `Primary property types: ${topPropertyTypes.slice(0, 3).map(t => `${t.type} (${t.count})`).join(", ")}`,
         `Primary service types: ${topJobTypes.slice(0, 3).map(t => `${t.type} (${t.count})`).join(", ")}`,
       ],
-      recommendation: "Sales Director: use Stars DNA profile (job types + property mix above) to build a 50-account regional target list — prioritize markets where Stars concentration exceeds portfolio average.",
+      recommendation: "Sales Director: use Stars DNA profile (job types + property mix above) to build a 50-account regional target list — prioritise markets where Stars concentration exceeds portfolio average.",
       page: "customer-intel",
       drillLevel: "macro",
     });
@@ -171,7 +171,7 @@ function portfolioFindings(data: ComputedData): BPFinding[] {
         category: "margin-alert",
         severity: "high",
         title: `Portfolio margin trending down: ${pct(t.priorMonthlyMargin)} to ${pct(t.recentMonthlyMargin)} over ${t.monthCount} months`,
-        narrative: `The portfolio's blended margin has declined month-over-month. This could reflect mix shift toward lower-margin work, rising labor costs, or pricing erosion on renewals. The trend across ${t.monthCount} months of data warrants investigation.`,
+        narrative: `The portfolio's blended margin has declined month on month. This could reflect mix shift toward lower-margin work, rising labor costs, or pricing erosion on renewals. The trend across ${t.monthCount} months of data warrants investigation.`,
         evidence: t.buckets.slice(-4).map(b =>
           `${b.month}: ${b.jobCount} jobs, ${pct(b.avgMarginPct)} margin, ${usd(b.totalRevenue)} revenue`
         ),
@@ -214,7 +214,7 @@ function portfolioFindings(data: ComputedData): BPFinding[] {
       evidence: improvingDogs.slice(0, 5).map(c =>
         `${c.customerName.split(",")[0]}: ${pct(c.trend!.priorMonthlyMargin)} → ${pct(c.trend!.recentMonthlyMargin)} (${c.trend!.monthCount} months)`
       ),
-      recommendation: "Hold these accounts for one more review cycle. If margin continues to improve, they should be reclassified as Question Marks and prioritized for retention.",
+      recommendation: "Hold these accounts for one more review cycle. If margin continues to improve, they should be reclassified as Question Marks and prioritised for retention.",
       page: "customer-intel",
       drillLevel: "macro",
     });
@@ -490,9 +490,9 @@ function fuelFindings(): BPFinding[] {
     category: "risk-flag",
     severity: worst.deltaPct > 0.15 ? "critical" : worst.deltaPct > 0.05 ? "high" : "info",
     title: `Fuel up ${pct(worst.deltaPct)} in ${worst.paddLabel}, ${pct(best.deltaPct)} in ${best.paddLabel}`,
-    narrative: `${worst.paddLabel} averages ${formatActiveEurUnit(worst.recentAvg)}/gal (+${(worst.deltaPct * 100).toFixed(1)}% from baseline). ${best.paddLabel} averages ${formatActiveEurUnit(best.recentAvg)}/gal (+${(best.deltaPct * 100).toFixed(1)}%). ${worst.deltaPct > 0.15 ? `Contract fuel clauses should be calibrated by region, not applied portfolio-wide at a flat rate.` : `The gap between ${worst.paddLabel} and ${best.paddLabel} is ${((worst.deltaPct - best.deltaPct) * 100).toFixed(1)} percentage points.`}`,
+    narrative: `${worst.paddLabel} averages ${formatActiveFuelUnit(worst.recentAvg)}/L (+${(worst.deltaPct * 100).toFixed(1)}% from baseline). ${best.paddLabel} averages ${formatActiveFuelUnit(best.recentAvg)}/L (+${(best.deltaPct * 100).toFixed(1)}%). ${worst.deltaPct > 0.15 ? `Contract fuel clauses should be calibrated by region, not applied portfolio-wide at a flat rate.` : `The gap between ${worst.paddLabel} and ${best.paddLabel} is ${((worst.deltaPct - best.deltaPct) * 100).toFixed(1)} percentage points.`}`,
     evidence: summaries.map(s =>
-      `${s.paddLabel}: ${formatActiveEurUnit(s.recentAvg)}/gal (baseline ${formatActiveEurUnit(s.baselineAvg)}, +${(s.deltaPct * 100).toFixed(1)}%)`
+      `${s.paddLabel}: ${formatActiveFuelUnit(s.recentAvg)}/L (baseline ${formatActiveFuelUnit(s.baselineAvg)}, +${(s.deltaPct * 100).toFixed(1)}%)`
     ),
     recommendation: worst.deltaPct > 0.15
       ? `Embed region-specific fuel escalation clauses in contracts. ${worst.paddLabel} exposure is ${((worst.recentAvg - worst.baselineAvg) / worst.baselineAvg * 100).toFixed(1)}% above baseline vs. ${best.paddLabel} at ${((best.recentAvg - best.baselineAvg) / best.baselineAvg * 100).toFixed(1)}%. Tie quarterly reviews to fleet card actuals.`

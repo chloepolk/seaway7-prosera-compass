@@ -6,6 +6,7 @@ import { tradeMargins, pricingBenchmarks, pricingElasticity, whaleCurve, peMetri
 import type { RootCauseAnalysis, MarginDriver } from "./_rootcause";
 import { getWageForRegion, nationalBaseline } from "./_labor";
 import { getConstructionGrowthSignal, getPermitsForRegion } from "./_construction";
+import { formatGbp, formatGbpUnit, formatFuelUnit } from "../_format";
 
 const SCALE = 0.87;
 
@@ -58,9 +59,7 @@ function pct(n: number): string {
 }
 
 function usd(n: number): string {
-  if (Math.abs(n) >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
-  if (Math.abs(n) >= 1_000) return `$${(n / 1_000).toFixed(0)}k`;
-  return `$${n.toFixed(0)}`;
+  return formatGbp(n);
 }
 
 /* ------------------------------------------------------------------ */
@@ -97,7 +96,7 @@ function portfolioFindings(data: ComputedData): BPFinding[] {
     ].filter(Boolean),
     recommendation: singleMaxPct > whaleCurve.concentrationRisk.singleCustomerThreshold
       ? `Diversification is critical. Target ${Math.ceil(singleMaxPct / 0.05)} new accounts to bring top-customer concentration below ${pct(whaleCurve.concentrationRisk.singleCustomerThreshold)}. Focus on Stars DNA profile: ${topJobTypesInList(customers.filter(c => c.tier === "Stars"))} in commercial properties. PE Portfolio Co's precedent: intentionally exiting low-margin accounts drove ${peMetrics.apiAccountPruning.ebitdaExpansionBps}bp EBITDA expansion.`
-      : `Prioritize Stars retention and conduct pricing reviews for all ${portfolioSummary.negativeMarginCustomers} negative-margin accounts. PE Portfolio Co's 13/60/80 framework targets ${pct(peMetrics.api1360Framework.ebitdaMarginTarget)} EBITDA, ${pct(peMetrics.api1360Framework.serviceRevenuePctTarget)} service revenue, ${pct(peMetrics.api1360Framework.fcfConversionTarget)} FCF conversion.`,
+      : `Prioritise Stars retention and conduct pricing reviews for all ${portfolioSummary.negativeMarginCustomers} negative-margin accounts. PE Portfolio Co's 13/60/80 framework targets ${pct(peMetrics.api1360Framework.ebitdaMarginTarget)} EBITDA, ${pct(peMetrics.api1360Framework.serviceRevenuePctTarget)} service revenue, ${pct(peMetrics.api1360Framework.fcfConversionTarget)} FCF conversion.`,
     page: "customer-intel",
     drillLevel: "macro",
   });
@@ -126,7 +125,7 @@ function portfolioFindings(data: ComputedData): BPFinding[] {
       category: "margin-alert",
       severity: "critical",
       title: `${portfolioSummary.negativeMarginCustomers} customers show negative realized margins — ${usd(Math.abs(totalLoss))} annual margin destruction`,
-      narrative: `These accounts are consuming resources at a loss. The combined margin deficit is ${usd(totalLoss)} on ${usd(exitRevenue)} in revenue. PE Portfolio Co's precedent: intentionally exiting comparable low-margin accounts drove ${peMetrics.apiAccountPruning.ebitdaExpansionBps}bp EBITDA expansion to record levels. Root cause analysis identifies ${usd(totalRecovery)} in addressable margin through forward pricing adjustments and cost structure optimization.`,
+      narrative: `These accounts are consuming resources at a loss. The combined margin deficit is ${usd(totalLoss)} on ${usd(exitRevenue)} in revenue. PE Portfolio Co's precedent: intentionally exiting comparable low-margin accounts drove ${peMetrics.apiAccountPruning.ebitdaExpansionBps}bp EBITDA expansion to record levels. Root cause analysis identifies ${usd(totalRecovery)} in addressable margin through forward pricing adjustments and cost structure optimisation.`,
       evidence: [
         `Combined negative margin: ${usd(totalLoss)} on ${usd(exitRevenue)} revenue`,
         `${exitCustomers.reduce((s, c) => s + c.negativeMarginJobCount, 0)} individual jobs with negative margins`,
@@ -158,7 +157,7 @@ function portfolioFindings(data: ComputedData): BPFinding[] {
         `Primary property types: ${topPropertyTypes.slice(0, 3).map(t => `${t.type} (${t.count})`).join(", ")}`,
         `Primary service types: ${topJobTypes.slice(0, 3).map(t => `${t.type} (${t.count})`).join(", ")}`,
       ],
-      recommendation: "Sales Director: use Stars DNA profile (job types + property mix above) to build a 50-account regional target list — prioritize markets where Stars concentration exceeds portfolio average.",
+      recommendation: "Sales Director: use Stars DNA profile (job types + property mix above) to build a 50-account regional target list — prioritise markets where Stars concentration exceeds portfolio average.",
       page: "customer-intel",
       drillLevel: "macro",
     });
@@ -172,7 +171,7 @@ function portfolioFindings(data: ComputedData): BPFinding[] {
         category: "margin-alert",
         severity: "high",
         title: `Portfolio margin trending down: ${pct(t.priorMonthlyMargin)} to ${pct(t.recentMonthlyMargin)} over ${t.monthCount} months`,
-        narrative: `The portfolio's blended margin has declined month-over-month. This could reflect mix shift toward lower-margin work, rising labor costs, or pricing erosion on renewals. The trend across ${t.monthCount} months of data warrants investigation.`,
+        narrative: `The portfolio's blended margin has declined month on month. This could reflect mix shift toward lower-margin work, rising labor costs, or pricing erosion on renewals. The trend across ${t.monthCount} months of data warrants investigation.`,
         evidence: t.buckets.slice(-4).map(b =>
           `${b.month}: ${b.jobCount} jobs, ${pct(b.avgMarginPct)} margin, ${usd(b.totalRevenue)} revenue`
         ),
@@ -215,7 +214,7 @@ function portfolioFindings(data: ComputedData): BPFinding[] {
       evidence: improvingDogs.slice(0, 5).map(c =>
         `${c.customerName.split(",")[0]}: ${pct(c.trend!.priorMonthlyMargin)} → ${pct(c.trend!.recentMonthlyMargin)} (${c.trend!.monthCount} months)`
       ),
-      recommendation: "Hold these accounts for one more review cycle. If margin continues to improve, they should be reclassified as Question Marks and prioritized for retention.",
+      recommendation: "Hold these accounts for one more review cycle. If margin continues to improve, they should be reclassified as Question Marks and prioritised for retention.",
       page: "customer-intel",
       drillLevel: "macro",
     });
@@ -247,7 +246,7 @@ function regionFindings(data: ComputedData): BPFinding[] {
         if (worstLatest && bestLatest) {
           const wageDelta = ((worstLatest.meanAnnualWage - bestLatest.meanAnnualWage) / bestLatest.meanAnnualWage * 100);
           if (wageDelta > 5) {
-            laborContext = ` BLS data confirms: ${worstWage.metroArea} HVAC techs avg $${(worstLatest.meanAnnualWage / 1000).toFixed(0)}k/yr vs. ${bestWage.metroArea} $${(bestLatest.meanAnnualWage / 1000).toFixed(0)}k/yr (+${wageDelta.toFixed(0)}% structural premium). This cost differential must be priced into ${regionLabels[worst.region]} contracts.`;
+            laborContext = ` BLS data confirms: ${worstWage.metroArea} HVAC techs avg ${formatGbp(worstLatest.meanAnnualWage)}/yr vs. ${bestWage.metroArea} ${formatGbp(bestLatest.meanAnnualWage)}/yr (+${wageDelta.toFixed(0)}% structural premium). This cost differential must be priced into ${regionLabels[worst.region]} contracts.`;
           }
         }
       }
@@ -262,7 +261,7 @@ function regionFindings(data: ComputedData): BPFinding[] {
           ...regions.map(r => {
             const state = r.region as "RW" | "RS" | "RC" | "RE" | "RN" | "RM";
             const wage = getWageForRegion(state);
-            const wageStr = wage ? `, HVAC wage $${(wage.snapshots[wage.snapshots.length - 1]?.meanAnnualWage ?? 0) / 1000}k` : "";
+            const wageStr = wage ? `, HVAC wage ${usd(wage.snapshots[wage.snapshots.length - 1]?.meanAnnualWage ?? 0)}` : "";
             return `${regionLabels[r.region]}: ${r.jobCount} jobs, ${pct(r.validated.avgMarginPct)} margin, ${usd(r.validated.avgTicket)} avg ticket${wageStr}`;
           }),
         ],
@@ -471,7 +470,7 @@ function pricingFindings(data: ComputedData): BPFinding[] {
           `Job ${e.jobNumber} (${e.customerName}): billed ${usd(e.totalAmount)} on ${usd(e.amountNTE)} NTE auth (${e.workflowOutcome}), ${e.visitCount} visits`
         ),
       ],
-      recommendation: `Dispatch Operations Lead: deploy single-queue re-auth on top ${Math.min(5, escalationEvents.length)} friction accounts — ${escalationEvents.length}/${dispatchEvents.length} jobs (${pct(escalationRate)}) exceed customer-set NTE; cut ${(avgVisitsEscalated - avgVisitsWithin).toFixed(1)} extra visits/job via one-pass approver routing (est. $${Math.round(escalationEvents.length * 50 * 0.4).toLocaleString()}/yr truck-roll savings).`,
+      recommendation: `Dispatch Operations Lead: deploy single-queue re-auth on top ${Math.min(5, escalationEvents.length)} friction accounts — ${escalationEvents.length}/${dispatchEvents.length} jobs (${pct(escalationRate)}) exceed customer-set NTE; cut ${(avgVisitsEscalated - avgVisitsWithin).toFixed(1)} extra visits/job via one-pass approver routing (est. ${formatGbp(escalationEvents.length * 50 * 0.4, false)}/yr truck-roll savings).`,
       page: "pricing-intel",
       drillLevel: "macro",
     });
@@ -491,9 +490,9 @@ function fuelFindings(): BPFinding[] {
     category: "risk-flag",
     severity: worst.deltaPct > 0.15 ? "critical" : worst.deltaPct > 0.05 ? "high" : "info",
     title: `Fuel up ${pct(worst.deltaPct)} in ${worst.paddLabel}, ${pct(best.deltaPct)} in ${best.paddLabel}`,
-    narrative: `${worst.paddLabel} averages $${worst.recentAvg.toFixed(2)}/gal (+${(worst.deltaPct * 100).toFixed(1)}% from baseline). ${best.paddLabel} averages $${best.recentAvg.toFixed(2)}/gal (+${(best.deltaPct * 100).toFixed(1)}%). ${worst.deltaPct > 0.15 ? `Contract fuel clauses should be calibrated by region, not applied portfolio-wide at a flat rate.` : `The gap between ${worst.paddLabel} and ${best.paddLabel} is ${((worst.deltaPct - best.deltaPct) * 100).toFixed(1)} percentage points.`}`,
+    narrative: `${worst.paddLabel} averages ${formatFuelUnit(worst.recentAvg)}/L (+${(worst.deltaPct * 100).toFixed(1)}% from baseline). ${best.paddLabel} averages ${formatFuelUnit(best.recentAvg)}/L (+${(best.deltaPct * 100).toFixed(1)}%). ${worst.deltaPct > 0.15 ? `Contract fuel clauses should be calibrated by region, not applied portfolio-wide at a flat rate.` : `The gap between ${worst.paddLabel} and ${best.paddLabel} is ${((worst.deltaPct - best.deltaPct) * 100).toFixed(1)} percentage points.`}`,
     evidence: summaries.map(s =>
-      `${s.paddLabel}: $${s.recentAvg.toFixed(3)}/gal (baseline $${s.baselineAvg.toFixed(3)}, +${(s.deltaPct * 100).toFixed(1)}%)`
+      `${s.paddLabel}: ${formatFuelUnit(s.recentAvg)}/L (baseline ${formatFuelUnit(s.baselineAvg)}, +${(s.deltaPct * 100).toFixed(1)}%)`
     ),
     recommendation: worst.deltaPct > 0.15
       ? `Embed region-specific fuel escalation clauses in contracts. ${worst.paddLabel} exposure is ${((worst.recentAvg - worst.baselineAvg) / worst.baselineAvg * 100).toFixed(1)}% above baseline vs. ${best.paddLabel} at ${((best.recentAvg - best.baselineAvg) / best.baselineAvg * 100).toFixed(1)}%. Tie quarterly reviews to fleet card actuals.`
@@ -565,7 +564,7 @@ function dataQualityFindings(data: ComputedData): BPFinding[] {
       title: `${affected.length} jobs have no posted costs — margin overstated by up to ${usd(overstatedMargin)}`,
       narrative: `These jobs show revenue but zero actual cost in the field service platform. If costs are pending, the portfolio margin is overstated. If these are warranty or goodwill jobs, they should be categorized as such and excluded from pricing benchmarks.`,
       evidence: affected.slice(0, 8).map(j =>
-        `Job ${j.jobNumber} (${j.customerName}): ${usd(j.totalAmount ?? 0)} revenue, $0 cost`
+        `Job ${j.jobNumber} (${j.customerName}): ${usd(j.totalAmount ?? 0)} revenue, ${usd(0)} cost`
       ),
       recommendation: `Verify cost posting status for ${affected.length === 1 ? "this job" : `these ${affected.length} jobs`} in the field service platform. If costs are finalized at $0, tag as warranty/goodwill to prevent margin distortion.`,
       page: "customer-intel",
@@ -582,7 +581,7 @@ function dataQualityFindings(data: ComputedData): BPFinding[] {
       category: "data-quality",
       severity: "high",
       title: `${affected.length} ${affected.length === 1 ? "job has" : "jobs have"} placeholder NTE values — excluded from NTE analysis`,
-      narrative: `NTE values under $10 are data entry placeholders. These produce extreme revenue-to-NTE ratios that distort escalation analysis. They have been excluded from NTE threshold analysis.`,
+      narrative: `NTE values under ${usd(10)} are data entry placeholders. These produce extreme revenue-to-NTE ratios that distort escalation analysis. They have been excluded from NTE threshold analysis.`,
       evidence: affected.slice(0, 8).map(j =>
         `Job ${j.jobNumber} (${j.customerName}): NTE ${usd(j.amountNTE ?? 0)}, billed ${usd(j.totalAmount ?? 0)}, utilization ${j.nteUtilization != null ? (j.nteUtilization * 100).toFixed(0) + "%" : "N/A"}`
       ),
@@ -621,7 +620,7 @@ function dataQualityFindings(data: ComputedData): BPFinding[] {
         category: "data-quality",
         severity: "critical",
         title: `${customer.split(",")[0]}: NTE of ${usd(avgNTE)} guarantees losses — ${jobsOverNTE} of ${custJobs.length} jobs exceed NTE`,
-        narrative: `This contract's NTE cannot cover a single tech-hour at current labor rates ($27–$37/hr). ${jobsOverNTE} of ${custJobs.length} jobs cost more than the NTE to execute. Net loss on this program: ${usd(netLoss)}.`,
+        narrative: `This contract's NTE cannot cover a single tech-hour at current labour rates (${formatGbpUnit(27)}–${formatGbpUnit(37)}/hr). ${jobsOverNTE} of ${custJobs.length} jobs cost more than the NTE to execute. Net loss on this programme: ${usd(netLoss)}.`,
         evidence: [
           `Average NTE: ${usd(avgNTE)}`,
           `Average actual cost: ${usd(avgCost)}`,
@@ -692,8 +691,8 @@ function dataQualityFindings(data: ComputedData): BPFinding[] {
       id: "dq-implausible-margin",
       category: "data-quality",
       severity: "critical",
-      title: `${implausibleJobs.length} jobs show 85%+ margin on $500+ revenue — costs almost certainly incomplete`,
-      narrative: `These jobs report margins that are economically impossible for field services (labor billing rates of $95–$125/hr against tech costs of $27–$45/hr cap realistic margins around 60–70%). The actual costs in the field service platform appear to be partially posted. Combined revenue of ${usd(totalRevenueExcluded)} is excluded from validated metrics until cost posting is completed.`,
+      title: `${implausibleJobs.length} jobs show 85%+ margin on ${usd(500)}+ revenue — costs almost certainly incomplete`,
+      narrative: `These jobs report margins that are economically impossible for field services (labour billing rates of ${formatGbpUnit(95)}–${formatGbpUnit(125)}/hr against tech costs of ${formatGbpUnit(27)}–${formatGbpUnit(45)}/hr cap realistic margins around 60–70%). The actual costs in the field service platform appear to be partially posted. Combined revenue of ${usd(totalRevenueExcluded)} is excluded from validated metrics until cost posting is completed.`,
       evidence: sorted.slice(0, 5).map(j =>
         `Job ${j.jobNumber} (${j.customerName}): ${usd(j.totalAmount ?? 0)} revenue, ${usd(j.actualCost ?? 0)} cost, ${pct(j.marginPct ?? 0)} margin`
       ),
@@ -748,7 +747,7 @@ function dataQualityFindings(data: ComputedData): BPFinding[] {
         `Total cost exposure: ${usd(totalCostExposed)} across ${openUnbilledJobs.length} jobs`,
         ...topCustomers.slice(0, 5).map(([name, custJobs]) => {
           const custCost = custJobs.reduce((s, j) => s + (j.actualCost ?? 0), 0);
-          return `${name.split(",")[0]}: ${custJobs.length} open ${custJobs.length === 1 ? "job" : "jobs"}, ${usd(custCost)} in posted costs, $0 revenue`;
+          return `${name.split(",")[0]}: ${custJobs.length} open ${custJobs.length === 1 ? "job" : "jobs"}, ${usd(custCost)} in posted costs, ${usd(0)} revenue`;
         }),
       ],
       recommendation: `Monitor these open jobs. If they remain unbilled past 30 days, escalate to project management for invoicing. The ${usd(totalCostExposed)} in costs will correctly flow into margin calculations once revenue is posted.`,
@@ -848,11 +847,11 @@ function costIntelFindings(data: ComputedData): BPFinding[] {
         id: `cost-labor-variance-${c.customerName.replace(/\s+/g, "-").toLowerCase().slice(0, 25)}`,
         category: "margin-alert",
         severity: spread > 15 * SCALE ? "high" : "medium",
-        title: `${c.customerName.split(",")[0]}: labor rate ranges $${minRate.toFixed(0)}–$${maxRate.toFixed(0)}/hr across ${custJobsWithLabor.length} jobs`,
-        narrative: `A $${spread.toFixed(0)}/hr labor rate spread on the same account suggests inconsistent tech assignment or overtime billing. Standardizing near the average of $${targetRate}/hr would improve margin predictability.`,
+        title: `${c.customerName.split(",")[0]}: labour rate ranges ${formatGbpUnit(minRate)}–${formatGbpUnit(maxRate)}/hr across ${custJobsWithLabor.length} jobs`,
+        narrative: `A ${formatGbpUnit(spread)}/hr labour rate spread on the same account suggests inconsistent tech assignment or overtime billing. Standardising near the average of ${formatGbpUnit(targetRate)}/hr would improve margin predictability.`,
         evidence: [
-          `Min rate: $${minRate.toFixed(0)}/hr, Max rate: $${maxRate.toFixed(0)}/hr, Avg: $${avgRate.toFixed(0)}/hr`,
-          `${highRateJobs.length} jobs billed above $${(avgRate + 4).toFixed(0)}/hr`,
+          `Min rate: ${formatGbpUnit(minRate)}/hr, Max rate: ${formatGbpUnit(maxRate)}/hr, Avg: ${formatGbpUnit(avgRate)}/hr`,
+          `${highRateJobs.length} jobs billed above ${formatGbpUnit(avgRate + 4)}/hr`,
           savingsEstimate > 50 * SCALE ? `Estimated savings from rate normalization: ${usd(savingsEstimate)}` : "",
         ].filter(Boolean),
         recommendation: `Review tech assignments for ${c.customerName.split(",")[0]} going forward. If senior techs are dispatched for routine work, redeploy to higher-value calls. Projected margin improvement: ${usd(savingsEstimate)}/yr.`,
@@ -907,10 +906,10 @@ function costIntelFindings(data: ComputedData): BPFinding[] {
       id: "cost-sync-issue",
       category: "data-quality",
       severity: "high",
-      title: `${syncIssueJobs.length} jobs have cost line items but $0 actual cost — platform sync issue`,
-      narrative: `These jobs have detailed cost line items totaling ${usd(totalLineCost)} but show $0 in the actualCost field. This is a platform rollup/sync failure, not genuinely zero-cost work. The margin on these jobs is overstated.`,
+      title: `${syncIssueJobs.length} jobs have cost line items but ${usd(0)} actual cost — platform sync issue`,
+      narrative: `These jobs have detailed cost line items totaling ${usd(totalLineCost)} but show ${usd(0)} in the actualCost field. This is a platform rollup/sync failure, not genuinely zero-cost work. The margin on these jobs is overstated.`,
       evidence: syncIssueJobs.slice(0, 5).map(j =>
-        `Job ${j.jobNumber} (${j.customerName}): ${j.costBreakdown!.lineCount} cost lines totaling ${usd(j.costBreakdown!.totalLineCost)}, actualCost = $0`
+        `Job ${j.jobNumber} (${j.customerName}): ${j.costBreakdown!.lineCount} cost lines totaling ${usd(j.costBreakdown!.totalLineCost)}, actualCost = ${usd(0)}`
       ),
       recommendation: `Trigger a cost rollup refresh in the field service platform for ${syncIssueJobs.length === 1 ? "this job" : `these ${syncIssueJobs.length} jobs`}. ${usd(totalLineCost)} in costs should be reflected in actuals.`,
       page: "customer-intel",
@@ -1045,9 +1044,9 @@ function laborMarketFindings(data: ComputedData): BPFinding[] {
         category: "risk-flag",
         severity: wage.fourYearChangePct > 0.18 ? "high" : "medium",
         title: `${wage.metroArea}: HVAC tech wages up ${pct(wage.fourYearChangePct)} in 4 years — ${usd(annualLaborInflation)}/yr labor cost pressure`,
-        narrative: `BLS data shows ${wage.metroArea} HVAC technician wages grew from $${(earliest.meanAnnualWage / 1000).toFixed(0)}k to $${(latest.meanAnnualWage / 1000).toFixed(0)}k (${pct(wage.fourYearChangePct)}) between 2019-2023. At an estimated ${techCount} techs serving ${region.jobCount} jobs, this creates ~${usd(annualLaborInflation)}/yr in labor cost inflation. ${wage.notes}`,
+        narrative: `BLS data shows ${wage.metroArea} HVAC technician wages grew from ${formatGbp(earliest.meanAnnualWage)} to ${formatGbp(latest.meanAnnualWage)} (${pct(wage.fourYearChangePct)}) between 2019-2023. At an estimated ${techCount} techs serving ${region.jobCount} jobs, this creates ~${usd(annualLaborInflation)}/yr in labor cost inflation. ${wage.notes}`,
         evidence: [
-          `2019 mean wage: $${(earliest.meanAnnualWage / 1000).toFixed(0)}k → 2023: $${(latest.meanAnnualWage / 1000).toFixed(0)}k`,
+          `2019 mean wage: ${formatGbp(earliest.meanAnnualWage)} → 2023: ${formatGbp(latest.meanAnnualWage)}`,
           `Location quotient: ${latest.locationQuotient?.toFixed(2) ?? "N/A"} (${(latest.locationQuotient ?? 0) < 0.9 ? "below-average tech density — supply constrained" : "adequate tech supply"})`,
           `Estimated tech pool: ${latest.employment?.toLocaleString() ?? "N/A"} in metro`,
           `National 4-year growth: ${pct(0.159)} — ${state} ${wage.fourYearChangePct > 0.159 ? "outpacing" : "trailing"} national`,
@@ -1080,7 +1079,7 @@ function laborMarketFindings(data: ComputedData): BPFinding[] {
           const latest = p.snapshots[p.snapshots.length - 1];
           return `${p.metroArea}: ${latest?.totalPermits.toLocaleString() ?? 0} total (${latest?.singleFamily.toLocaleString() ?? 0} SF, ${latest?.multiFamilyFivePlus.toLocaleString() ?? 0} MF 5+), ${p.constructionActivityLevel} activity`;
         }),
-        recommendation: `Target new construction HVAC contracts in ${signal.topMetro}. Each 1,000 residential permits generates ~$2-4M in commercial HVAC demand over 3 years. ${permits[0]?.notes ?? ""}`,
+        recommendation: `Target new construction HVAC contracts in ${signal.topMetro}. Each 1,000 residential permits generates ~${usd(2_000_000)}–${usd(4_000_000)} in commercial HVAC demand over 3 years. ${permits[0]?.notes ?? ""}`,
         page: "customer-intel",
         drillLevel: "region",
         regionScope: state,
@@ -1201,7 +1200,7 @@ function procurementFindings(): BPFinding[] {
       severity: "medium",
       title: "Anode tender exposed to aluminium alloy volatility",
       narrative:
-        "PKG-2104 closes 24 July with four bidders. Clause 7.1 fixed pricing must hold without a commodities-index rider, or the $118k savings target erodes on award.",
+        `PKG-2104 closes 24 July with four bidders. Clause 7.1 fixed pricing must hold without a commodities-index rider, or the ${usd(118000)} savings target erodes on award.`,
       evidence: [
         "S7-SCM-TC-2026 §7.1: fixed firm pricing, no escalation without an agreed commodities index.",
         "4 of 4 bidders acknowledged receipt; two clarifications answered inside the 7-day window.",

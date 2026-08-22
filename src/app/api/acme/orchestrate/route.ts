@@ -35,18 +35,18 @@ export async function POST(req: Request) {
 
     const rootCauseSection = orchestratorContext?.currentEntityRootCause
       ? `\n═══ ROOT CAUSE ANALYSIS FOR CURRENT ENTITY ═══
-INSTRUCTIONS: The data below contains RAW NUMBERS (decimals for percentages, integers for dollars).
+INSTRUCTIONS: The data below contains RAW NUMBERS (decimals for percentages, integers for USD seed amounts). Field names such as dollarImpact stay as written.
 - "currentMarginPct": 0.557 means 55.7% margin
-- "dollarImpact": 6200 means $6,200
-- "estimatedRecoveryDollars": 12000 means $12,000
+- "dollarImpact": 6200 means £4,898 at USD 1 = GBP 0.79 (prototype rate, 21 August 2026)
+- "estimatedRecoveryDollars": 12000 means £9,480
 
 For each driver below, you MUST write a prescription that:
 1. Names the customer (from "entity")
 2. Names the root cause (from "driver" — e.g., "pricing gap", "labor cost variance")
 3. Shows the MATH: take the dollarImpact, the detail, and the benchmarkComparison to compute a specific corrective action
-4. States the dollar recovery from that corrective action
+4. States the recovery in pounds from that corrective action
 
-CRITICAL: Do NOT round "$6,200" to "$6k" — use exact figures. Do NOT say "address" or "optimize" — say exactly WHAT to change, by HOW MUCH, for WHICH customer.
+CRITICAL: Do NOT round "£4,898" to "£5k" — use exact converted figures. Do NOT say "address" or "optimise" — say exactly WHAT to change, by HOW MUCH, for WHICH customer.
 
 Entity Root Cause Data:
 ${JSON.stringify(orchestratorContext.currentEntityRootCause, null, 1)}`
@@ -59,17 +59,17 @@ ${JSON.stringify(orchestratorContext.regionExternalData, null, 1)}`
 
     const topDragsSection = orchestratorContext?.topMarginDrags
       ? `\n═══ MARGIN DRAGS REQUIRING PRESCRIPTIVE ACTION ═══
-INSTRUCTIONS: Each object below is a customer dragging portfolio margin. ALL values are RAW NUMBERS.
+INSTRUCTIONS: Each object below is a customer dragging portfolio margin. ALL values are RAW NUMBERS. Field names such as dollarImpact stay as written.
 - "currentMarginPct": 0.25 → 25% margin; "gapToPortfolioPct": -0.30 → 30 points below portfolio
-- "dollarImpact": 3500 → $3,500 impact from that driver
-- "estimatedRecoveryDollars": 8000 → $8,000 total recoverable
+- "dollarImpact": 3500 → £2,765 at USD 1 = GBP 0.79 (prototype rate, 21 August 2026)
+- "estimatedRecoveryDollars": 8000 → £6,320 total recoverable
 
 For EACH drag below you MUST produce a separate bullet that:
 1. Starts with the customer name from "entity"
 2. Identifies the #1 driver from the "drivers" array (highest dollarImpact)
-3. Quotes the exact dollarImpact in dollars (e.g., $3,500 — NOT $4k)
+3. Quotes the converted pound figure (e.g., £2,765 — NOT £3k)
 4. Reads the "detail" and "benchmarkComparison" fields and converts them into a specific action (change X from Y to Z)
-5. Computes the recovery: corrective action × volume = dollars recovered
+5. Computes the recovery: corrective action × volume = pounds recovered
 
 DO NOT combine multiple drags into one bullet like "address negative-margin accounts." Each drag = one bullet with one customer's specific prescription.
 
@@ -99,7 +99,7 @@ ${JSON.stringify(orchestratorContext.expansionStrategy, null, 1)}`
     const pricingBandSection = orchestratorContext?.pricingBandIntelligence
       ? `\n═══ PRICING-BAND INTELLIGENCE (pre-computed win-rate inflection points) ═══
 Each entry is a job type with its sweet spot, ceiling, win-rate drop above ceiling, pending quotes at risk, and projected uplift from correct future pricing.
-On the Pricing Intel page, surface any job type with pending quotes priced above the ceiling as an immediate, dollar-quantified risk.
+On the Pricing Intel page, surface any job type with pending quotes priced above the ceiling as an immediate, pound-quantified risk.
 
 ${JSON.stringify(orchestratorContext.pricingBandIntelligence, null, 1)}`
       : ""
@@ -121,7 +121,7 @@ ${JSON.stringify(orchestratorContext.dispatchEfficiency, null, 1)}`
 
     const fuelExposureSection = orchestratorContext?.fuelExposure
       ? `\n═══ FLEET FUEL EXPOSURE (fleet card actuals) ═══
-Total fleet fuel cost, monthly burn, $0.10/gal sensitivity, division breakdown, and margin erosion factors.
+Total fleet fuel cost, monthly burn, 2p/litre sensitivity (USD $0.10/gal seed), division breakdown, and margin erosion factors.
 On the Pricing Intel page, frame as aggregate exposure + contract fuel-escalation clauses tied to fleet card actuals. Do NOT compute per-trip surcharges.
 
 ${JSON.stringify(orchestratorContext.fuelExposure, null, 1)}`
@@ -129,7 +129,7 @@ ${JSON.stringify(orchestratorContext.fuelExposure, null, 1)}`
 
     const userContent = `${languageInstruction}Synthesize the following specialist analyses into a unified intelligence briefing.
 
-HERO HEADLINE: headline.title and headline.narrative appear on Today's Focus. Write them as a calm fact plus the next action. Name the package, the days or date, and the dollar figure. Do not use threaten, jeopardise, expedite, crisis, or "Critical …" in the title.
+HERO HEADLINE: headline.title and headline.narrative appear on Today's Focus. Write them as a calm fact plus the next action. Name the package, the days or date, and the pound figure. Do not use threaten, jeopardise, expedite, crisis, or "Critical …" in the title.
 
 Navigation Context: ${JSON.stringify(drillState)}
 Active Page: ${pageContext}

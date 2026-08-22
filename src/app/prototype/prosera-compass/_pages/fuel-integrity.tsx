@@ -25,19 +25,16 @@ import {
   ComposedChart,
   Line,
 } from "recharts"
+import { formatGbp, formatGbpExact, formatFuelUnit, formatLitres, fuelSensitivityStep, formatEconomy } from "../_format"
 
 const SERVICE_VAN_MPG_LABEL = 15
 
 function fmtUsd(n: number): string {
-  const abs = Math.abs(n)
-  const sign = n < 0 ? "-" : ""
-  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`
-  if (abs >= 1_000) return `${sign}$${(abs / 1_000).toFixed(abs >= 10_000 ? 0 : 1)}k`
-  return `${sign}$${abs.toFixed(0)}`
+  return formatGbp(n)
 }
 
 function fmtUsdExact(n: number): string {
-  return `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return formatGbpExact(n)
 }
 
 function fmtPct(n: number): string {
@@ -102,7 +99,7 @@ function FleetSpendChart({ data, spikeMonth }: { data: CombinedFuelMonth[]; spik
           <div>
             <h3 className="text-sm font-semibold">Monthly Fleet Fuel Spend</h3>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              Fleet card transactions — 15-month series with unleaded $/gal overlay
+              Fleet card transactions — 15-month series with unleaded £/L overlay
             </p>
           </div>
           <div className="flex items-center gap-4 text-[10px]">
@@ -112,7 +109,7 @@ function FleetSpendChart({ data, spikeMonth }: { data: CombinedFuelMonth[]; spik
             </span>
             <span className="flex items-center gap-1.5">
               <span className="inline-block h-0.5 w-6 bg-red-500" />
-              Unleaded $/gal
+              Unleaded £/L
             </span>
           </div>
         </div>
@@ -137,7 +134,7 @@ function FleetSpendChart({ data, spikeMonth }: { data: CombinedFuelMonth[]; spik
               yAxisId="price"
               orientation="right"
               tick={{ fontSize: 9 }}
-              tickFormatter={(v: number) => `$${v.toFixed(2)}`}
+              tickFormatter={(v: number) => formatFuelUnit(v)}
               domain={[2.5, 6]}
               width={44}
             />
@@ -154,7 +151,7 @@ function FleetSpendChart({ data, spikeMonth }: { data: CombinedFuelMonth[]; spik
                       <span className="font-mono font-medium">{fmtUsdExact(d?.totalSpend ?? 0)}</span>
                     </div>
                     <div className="flex items-center justify-between gap-4">
-                      <span className="text-muted-foreground">Unleaded $/gal</span>
+                      <span className="text-muted-foreground">Unleaded £/L</span>
                       <span className="font-mono font-medium">${(d?.unleadedPPG ?? 0).toFixed(2)}</span>
                     </div>
                     {(d?.spikeImpact ?? 0) !== 0 && (
@@ -215,7 +212,7 @@ function EiaReferenceChart({ data, spikeWeek }: { data: PortfolioFuelExposure["w
           <AreaChart data={formatted} margin={{ top: 4, right: 12, bottom: 0, left: 4 }}>
             <CartesianGrid strokeDasharray="2 4" strokeOpacity={0.1} vertical={false} />
             <XAxis dataKey="weekLabel" tick={{ fontSize: 8 }} interval={6} />
-            <YAxis tick={{ fontSize: 8 }} tickFormatter={(v: number) => `$${v.toFixed(1)}`} domain={["auto", "auto"]} width={36} />
+            <YAxis tick={{ fontSize: 8 }} tickFormatter={(v: number) => formatFuelUnit(v)} domain={["auto", "auto"]} width={36} />
             <Area type="monotone" dataKey="gulfCoast" stroke={PADD_COLORS.gulfCoast} fill="transparent" strokeWidth={1.5} dot={false} />
             <Area type="monotone" dataKey="rockyMountain" stroke={PADD_COLORS.rockyMountain} fill="transparent" strokeWidth={1.5} dot={false} />
             <Area type="monotone" dataKey="westCoast" stroke={PADD_COLORS.westCoast} fill="transparent" strokeWidth={1.5} dot={false} />
@@ -265,11 +262,11 @@ function DivisionCard({ div }: { div: DivisionFuelSummary }) {
             <p className="font-mono text-xs font-medium">{fmtUsd(div.avgMonthlySpend)}</p>
           </div>
           <div>
-            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Total gallons</p>
-            <p className="font-mono text-xs font-medium">{Math.round(div.totalAnnualGallons).toLocaleString()}</p>
+            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Total litres</p>
+            <p className="font-mono text-xs font-medium">{formatLitres(div.totalAnnualGallons)}</p>
           </div>
           <div>
-            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Unleaded $/gal trend</p>
+            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Unleaded £/L trend</p>
             <p className="font-mono text-xs font-medium">
               ${div.baselineAvgPricePerGal.toFixed(2)} → <span className={div.priceDeltaPct > 0 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}>
                 ${div.currentAvgPricePerGal.toFixed(2)}
@@ -305,7 +302,7 @@ function FuelSensitivityCard({ sensitivity }: { sensitivity: FuelSensitivityAnal
         <div className="mb-4">
           <h3 className="text-sm font-semibold">Fuel Price Sensitivity</h3>
           <p className="text-[11px] text-muted-foreground mt-0.5">
-            Fleet burns {Math.round(sensitivity.annualGallons).toLocaleString()} gal/yr — every $0.10/gal move = {fmtUsd(sensitivity.impactPerDime)}/yr impact
+            Fleet burns {formatLitres(sensitivity.annualGallons)}/yr — every {fuelSensitivityStep()} move = {fmtUsd(sensitivity.impactPerDime)}/yr impact
           </p>
         </div>
 
@@ -316,10 +313,10 @@ function FuelSensitivityCard({ sensitivity }: { sensitivity: FuelSensitivityAnal
           </div>
           <div className="text-center">
             <p className="font-mono text-2xl font-bold text-foreground">{fmtUsd(sensitivity.impactPerDime)}</p>
-            <p className="text-[10px] text-muted-foreground mt-1">annual fleet cost impact per $0.10/gal price move</p>
+            <p className="text-[10px] text-muted-foreground mt-1">annual fleet cost impact per {fuelSensitivityStep()} price move</p>
           </div>
           <div className="flex items-center justify-between mt-3 text-[10px] text-muted-foreground">
-            <span>{Math.round(sensitivity.annualGallons).toLocaleString()} gal/yr</span>
+            <span>{formatLitres(sensitivity.annualGallons)}/yr</span>
             <span>${sensitivity.baselinePricePerGal.toFixed(2)} baseline → ${sensitivity.currentPricePerGal.toFixed(2)} current</span>
           </div>
         </div>
@@ -463,7 +460,7 @@ export function FuelIntegritySection() {
         <SafeIcon name="Fuel" className="h-4 w-4 text-red-600 dark:text-red-400" />
         <h3 className="text-sm font-semibold">Fuel &amp; Fleet Cost Intelligence</h3>
         <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
-          {fmtUsd(act.totalAnnualSpend)} annual fleet fuel · {(act.unleadedPctOfVolume * 100).toFixed(0)}% unleaded · every $0.10/gal = {fmtUsd(fuel.sensitivity.impactPerDime)}/yr
+          {fmtUsd(act.totalAnnualSpend)} annual fleet fuel · {(act.unleadedPctOfVolume * 100).toFixed(0)}% unleaded · every {fuelSensitivityStep()} = {fmtUsd(fuel.sensitivity.impactPerDime)}/yr
         </span>
       </div>
 
@@ -490,7 +487,7 @@ export function FuelIntegritySection() {
         <KpiCard
           label="Fleet Fuel Mix"
           value={`${(act.unleadedPctOfVolume * 100).toFixed(0)}% unleaded`}
-          sublabel={`${(100 - act.unleadedPctOfVolume * 100).toFixed(0)}% other (incl. diesel) · ${SERVICE_VAN_MPG_LABEL} MPG avg`}
+          sublabel={`${(100 - act.unleadedPctOfVolume * 100).toFixed(0)}% other (incl. diesel) · ${formatEconomy(SERVICE_VAN_MPG_LABEL)} avg`}
           severity="info"
         />
       </div>

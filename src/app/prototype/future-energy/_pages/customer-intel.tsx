@@ -293,7 +293,7 @@ function useExecutiveBrief(
           `The state runs ${Math.abs(delta * 100).toFixed(1)} percentage points ${delta >= 0 ? "above" : "below"} the portfolio average of ${fmtPct(portfolioSummary.validated.avgMarginPct)}, ${delta >= 0 ? "contributing positive margin uplift" : "dragging overall portfolio performance"}.`,
           `${bestCity && worstCity && bestCity.city !== worstCity.city ? `${bestCity.city} leads at ${fmtPct(bestCity.avgMarginPct)} while ${worstCity.city} trails at ${fmtPct(worstCity.avgMarginPct)} — a ${((bestCity.avgMarginPct - worstCity.avgMarginPct) * 100).toFixed(1)}pt spread.` : `No city-to-city margin comparison for ${cities.length} ${cities.length === 1 ? "city" : "cities"}.`}`,
           `${regionExitCount} Dogs accounts are destroying ${fmtUsd(Math.abs(exitLoss))} in margin through negative-margin jobs, predominantly driven by pricing misalignment or unbilled labor.`,
-          `Prioritize Dogs cleanup ${worstCity ? `starting in ${worstCity.city}` : ""} and replicate ${regionCloneCount > 0 ? `the ${regionCloneCount} Stars accounts` : "proven margin models"} to establish acquisition DNA for PE scaling in ${localizeActiveCopy(label)}.`,
+          `Prioritise Dogs cleanup ${worstCity ? `starting in ${worstCity.city}` : ""} and replicate ${regionCloneCount > 0 ? `the ${regionCloneCount} Stars accounts` : "proven margin models"} to establish acquisition DNA for PE scaling in ${localizeActiveCopy(label)}.`,
         ],
         bullets: [
           `Investigate ${cities.length} markets for pricing variance across ${fmtUsd(filteredRegion.validated.totalRevenue)} in revenue.`,
@@ -318,7 +318,7 @@ function useExecutiveBrief(
         `The top ${portfolioSummary.topMarginCustomerPct.toFixed(0)}% of customers deliver ${portfolioSummary.topMarginSharePct}% of total margin.`,
         `${bestRegion && worstRegion ? `${regionLabels[bestRegion.region] ?? bestRegion.region} leads at ${fmtPct(bestRegion.validated.avgMarginPct)} while ${regionLabels[worstRegion.region] ?? worstRegion.region} trails at ${fmtPct(worstRegion.validated.avgMarginPct)} — a ${regionSpread}pt spread.` : `No prior-period data to compare regional performance.`}`,
         `${exitCustomers.length} Dogs accounts are destroying ${fmtUsd(Math.abs(exitLoss))} in margin, while ${nteEscalations.length} NTE scope escalation events add dispatch friction when jobs exceed customer-set authorization caps.`,
-        `Prioritize Dogs cleanup, replicate Stars DNA (${cloneCustomers.length} accounts averaging ${fmtPct(cloneCustomers.length > 0 ? cloneCustomers.reduce((s, c) => s + c.validated.avgMarginPct, 0) / cloneCustomers.length : 0)} margin) into acquisition targeting, and close the ${regionSpread ?? "0"}pt regional margin gap.`,
+        `Prioritise Dogs cleanup, replicate Stars DNA (${cloneCustomers.length} accounts averaging ${fmtPct(cloneCustomers.length > 0 ? cloneCustomers.reduce((s, c) => s + c.validated.avgMarginPct, 0) / cloneCustomers.length : 0)} margin) into acquisition targeting, and close the ${regionSpread ?? "0"}pt regional margin gap.`,
       ],
       bullets: [
         `Replicate Stars DNA from ${cloneCustomers.length} high-margin accounts averaging ${fmtPct(cloneCustomers.length > 0 ? cloneCustomers.reduce((s, c) => s + c.validated.avgMarginPct, 0) / cloneCustomers.length : 0)} for acquisition targeting.`,

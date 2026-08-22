@@ -21,6 +21,16 @@ import type { AppSpec } from "./_modules/spec"
 import type { GateTaskStatus } from "./_diamond/types"
 import type { MissionStage } from "./_diamond/stages"
 import {
+  type AwardActor,
+  type AwardApprovalRecord,
+  type AwardApprovalSnapshot,
+  type AwardDecision,
+  confirmSupplierAward,
+  recordAwardDecision,
+  selectRecommendedSupplier,
+  submitAwardApprovalRequest,
+} from "@/lib/compass/award-governance"
+import {
   buildPortfolioContext,
   buildPricingContext,
   buildMarketContext,
@@ -169,6 +179,13 @@ export interface AcmeDemoStore {
   /** Package to focus when Bid Evaluation opens (set by the board's Evaluate bids action). */
   focusEvalPackageId: string | null
   openBidEvaluation: (packageId: string | null) => void
+
+  /** Session award-approval workflow, keyed by package / mission id. */
+  awardApprovals: Record<string, AwardApprovalRecord>
+  selectAwardRecommendation: (packageId: string, snapshot: AwardApprovalSnapshot, actor: AwardActor) => void
+  submitAwardApproval: (packageId: string, actor: AwardActor) => void
+  decideAwardApproval: (packageId: string, decision: AwardDecision, comments: string, actor: AwardActor) => void
+  confirmAward: (packageId: string, actor: AwardActor) => void
 
   /** Catalogue of completed ITT drafts (persisted across navigation and reloads). */
   draftedTenders: DraftedTender[]
@@ -1016,10 +1033,43 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
   const [tenderStages, setTenderStages] = React.useState<Record<string, MissionStage>>({})
   const [focusTenderId, setFocusTenderId] = React.useState<string | null>(null)
   const [focusEvalPackageId, setFocusEvalPackageId] = React.useState<string | null>(null)
+  const [awardApprovals, setAwardApprovals] = React.useState<Record<string, AwardApprovalRecord>>({})
 
   const advanceTenderStage = React.useCallback((packageId: string, stage: MissionStage) => {
     setTenderStages(prev => ({ ...prev, [packageId]: stage }))
   }, [])
+
+  const selectAwardRecommendation = React.useCallback((packageId: string, snapshot: AwardApprovalSnapshot, actor: AwardActor) => {
+    setAwardApprovals(prev => ({
+      ...prev,
+      [packageId]: selectRecommendedSupplier(prev[packageId], snapshot, actor),
+    }))
+  }, [])
+
+  const submitAwardApproval = React.useCallback((packageId: string, actor: AwardActor) => {
+    setAwardApprovals(prev => {
+      const current = prev[packageId]
+      if (!current) return prev
+      return { ...prev, [packageId]: submitAwardApprovalRequest(current, actor) }
+    })
+  }, [])
+
+  const decideAwardApproval = React.useCallback((packageId: string, decision: AwardDecision, comments: string, actor: AwardActor) => {
+    setAwardApprovals(prev => {
+      const current = prev[packageId]
+      if (!current) return prev
+      return { ...prev, [packageId]: recordAwardDecision(current, decision, comments, actor) }
+    })
+  }, [])
+
+  const confirmAward = React.useCallback((packageId: string, actor: AwardActor) => {
+    setAwardApprovals(prev => {
+      const current = prev[packageId]
+      if (!current || current.status !== "approved_for_award") return prev
+      return { ...prev, [packageId]: confirmSupplierAward(current, actor) }
+    })
+    advanceTenderStage(packageId, "outcome_roi")
+  }, [advanceTenderStage])
 
   const openTenderStudio = React.useCallback((packageId: string | null) => {
     setFocusTenderId(packageId)
@@ -1267,6 +1317,11 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
       openTenderStudio,
       focusEvalPackageId,
       openBidEvaluation,
+      awardApprovals,
+      selectAwardRecommendation,
+      submitAwardApproval,
+      decideAwardApproval,
+      confirmAward,
       draftedTenders,
       saveDraftedTender,
       deleteDraftedTender,
@@ -1289,7 +1344,7 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
       deletedCustomApps,
       restoreCustomApp,
     }),
-    [state, actions, derived, authenticated, login, agentState, chatMessages, chatLoading, sendChatMessage, clearChat, sandboxOpen, biOpen, intelPanelOpen, savedScenarios, saveScenario, deleteScenario, missionPriority, setMissionPriority, focusMissionId, setFocusMission, tenderStages, advanceTenderStage, focusTenderId, openTenderStudio, focusEvalPackageId, openBidEvaluation, draftedTenders, saveDraftedTender, deleteDraftedTender, taskActions, markTaskComplete, overrideTask, postponeTask, sendTaskAlert, boards, getBoard, setBoardOrder, setModuleHidden, setBoardHero, openModuleId, openModule, closeModule, customApps, saveCustomApp, deleteCustomApp, deletedCustomApps, restoreCustomApp]
+    [state, actions, derived, authenticated, login, agentState, chatMessages, chatLoading, sendChatMessage, clearChat, sandboxOpen, biOpen, intelPanelOpen, savedScenarios, saveScenario, deleteScenario, missionPriority, setMissionPriority, focusMissionId, setFocusMission, tenderStages, advanceTenderStage, focusTenderId, openTenderStudio, focusEvalPackageId, openBidEvaluation, awardApprovals, selectAwardRecommendation, submitAwardApproval, decideAwardApproval, confirmAward, draftedTenders, saveDraftedTender, deleteDraftedTender, taskActions, markTaskComplete, overrideTask, postponeTask, sendTaskAlert, boards, getBoard, setBoardOrder, setModuleHidden, setBoardHero, openModuleId, openModule, closeModule, customApps, saveCustomApp, deleteCustomApp, deletedCustomApps, restoreCustomApp]
   )
 
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>

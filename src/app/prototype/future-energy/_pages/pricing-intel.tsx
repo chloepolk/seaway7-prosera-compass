@@ -1,6 +1,6 @@
 "use client"
 
-import { activeLocaleTag, formatActivePercent, formatActiveUsd, localizeActiveCopy } from "../_i18n/legacy"
+import { activeLocaleTag, formatActivePercent, formatActiveUsd, localizeActiveCopy, formatActiveFuelSensitivityStep } from "../_i18n/legacy"
 
 import * as React from "react"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
@@ -703,12 +703,12 @@ function fuelSummary(data: ComputedData): ModuleSummary {
   }
   const act = fuel.actuals
   return {
-    headline: `${fmtUsd(act.totalAnnualSpend)} annual fleet fuel with a ${fmtUsd(act.spikeImpactDollars)} spike month. ${localizeActiveCopy("Every $0.10/gal moves")} ${fmtUsd(fuel.sensitivity.impactPerDime)}/${localizeActiveCopy("yr")}.`,
+    headline: `${fmtUsd(act.totalAnnualSpend)} annual fleet fuel with a ${fmtUsd(act.spikeImpactDollars)} spike month. ${localizeActiveCopy("Every $0.10/gal moves")} ${fmtUsd(fuel.sensitivity.impactPerDime)}/${localizeActiveCopy("yr")}.`.replace("Every $0.10/gal moves", `Every ${formatActiveFuelSensitivityStep()} moves`),
     severity: "high",
     figures: [
       { value: fmtUsd(act.totalAnnualSpend), label: "annual fuel", tone: "neutral" },
       { value: `+${fmtUsd(act.spikeImpactDollars)}`, label: "spike impact", tone: "bad" },
-      { value: fmtUsd(fuel.sensitivity.impactPerDime), label: localizeActiveCopy("per $0.10/gal"), tone: "neutral" },
+      { value: fmtUsd(fuel.sensitivity.impactPerDime), label: `per ${formatActiveFuelSensitivityStep()}`, tone: "neutral" },
     ],
   }
 }

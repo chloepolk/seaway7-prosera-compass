@@ -1,4 +1,4 @@
-import {activeLocaleTag, formatActiveUsd, formatActiveEurUnit } from "../_i18n/legacy"
+import {activeLocaleTag, formatActiveUsd, formatActiveFuelUnit } from "../_i18n/legacy"
 /* ------------------------------------------------------------------ */
 /*  Market Expansion Prescriptions Engine                              */
 /*                                                                     */
@@ -226,7 +226,7 @@ function buildMarketSignals(region: Region, sc: StrategyScorecard, regionAgg: Re
   signals.push({
     source: "EIA",
     metric: `Fuel cost trend (${eiaFuel.paddLabel})`,
-    value: `${formatActiveEurUnit(eiaFuel.recentAvg)}/gal (${eiaFuel.deltaPct > 0 ? "+" : ""}${(eiaFuel.deltaPct * 100).toFixed(1)}% from baseline ${formatActiveEurUnit(eiaFuel.baselineAvg)})`,
+    value: `${formatActiveFuelUnit(eiaFuel.recentAvg)}/L (${eiaFuel.deltaPct > 0 ? "+" : ""}${(eiaFuel.deltaPct * 100).toFixed(1)}% from baseline ${formatActiveFuelUnit(eiaFuel.baselineAvg)})`,
     implication: eiaFuel.deltaPct > 0.25
       ? `${eiaFuel.paddLabel} fuel is ${(eiaFuel.deltaPct * 100).toFixed(1)}% above baseline. Add a contract fuel clause.`
       : eiaFuel.deltaPct > 0.10

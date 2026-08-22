@@ -1,26 +1,15 @@
 "use client"
 
-
-
 import * as React from "react"
-
 import { cn } from "@/lib/utils"
-
 import type { PortfolioRoi } from "../../_diamond/adapter"
-
 import { formatCurrency } from "../../_diamond/stages"
-
 import { enterMotion, sparkDrawMotion } from "../motion"
 import { ReasoningTooltip } from "../reasoning-disclosure"
-
-
+import { formatGbp } from "../../_format"
 
 function compactUsd(n: number): string {
-  const sign = n < 0 ? "-" : ""
-  const abs = Math.abs(n)
-  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(2)}M`
-  if (abs >= 1_000) return `${sign}$${Math.round(abs / 1_000)}k`
-  return `${sign}$${abs}`
+  return formatGbp(n)
 }
 
 

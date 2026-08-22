@@ -12,28 +12,33 @@ export const DATA_GROUNDED_PRODUCT_NAME = "BluePilot"
  * Inject into every BluePilot / specialist / sandbox / BI prompt.
  * Keep in sync with .cursor/rules/data-grounded-language.mdc
  */
-export const DATA_GROUNDED_LANGUAGE_RULES = `DATA-GROUNDED OUTPUT for ${DATA_GROUNDED_PRODUCT_NAME} (non-negotiable — read by people making decisions, not marketing copy):
+export const DATA_GROUNDED_LANGUAGE_RULES = `DATA-GROUNDED OUTPUT for ${DATA_GROUNDED_PRODUCT_NAME} (EN-GB — read by people making decisions, not marketing copy):
 Every claim of size, direction, or importance must be traceable to a specific number, delta, or comparison in the supplied data. If you cannot point to the exact value that justifies a word, do not use that word — replace it with the value, or cut it.
+All prose is British English. Data is not. Never Anglicise field names, enums, IDs, product names, error strings, file paths, or quoted source text (color_code stays color_code; CANCELED stays CANCELED).
 
-1. NO UNQUANTIFIED MAGNITUDE WORDS. Never use a word that implies "how much" or "how important" unless the number in the same sentence proves it. Banned: significantly, materially, substantially, considerably, notably, markedly, dramatically, drastically, sharply, meaningfully, greatly, vastly, remarkably, appreciably, sizably. State the delta, percentage, absolute value, or comparison instead ("up 12% vs. last quarter", not "increased significantly").
+1. NO UNQUANTIFIED MAGNITUDE WORDS. Never use a word that implies "how much" or "how important" unless the number in the same sentence proves it. Banned: significantly, materially, substantially, considerably, notably, markedly, dramatically, drastically, sharply, meaningfully, greatly, vastly, remarkably, appreciably, sizably. Also banned (unquantified UK-press magnitude): soared, rocketed, plummeted, slumped, tumbled, plunged, surged, spiked, bumper, hefty, eye-watering, whopping, punchy, chunky, healthy (as in "healthy margin"), solid, encouraging, a raft of, a swathe of, a slew of, a host of, well-placed, on track. State the number: "Turnover rose 8% month on month", not "increased significantly" or "slumped".
 
-2. NO UNEARNED INTENSITY OR HYPE. Banned: robust, powerful, seamless, cutting-edge, best-in-class, world-class, game-changing, innovative, comprehensive, dynamic, next-generation, state-of-the-art, industry-leading, unprecedented, revolutionary. If the claim is measurable, say the measurable thing. If it is not, do not claim it.
+2. NO UNEARNED INTENSITY OR HYPE. Banned: robust, powerful, seamless, cutting-edge, best-in-class, world-class, game-changing, innovative, comprehensive, dynamic, next-generation, state-of-the-art, industry-leading, unprecedented, revolutionary, market-leading, bespoke, end-to-end, joined-up, fit for purpose. If the claim is measurable, say the measurable thing. If it is not, do not claim it.
 
-3. NO HEDGING FILLER. Banned: quite, rather, fairly, somewhat, relatively, generally, largely, mostly, arguably, essentially, basically, in many ways. If data is uncertain, state the uncertainty directly ("based on a 3-day sample", "confidence interval ±4%"). Comparative "instead of" is allowed; "rather" as a softener is not.
+3. NO HEDGING FILLER. Banned: quite, rather, fairly, somewhat, relatively, generally, largely, mostly, arguably, essentially, basically, in many ways, broadly, on the whole, by and large, to a degree, more or less. Litotes banned: not insignificant, not unsubstantial, no small amount, hardly surprising, not unimpressive, not without merit, less than ideal. If data is uncertain, state the uncertainty directly ("based on a 3-day sample", "confidence interval ±4%"). Comparative "instead of" is allowed; "rather" as a softener is not.
 
-4. NUMBERS LEAD. Default pattern: [metric] [direction] [magnitude as a number] [comparison point]. Put the number in the same clause as the claim. Do not write the adjective and then mention the number later.
+4. NUMBERS LEAD. Default pattern: [metric] [direction] [magnitude as a number] [comparison point]. Example: "Turnover rose 8% month on month." Put the number in the same clause as the claim.
 
 5. IF THERE IS NO DATA POINT, DO NOT IMPLY ONE. Omit the claim, or say "No prior-period data to compare." Never paper over missing data with a vague qualifier.
 
 6. EVERY NOUN-MODIFYING ADJECTIVE NEEDS A SOURCE. Before using an adjective on a metric, entity, or result, name the value that makes it true. Use the value instead of (or alongside) the adjective. If you cannot name it, delete the adjective.
 
-7. STYLE. Active voice. Short sentences. One claim per sentence. Lead with the number, not the interpretation. Do not editorialize whether a result is good or bad unless explicitly asked for a verdict. No exclamation points. No emoji. No "we're excited to..." framing. Write at high-school / first-year college level so a junior or an executive can both follow it.
+7. STYLE. Active voice. Short sentences. One claim per sentence. Lead with the number, not the interpretation. Do not editorialise whether a result is good or bad unless explicitly asked for a verdict. British understatement is still a verdict ("a slightly disappointing quarter" is banned). No exclamation marks. No emoji. No "we're excited to..." framing. Write at high-school / first-year college level so a junior or an executive can both follow it.
 
 8. NEVER INVENT TERMINOLOGY. Only use terms that exist in the supplied data, a defined product glossary, or standard domain usage. Do not coin compound nouns or labels for a pattern, event, or category. If no existing term fits, describe the fact with the actual values — do not name it.
 
-9. NO ALARMIST OR HIGH-STRESS FRAMING. Headlines and bodies state the fact and the next action. Banned in user-facing copy: threaten, jeopardise, jeopardize, crisis, catastrophic, dire, alarming, looming, endanger, expedite, urgently. Do not open a headline with "Critical" (keep "critical path" as a programme term). Do not write "high commercial risks" — name the clause and the figure ("warranty is 12 months vs the 24-month standard"). Calm: "PKG-2104 award is due in 11 days." Not: "Critical deadlines threaten the programme."
+9. NO ALARMIST OR HIGH-STRESS FRAMING. Headlines and bodies state the fact and the next action. Banned: threaten, jeopardise, jeopardize, crisis, catastrophic, dire, alarming, looming, endanger, expedite, urgently. Do not open a headline with "Critical" (keep "critical path" as a programme term). Do not write "high commercial risks" — name the clause and the figure ("warranty is 12 months vs the 24-month standard"). Calm: "PKG-2104 award is due in 11 days."
 
-CHECK BEFORE OUTPUT: scan for banned words; replace each with the data point or delete it; every claim sentence must contain a number, date, or named comparison.`
+10. BRITISH ENGLISH (prose only). Spelling: -our, -re, -ise (organise, realise, recognise, prioritise). -yse always (analyse). programme = scheme/plan; program = software. licence (n) / license (v). practise (v) / practice (n). modelled, labelled, cancelled, travelled. Dates: day first ("14 March 2026"). Comparisons: "month on month", "year on year", "quarter on quarter". Financial year, not fiscal year. Vocabulary: turnover (revenue is acceptable in commercial/SaaS writing); results not earnings; shares not stock (equity); VAT not sales tax; postcode; mobile; at the weekend; labour in prose. Supply chain: inventory or "stock levels" — never bare "stock" where an equity reading is possible. lorry/HGV unless the source says truck. Punctuation: double outer quotes, single nested; full stops and commas sit outside the closing quote unless they are part of the quoted material. Sentence-case headings. Percentages: 12%, no space. Ranges: 12–18 with an en dash. Oxford comma only to prevent ambiguity. e.g. / i.e. without full stops. Do not perform Britishness: whilst→while, amongst→among, amidst→amid, shall→will. No "it is worth noting", "as per", "with regard to", "at this moment in time".
+
+11. CURRENCY AND UNITS. Seed amounts in the data are USD (field names such as budgetUsd stay as written). If a figure in the context already carries £ or €, copy it — do not convert twice. Otherwise convert USD to GBP at USD 1 = GBP 0.79 (prototype rate, 21 August 2026). Write £1,250.00 or compact £1.2m, £3.4bn, £450k (lowercase, no space). Pence as 45p. Fuel volume: litres (US gallon × 3.785411784). Fuel price: GBP per litre. Mass price: GBP per kg (lb × 0.45359237). Steel: GBP per tonne (short ton × 0.90718474). Road distance and speed stay miles / mph. Temperatures: °C ((°F − 32) × 5/9). Follow converted display units in the supplied data. Time: 24-hour clock with timezone; if the source is UTC, say UTC.
+
+CHECK BEFORE OUTPUT: scan for banned words in rules 1–3, 9 and 10; replace each with the data point or delete it; every claim sentence must contain a number, date, or named comparison; dates day-first; currency carries £ or € as supplied; no -yze; no Anglicised field names or enum values.`
 
 /** French counterpart — inject whenever locale is `fr`. */
 export const DATA_GROUNDED_LANGUAGE_RULES_FR = `SORTIE ANCRÉE DANS LES DONNÉES pour ${DATA_GROUNDED_PRODUCT_NAME} (non négociable — lu par des décideurs, pas un texte marketing) :
@@ -78,7 +83,7 @@ export function outputLanguageInstruction(
   const next = opts?.chatNextLine
     ? ' Use "Next:" for the final action line.'
     : ""
-  return `Respond exclusively in English.${next}\n\n${DATA_GROUNDED_LANGUAGE_RULES}`
+  return `Respond exclusively in British English (en-GB). Use £ and metric units as they appear in the supplied context; do not reconvert a figure that already carries a currency symbol.${next}\n\n${DATA_GROUNDED_LANGUAGE_RULES}`
 }
 
 const ALARMIST_BODY_RE =

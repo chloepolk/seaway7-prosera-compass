@@ -10,8 +10,9 @@ import { DEFAULT_SCENARIO } from "./types"
 import { projectAll, getDogsCount, getCurrentFuelPrice, getDogsNames } from "./projections"
 import { buildSandboxPrompt } from "./prompt"
 import { buildPortfolioContext } from "../agents/_context"
+import { formatGbp, formatFuelUnit } from "../_format"
 
-const usd = (n: number) => (n >= 0 ? "+$" : "-$") + Math.abs(Math.round(n)).toLocaleString()
+const usd = (n: number) => `${n >= 0 ? "+" : ""}${formatGbp(n, false)}`
 const pts = (n: number) => (n >= 0 ? "+" : "") + n.toFixed(1)
 const bps = (n: number) => (n >= 0 ? "+" : "") + Math.round(n)
 
@@ -165,7 +166,7 @@ export function SandboxDrawer() {
       "── Scenario Parameters ──",
       `Customer Mix: Exit ${scenario.customerMix.exitDogs} Dogs, Add ${scenario.customerMix.addStars} Stars`,
       `Pricing: Labor ${scenario.pricing.laborMultiplier > 0 ? scenario.pricing.laborMultiplier.toFixed(1) + "x" : "unchanged"}, Material ${scenario.pricing.materialMarkupPct > 0 ? scenario.pricing.materialMarkupPct + "%" : "unchanged"}`,
-      `Fuel: $${scenario.fuel.pricePerGal.toFixed(2)}/gal`,
+      `Fuel: ${formatFuelUnit(scenario.fuel.pricePerGal)}/L`,
       `NTE friction sensitivity: ${scenario.nte.thresholdMultiplier.toFixed(1)}x`,
       "",
       "── Projected Impact ──",
@@ -458,18 +459,18 @@ function FuelLevers({ scenario, currentPrice, onUpdate }: {
         Fuel Price Scenario
       </div>
       <LeverSlider
-        label="Unleaded price per gallon"
+        label="Unleaded price per litre"
         value={scenario.fuel.pricePerGal}
         min={2.50}
         max={6.00}
         step={0.05}
-        displayValue={`$${scenario.fuel.pricePerGal.toFixed(2)}`}
+        displayValue={formatFuelUnit(scenario.fuel.pricePerGal)}
         onChange={v => onUpdate(s => ({ ...s, fuel: { pricePerGal: v } }))}
       />
       <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-        <span>Current: ${currentPrice.toFixed(2)}</span>
+        <span>Current: {formatFuelUnit(currentPrice)}</span>
         <span className={cn(delta > 0 ? "text-[var(--color-accent-critical-text)]" : delta < 0 ? "text-[var(--color-accent-positive-text)]" : "")}>
-          {delta > 0 ? "+" : ""}{delta.toFixed(2)}/gal
+          {delta > 0 ? "+" : ""}{formatFuelUnit(delta)}/L
         </span>
       </div>
     </>

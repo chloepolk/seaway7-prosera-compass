@@ -1,5 +1,5 @@
 import type { Job } from "./_transform";
-import { formatActiveEurUnit } from "../_i18n/legacy"
+import { formatActiveFuelUnit } from "../_i18n/legacy"
 import type { Region } from "./_regions";
 import { getEIAFuelForRegion, getEIAFuelSummaryForRegion, paddLabels, type PADDRegion, type EIAFuelPrice } from "./_eia";
 import { getWageForRegion } from "./_labor";
@@ -202,7 +202,7 @@ function buildFuelSensitivity(atobActuals: FleetFuelActuals): FuelSensitivityAna
   const scenarios: FuelSensitivityScenario[] = [
     {
       name: "return-to-baseline",
-      label: `Return to baseline (${formatActiveEurUnit(baselinePrice)}/gal)`,
+      label: `Return to baseline (${formatActiveFuelUnit(baselinePrice)}/L)`,
       pricePerGal: baselinePrice,
       annualFleetCost: baselineAnnualCost,
       deltaVsBaseline: 0,
@@ -210,7 +210,7 @@ function buildFuelSensitivity(atobActuals: FleetFuelActuals): FuelSensitivityAna
     },
     {
       name: "hold-current",
-      label: `Hold at current (${formatActiveEurUnit(currentPrice)}/gal)`,
+      label: `Hold at current (${formatActiveFuelUnit(currentPrice)}/L)`,
       pricePerGal: currentPrice,
       annualFleetCost: currentAnnualCost,
       deltaVsBaseline: currentAnnualCost - baselineAnnualCost,
@@ -218,7 +218,7 @@ function buildFuelSensitivity(atobActuals: FleetFuelActuals): FuelSensitivityAna
     },
     {
       name: "plus-10pct",
-      label: `+10% from current (${formatActiveEurUnit((currentPrice * 1.1))}/gal)`,
+      label: `+10% from current (${formatActiveFuelUnit((currentPrice * 1.1))}/L)`,
       pricePerGal: currentPrice * 1.1,
       annualFleetCost: annualGallons * currentPrice * 1.1,
       deltaVsBaseline: annualGallons * currentPrice * 1.1 - baselineAnnualCost,
@@ -226,7 +226,7 @@ function buildFuelSensitivity(atobActuals: FleetFuelActuals): FuelSensitivityAna
     },
     {
       name: "plus-25pct",
-      label: `+25% from current (${formatActiveEurUnit((currentPrice * 1.25))}/gal)`,
+      label: `+25% from current (${formatActiveFuelUnit((currentPrice * 1.25))}/L)`,
       pricePerGal: currentPrice * 1.25,
       annualFleetCost: annualGallons * currentPrice * 1.25,
       deltaVsBaseline: annualGallons * currentPrice * 1.25 - baselineAnnualCost,

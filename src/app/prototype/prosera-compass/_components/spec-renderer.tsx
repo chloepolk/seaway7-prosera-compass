@@ -15,15 +15,12 @@ import type { ComputedData } from "../data/_transform"
 import { isWeatherRelevant } from "../_modules/spec"
 import type { AppSpec, AppBlock, Figure, SourceRef, Fmt, Tone, StripaStages } from "../_modules/spec"
 import type { ModuleSummary, ModuleSeverity, KeyFigure } from "../_modules/types"
+import { formatGbp } from "../_format"
 
 /* ----------------------------- helpers ---------------------------- */
 
 function fmtUsd(n: number): string {
-  const abs = Math.abs(n)
-  const sign = n < 0 ? "-" : ""
-  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`
-  if (abs >= 1_000) return `${sign}$${(abs / 1_000).toFixed(abs >= 10_000 ? 0 : 1)}k`
-  return `${sign}$${abs.toFixed(0)}`
+  return formatGbp(n)
 }
 
 function formatValue(v: unknown, fmt: Fmt = "num"): string {

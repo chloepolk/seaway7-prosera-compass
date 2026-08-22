@@ -11,17 +11,14 @@ import { StageBlock, Stat, StripaCard, ConfidenceBadge } from "./stripa-scaffold
 import { isWeatherRelevant } from "./app-spec"
 import type { AppSpec, AppBlock, Figure, SourceRef, Fmt, Tone, StripaStages } from "./app-spec"
 import type { ModuleSummary, ModuleSeverity, KeyFigure } from "./module-contract"
+import { formatCompactMoney } from "../locale-display"
 
 const BRAND = "#004F9A"
 
 /* ----------------------------- helpers ---------------------------- */
 
 function fmtUsd(n: number): string {
-  const abs = Math.abs(n)
-  const sign = n < 0 ? "-" : ""
-  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`
-  if (abs >= 1_000) return `${sign}$${(abs / 1_000).toFixed(abs >= 10_000 ? 0 : 1)}k`
-  return `${sign}$${abs.toFixed(0)}`
+  return formatCompactMoney(n, "en")
 }
 
 function formatValue(v: unknown, fmt: Fmt = "num"): string {

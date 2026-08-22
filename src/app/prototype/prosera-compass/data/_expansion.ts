@@ -12,6 +12,7 @@ import { regionLabels } from "./_regions";
 import { metroWageProfiles, nationalBaseline, getWageForRegion, getWagePremiumVsNational } from "./_labor";
 import { metroPermitProfiles, getPermitsForRegion, getConstructionGrowthSignal } from "./_construction";
 import { getEIAFuelForRegion, getEIAFuelSummaryForRegion, paddLabels } from "./_eia";
+import { formatGbp, formatFuelUnit } from "../_format";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -169,7 +170,7 @@ function buildMarketSignals(region: Region, sc: StrategyScorecard, regionAgg: Re
     signals.push({
       source: "BLS",
       metric: "HVAC tech mean wage",
-      value: `$${latest?.meanAnnualWage?.toLocaleString()}/yr`,
+      value: `${formatGbp(latest?.meanAnnualWage ?? 0, false)}/yr`,
       implication: premium > 0.05
         ? `${(premium * 100).toFixed(1)}% above the national mean`
         : `${Math.abs(premium * 100).toFixed(1)}% ${premium >= 0 ? "above" : "below"} the national mean`,
@@ -225,7 +226,7 @@ function buildMarketSignals(region: Region, sc: StrategyScorecard, regionAgg: Re
   signals.push({
     source: "EIA",
     metric: `Fuel cost trend (${eiaFuel.paddLabel})`,
-    value: `$${eiaFuel.recentAvg.toFixed(3)}/gal (${eiaFuel.deltaPct > 0 ? "+" : ""}${(eiaFuel.deltaPct * 100).toFixed(1)}% from baseline $${eiaFuel.baselineAvg.toFixed(3)})`,
+    value: `${formatFuelUnit(eiaFuel.recentAvg)}/L (${eiaFuel.deltaPct > 0 ? "+" : ""}${(eiaFuel.deltaPct * 100).toFixed(1)}% from baseline ${formatFuelUnit(eiaFuel.baselineAvg)})`,
     implication: eiaFuel.deltaPct > 0.25
       ? `${eiaFuel.paddLabel} fuel is ${(eiaFuel.deltaPct * 100).toFixed(1)}% above baseline. Add a contract fuel clause.`
       : eiaFuel.deltaPct > 0.10
@@ -298,11 +299,11 @@ function buildActions(
     if (wageProfile && wageProfile.fourYearChangePct > 0.14) {
       const latest = wageProfile.snapshots[wageProfile.snapshots.length - 1];
       actions.push({
-        action: `Corp Dev Lead: acquire 1–3 truck operators in ${name} facing ${(wageProfile.fourYearChangePct * 100).toFixed(1)}% BLS wage inflation at $${latest?.meanAnnualWage?.toLocaleString()}/yr — consolidate overhead for 4–6× EBITDA entry`,
+        action: `Corp Dev Lead: acquire 1–3 truck operators in ${name} facing ${(wageProfile.fourYearChangePct * 100).toFixed(1)}% BLS wage inflation at ${formatGbp(latest?.meanAnnualWage ?? 0, false)}/yr — consolidate overhead for 4–6× EBITDA entry`,
         lever: "M&A",
         rationale: `Small operators (1-3 trucks) face margin compression from rising tech wages without scale economies. ACME Field Services' platform absorbs the cost through utilization leverage.`,
         expectedImpact: `Acquire at 4-6x EBITDA from margin-pressured sellers, immediately improve margins through overhead consolidation`,
-        math: `BLS 4-yr wage growth = ${(wageProfile.fourYearChangePct * 100).toFixed(1)}%; platform absorbs via utilization leverage at $${latest?.meanAnnualWage?.toLocaleString()}/yr`,
+        math: `BLS 4-yr wage growth = ${(wageProfile.fourYearChangePct * 100).toFixed(1)}%; platform absorbs via utilization leverage at ${formatGbp(latest?.meanAnnualWage ?? 0, false)}/yr`,
         sources: ["BLS", "Internal"],
         confidence: "medium",
       });
@@ -310,11 +311,11 @@ function buildActions(
 
     if (regionAgg && regionAgg.customerCount < 30) {
       actions.push({
-        action: `Sales Director: add 1 dedicated AE in ${name} to grow from ${regionAgg.customerCount} → 50+ accounts — each new customer adds ~$${Math.round(regionAgg.validated.avgTicket).toLocaleString()} at near-zero incremental travel`,
+        action: `Sales Director: add 1 dedicated AE in ${name} to grow from ${regionAgg.customerCount} → 50+ accounts — each new customer adds ~${formatGbp(regionAgg.validated.avgTicket, false)} at near-zero incremental travel`,
         lever: "Sales",
         rationale: `Current footprint is sub-scale. Route density drives technician utilization — more customers per zip code reduces windshield time.`,
-        expectedImpact: `Each additional customer in an existing service area adds ~$${Math.round(regionAgg.validated.avgTicket)} avg ticket revenue at near-zero incremental travel cost`,
-        math: `Incremental revenue/customer ≈ avgTicket = $${Math.round(regionAgg.validated.avgTicket).toLocaleString()} (near-zero marginal travel in existing routes)`,
+        expectedImpact: `Each additional customer in an existing service area adds ~${formatGbp(regionAgg.validated.avgTicket, false)} avg ticket revenue at near-zero incremental travel cost`,
+        math: `Incremental revenue/customer ≈ avgTicket = ${formatGbp(regionAgg.validated.avgTicket, false)} (near-zero marginal travel in existing routes)`,
         sources: ["Internal"],
         confidence: "medium",
       });
@@ -324,11 +325,11 @@ function buildActions(
   if (strategy === "defend") {
     if (regionAgg && regionAgg.validated.avgMarginPct >= 0.60) {
       actions.push({
-        action: `Sales Director: lock ${Math.min(10, regionAgg.customerCount)} top ${name} accounts into 3-yr agreements at ${(regionAgg.validated.avgMarginPct * 100).toFixed(1)}% margin — protects $${Math.round(regionAgg.validated.totalMargin).toLocaleString()}/yr from competitive displacement`,
+        action: `Sales Director: lock ${Math.min(10, regionAgg.customerCount)} top ${name} accounts into 3-yr agreements at ${(regionAgg.validated.avgMarginPct * 100).toFixed(1)}% margin — protects ${formatGbp(regionAgg.validated.totalMargin, false)}/yr from competitive displacement`,
         lever: "Sales",
         rationale: `High-margin regions attract competitor attention. Contractual lock-in prevents cherry-picking of best accounts.`,
-        expectedImpact: `Protect $${Math.round(regionAgg.validated.totalMargin).toLocaleString()} in annual margin from competitive displacement`,
-        math: `Protected margin = Σ(top ${Math.min(10, regionAgg.customerCount)} accounts) = $${Math.round(regionAgg.validated.totalMargin).toLocaleString()}/yr at ${(regionAgg.validated.avgMarginPct * 100).toFixed(1)}%`,
+        expectedImpact: `Protect ${formatGbp(regionAgg.validated.totalMargin, false)} in annual margin from competitive displacement`,
+        math: `Protected margin = Σ(top ${Math.min(10, regionAgg.customerCount)} accounts) = ${formatGbp(regionAgg.validated.totalMargin, false)}/yr at ${(regionAgg.validated.avgMarginPct * 100).toFixed(1)}%`,
         sources: ["Internal"],
         confidence: "high",
       });
@@ -337,9 +338,9 @@ function buildActions(
     if (wageProfile && wageProfile.fourYearChangePct > 0.15) {
       const latest = wageProfile.snapshots[wageProfile.snapshots.length - 1];
       actions.push({
-        action: `Regional Pricing Manager: escalate ${name} service rates ${(wageProfile.fourYearChangePct * 100 / 4).toFixed(1)}%/yr to track BLS ${(wageProfile.fourYearChangePct * 100).toFixed(1)}% wage growth ($${latest?.meanAnnualWage?.toLocaleString()}/yr HVAC tech in ${wageProfile.metroArea})`,
+        action: `Regional Pricing Manager: escalate ${name} service rates ${(wageProfile.fourYearChangePct * 100 / 4).toFixed(1)}%/yr to track BLS ${(wageProfile.fourYearChangePct * 100).toFixed(1)}% wage growth (${formatGbp(latest?.meanAnnualWage ?? 0, false)}/yr HVAC tech in ${wageProfile.metroArea})`,
         lever: "Pricing",
-        rationale: `BLS data shows HVAC tech wages in ${wageProfile.metroArea} at $${latest?.meanAnnualWage?.toLocaleString()}/yr, growing faster than national average.`,
+        rationale: `BLS data shows HVAC tech wages in ${wageProfile.metroArea} at ${formatGbp(latest?.meanAnnualWage ?? 0, false)}/yr, growing faster than national average.`,
         expectedImpact: `Prevents margin erosion from wage-price divergence`,
         math: `Required price escalation ≥ wage growth / 4 = ${(wageProfile.fourYearChangePct * 100 / 4).toFixed(1)}%/yr to match ${(wageProfile.fourYearChangePct * 100).toFixed(1)}% 4-yr BLS trend`,
         sources: ["BLS", "Internal"],

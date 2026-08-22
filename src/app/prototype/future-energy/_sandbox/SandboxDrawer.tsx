@@ -12,12 +12,12 @@ import { buildSandboxPrompt } from "./prompt"
 import { buildPortfolioContext } from "../agents/_context"
 import { useT } from "../_i18n/use-t"
 import { localeTag } from "../_i18n"
-import { activeLocaleTag, formatActiveUsd, formatActiveEurUnit } from "../_i18n/legacy"
-import { displayAmount } from "../_i18n/currency"
+import { activeLocaleTag, formatActiveUsd, formatActiveFuelUnit } from "../_i18n/legacy"
+import { fuelPriceDisplay } from "@/lib/compass/locale-display"
 import type { Locale } from "../_i18n/types"
 
 const usd = (n: number) => `${n >= 0 ? "+" : ""}${formatActiveUsd(n, false)}`
-const fuelGal = (n: number) => formatActiveEurUnit(n)
+const fuelGal = (n: number) => formatActiveFuelUnit(n)
 const pts = (n: number) => (n >= 0 ? "+" : "") + n.toFixed(1)
 const bps = (n: number) => (n >= 0 ? "+" : "") + Math.round(n)
 
@@ -172,7 +172,7 @@ export function SandboxDrawer() {
       "── Scenario Parameters ──",
       `Customer Mix: Exit ${scenario.customerMix.exitDogs} Dogs, Add ${scenario.customerMix.addStars} Stars`,
       `Pricing: Labor ${scenario.pricing.laborMultiplier > 0 ? scenario.pricing.laborMultiplier.toFixed(1) + "x" : "unchanged"}, Material ${scenario.pricing.materialMarkupPct > 0 ? scenario.pricing.materialMarkupPct + "%" : "unchanged"}`,
-      `Fuel: ${fuelGal(scenario.fuel.pricePerGal)}/gal`,
+      `Fuel: ${fuelGal(scenario.fuel.pricePerGal)}/L`,
       `NTE friction sensitivity: ${scenario.nte.thresholdMultiplier.toFixed(1)}x`,
       "",
       "── Projected Impact ──",
@@ -462,7 +462,7 @@ function FuelLevers({ scenario, currentPrice, onUpdate }: {
   const t = useT()
   const { locale } = useStore()
   const delta = scenario.fuel.pricePerGal - currentPrice
-  const shownDelta = displayAmount(delta, locale as Locale)
+  const shownDelta = fuelPriceDisplay(delta, locale as Locale)
   return (
     <>
       <div className="flex items-center gap-1.5 text-xs font-semibold">
@@ -481,7 +481,7 @@ function FuelLevers({ scenario, currentPrice, onUpdate }: {
       <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
         <span>{t("sandbox.current")}: {fuelGal(currentPrice)}</span>
         <span className={cn(delta > 0 ? "text-[var(--color-accent-critical-text)]" : delta < 0 ? "text-[var(--color-accent-positive-text)]" : "")}>
-          {shownDelta > 0 ? "+" : ""}{shownDelta.toFixed(2)}/gal
+          {shownDelta > 0 ? "+" : ""}{shownDelta.toFixed(2)}/L
         </span>
       </div>
     </>

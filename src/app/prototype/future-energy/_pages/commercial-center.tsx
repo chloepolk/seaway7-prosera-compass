@@ -391,7 +391,7 @@ export function CommercialCenterPage() {
               `${fmtUsd(tam.whitespace)} addressable whitespace`,
               `${fmtUsd(untappedValue)} combined repricing + exit recovery opportunity`,
             ],
-            conclusion: "Prioritize expansion in high-score regions and re-price underperforming bands.",
+            conclusion: "Prioritise expansion in high-score regions and re-price underperforming bands.",
           }}
         />
         <PriorityCard

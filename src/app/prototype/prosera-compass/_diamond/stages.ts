@@ -5,6 +5,8 @@
 /*  with no external data coupling, reused by the ACME diamond.        */
 /* ------------------------------------------------------------------ */
 
+import { formatCompactMoney } from "@/lib/compass/locale-display"
+
 export type MissionStage =
   | "mission_created"
   | "understand"
@@ -152,10 +154,7 @@ export const isSegmentComplete = (current: MissionStage, segIndex: number): bool
   stageIndex(current) >= segIndex + 1
 
 export function formatCurrency(n: number): string {
-  if (Math.abs(n) >= 1_000_000) {
-    return `$${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}M`
-  }
-  return `$${Math.round(n / 1000)}k`
+  return formatCompactMoney(n, "en")
 }
 
 export function getInitials(name: string): string {

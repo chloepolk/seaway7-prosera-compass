@@ -31,7 +31,7 @@ export type ActionTimelineEntry = {
 export interface AuditEntry {
   id: string
   timestamp: string
-  field: "recommendation" | "completion"
+  field: "recommendation" | "completion" | "award_governance"
   oldValue: string
   newValue: string
 }

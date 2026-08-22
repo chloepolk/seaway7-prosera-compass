@@ -23,9 +23,15 @@ import {
   reconcileMissionAfterComplete,
   type MissionSessionPatch,
 } from "../_components/hub/bluepilot-action-reconcile"
-import { displayName, isMissionOwnedByActiveUser } from "../_components/hub/active-user"
+import { displayName, isMissionOwnedByActiveUser, ACTIVE_USER } from "../_components/hub/active-user"
 import { listItemMotion } from "../_components/motion"
 import { reasoningFromMission, buildActionBoardHeroReasoning } from "../_components/reasoning-helpers"
+import { AwardApprovalModal, AwardGovernanceChip } from "@/lib/compass/award-approval-modal"
+import {
+  awardGovernanceStatusFor,
+  awardGovCopy,
+  formatAwardAuditLine,
+} from "@/lib/compass/award-governance"
 
 const HORIZON_MAP: Record<HorizonKey, MissionHorizon> = {
   immediate: "shock",
@@ -95,6 +101,10 @@ export function OperatingLoopPage() {
     tenderStages,
     openTenderStudio,
     openBidEvaluation,
+    awardApprovals,
+    submitAwardApproval,
+    decideAwardApproval,
+    confirmAward,
   } = useStore()
 
   const [horizonFilter, setHorizonFilter] = React.useState<HorizonKey | null>(null)
@@ -110,6 +120,7 @@ export function OperatingLoopPage() {
   const [completingMissionId, setCompletingMissionId] = React.useState<string | null>(null)
   const [emailPreviewMissionId, setEmailPreviewMissionId] = React.useState<string | null>(null)
   const [auditViewMissionId, setAuditViewMissionId] = React.useState<string | null>(null)
+  const [awardModalMissionId, setAwardModalMissionId] = React.useState<string | null>(null)
 
   const openEdit = React.useCallback((id: string) => {
     setExpandedId(id)
@@ -182,6 +193,10 @@ export function OperatingLoopPage() {
     setReconcilingId(missionId)
     setReconcilePhase("Ingesting your confirmation…")
 
+    if (effectiveMission.stage === "execute" && awardApprovals[missionId]?.status === "approved_for_award") {
+      confirmAward(missionId, { name: ACTIVE_USER.name, role: ACTIVE_USER.role })
+    }
+
     void reconcileMissionAfterComplete(effectiveMission, confirmedAction, setReconcilePhase).then((patch) => {
       setMissionPatches((prev) => ({
         ...prev,
@@ -204,7 +219,7 @@ export function OperatingLoopPage() {
       setReconcilingId(null)
       setReconcilePhase("")
     })
-  }, [orderedMissions, missionPatches])
+  }, [orderedMissions, missionPatches, awardApprovals, confirmAward])
 
   const roi = React.useMemo(() => buildPortfolioRoi(orderedMissions, closed), [orderedMissions, closed])
 
@@ -267,14 +282,46 @@ export function OperatingLoopPage() {
     const assignedToYou = isMissionOwnedByActiveUser({ ...mission, owner: fields.ownerRole })
     // Packages ahead of the approval gate can be drafted in Tender Studio.
     const canDraft = fields.stage === "mission_created" || fields.stage === "understand"
-    // Issued packages open Bid Evaluation for that ITT.
     const canEvaluate = fields.stage === "execute"
-    const primaryActionLabel = canEvaluate ? "Evaluate bids" : canDraft ? "Draft ITT" : undefined
-    const onPrimaryAction = canEvaluate
-      ? () => openBidEvaluation(mission.id)
-      : canDraft
-        ? () => openTenderStudio(mission.id)
-        : undefined
+    const govCopy = awardGovCopy("en")
+    const govStatus = awardGovernanceStatusFor(fields.stage, awardApprovals[mission.id])
+    const govCta =
+      govStatus === "approval_required"
+        ? { label: govCopy.requestApproval, openModal: true }
+        : govStatus === "awaiting_approver"
+          ? { label: govCopy.reviewApproval, openModal: true }
+          : govStatus === "clarification_requested"
+            ? { label: govCopy.respondClarification, openModal: true }
+            : govStatus === "approved_for_award"
+              ? { label: govCopy.confirmAward, openModal: true }
+              : null
+    const primaryActionLabel = govCta
+      ? govCta.label
+      : canEvaluate
+        ? "Evaluate bids"
+        : canDraft
+          ? "Draft ITT"
+          : undefined
+    const onPrimaryAction = govCta
+      ? () => {
+          setExpandedId(mission.id)
+          setAwardModalMissionId(mission.id)
+        }
+      : canEvaluate
+        ? () => openBidEvaluation(mission.id)
+        : canDraft
+          ? () => openTenderStudio(mission.id)
+          : undefined
+    const awardAuditEntries: AuditEntry[] = (awardApprovals[mission.id]?.audit ?? []).map((entry) => ({
+      id: entry.id,
+      timestamp: entry.at,
+      field: "award_governance" as const,
+      oldValue: "",
+      newValue: formatAwardAuditLine(entry, "en"),
+    }))
+    const mergedAudit = [...(auditLog[mission.id] ?? []), ...awardAuditEntries].sort((a, b) =>
+      a.timestamp.localeCompare(b.timestamp),
+    )
     return (
       <div key={mission.id} className={motion.className} style={motion.style}>
         <MissionActionCard
@@ -301,12 +348,25 @@ export function OperatingLoopPage() {
           onToggleExpand={() => setExpandedId(expanded ? null : mission.id)}
           onEditClick={() => openEdit(mission.id)}
           onEmailClick={() => openEmail(mission.id)}
-          onCompleteClick={() => openComplete(mission.id)}
-          auditEntries={auditLog[mission.id] ?? []}
+          onCompleteClick={() => {
+            if (fields.stage === "execute" && awardApprovals[mission.id]?.status !== "approved_for_award") {
+              setExpandedId(mission.id)
+              setAwardModalMissionId(mission.id)
+              return
+            }
+            openComplete(mission.id)
+          }}
+          auditEntries={mergedAudit}
           onViewAudit={() => setAuditViewMissionId(mission.id)}
           timelineEntries={fields.timelineEntries}
           isReconciling={reconciling}
           reconcilePhase={reconcilePhase}
+          governanceChip={
+            govStatus ? <AwardGovernanceChip status={govStatus} locale="en" /> : undefined
+          }
+          governanceNote={govStatus ? `${govCopy.status[govStatus]} — ${govCopy.definition[govStatus]}` : undefined}
+          evaluateBidsLabel={canEvaluate && govCta ? "Evaluate bids" : undefined}
+          onEvaluateBids={canEvaluate && govCta ? () => openBidEvaluation(mission.id) : undefined}
         />
       </div>
     )
@@ -341,6 +401,8 @@ export function OperatingLoopPage() {
           onToggleExpand={() => setExpandedId(expanded ? null : mission.id)}
           isCompleted
           timelineEntries={fields.timelineEntries}
+          governanceChip={<AwardGovernanceChip status="awarded" locale="en" />}
+          governanceNote={`${awardGovCopy("en").status.awarded} — ${awardGovCopy("en").definition.awarded}`}
         />
       </div>
     )
@@ -490,8 +552,50 @@ export function OperatingLoopPage() {
       {auditViewMissionId && (
         <AuditLogModal
           missionName={orderedMissions.find((m) => m.id === auditViewMissionId)?.name ?? ""}
-          entries={auditLog[auditViewMissionId] ?? []}
+          entries={[
+            ...(auditLog[auditViewMissionId] ?? []),
+            ...(awardApprovals[auditViewMissionId]?.audit ?? []).map((entry) => ({
+              id: entry.id,
+              timestamp: entry.at,
+              field: "award_governance" as const,
+              oldValue: "",
+              newValue: formatAwardAuditLine(entry, "en"),
+            })),
+          ].sort((a, b) => a.timestamp.localeCompare(b.timestamp))}
           onClose={() => setAuditViewMissionId(null)}
+        />
+      )}
+      {awardModalMissionId && (
+        <AwardApprovalModal
+          record={awardApprovals[awardModalMissionId]}
+          locale="en"
+          fromName={ACTIVE_USER.name}
+          fromEmail={ACTIVE_USER.email}
+          onClose={() => setAwardModalMissionId(null)}
+          onOpenBidEvaluation={() => {
+            setAwardModalMissionId(null)
+            openBidEvaluation(awardModalMissionId)
+          }}
+          onSendRequest={() =>
+            submitAwardApproval(awardModalMissionId, { name: ACTIVE_USER.name, role: ACTIVE_USER.role })
+          }
+          onDecide={(decision, comments) => {
+            const rec = awardApprovals[awardModalMissionId]
+            const approver = rec?.snapshot
+            decideAwardApproval(
+              awardModalMissionId,
+              decision,
+              comments,
+              {
+                name: approver?.requiredApproverName ?? ACTIVE_USER.name,
+                role: approver?.requiredApproverRole ?? "SCM Director",
+              },
+            )
+          }}
+          onConfirmAward={() => {
+            confirmAward(awardModalMissionId, { name: ACTIVE_USER.name, role: ACTIVE_USER.role })
+            setAwardModalMissionId(null)
+          }}
         />
       )}
     </div>

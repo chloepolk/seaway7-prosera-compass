@@ -10,6 +10,7 @@ import type { TranslateFn } from "../../_i18n"
 import { localizeRole } from "../../_i18n/domain"
 import { PROJECT } from "../../data/future-energy/_tenders"
 import { gateLabels, type BidEvaluationResult } from "../../data/future-energy/_bid-scoring"
+import { awardGovCopy } from "@/lib/compass/award-governance"
 
 type Outcome = "award" | "unsuccessful" | "disqualified"
 
@@ -69,11 +70,13 @@ export function BidderNotifyModal({
   ittRef,
   packageTitle,
   results,
+  awardUnlocked = true,
   onClose,
 }: {
   ittRef: string
   packageTitle: string
   results: BidEvaluationResult[]
+  awardUnlocked?: boolean
   onClose: () => void
 }) {
   const t = useT()
@@ -137,6 +140,7 @@ export function BidderNotifyModal({
 
   const sendActive = () => {
     if (!activeId || activeSent || sendPhase !== "idle") return
+    if (!awardUnlocked && active && outcomeFor(active) === "award") return
     setSendPhase("sending")
     const id = activeId
     window.setTimeout(() => {
@@ -150,7 +154,8 @@ export function BidderNotifyModal({
     if (sendPhase !== "idle") return
     setSendPhase("sending")
     window.setTimeout(() => {
-      setSentIds(new Set(ordered.map((r) => r.bidId)))
+      const allowed = ordered.filter((r) => awardUnlocked || outcomeFor(r) !== "award").map((r) => r.bidId)
+      setSentIds((prev) => new Set([...prev, ...allowed]))
       setSendPhase("idle")
     }, 800)
   }
@@ -199,6 +204,11 @@ export function BidderNotifyModal({
             </button>
           </div>
         </div>
+        {!awardUnlocked && (
+          <div className="border-b border-[var(--color-border-default)] bg-[var(--color-tint-warning)] px-4 py-2 text-[12px] text-[var(--color-accent-warning-text)]">
+            {awardGovCopy(locale).notifyHeld}
+          </div>
+        )}
 
         <div className="flex min-h-0 flex-col sm:flex-row">
           {/* Recipient list */}
@@ -242,7 +252,7 @@ export function BidderNotifyModal({
                 <button
                   type="button"
                   onClick={sendActive}
-                  disabled={activeSent || sendPhase !== "idle"}
+                  disabled={activeSent || sendPhase !== "idle" || (!awardUnlocked && outcomeFor(active) === "award")}
                   className={cn(
                     "inline-flex items-center gap-1.5 rounded-md px-4 py-1.5 text-[12px] font-semibold transition-all",
                     activeSent

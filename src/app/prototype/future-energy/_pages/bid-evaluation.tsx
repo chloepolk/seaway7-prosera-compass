@@ -18,6 +18,7 @@ import {
   TECH_MAX,
   QA_MAX,
   LEGAL_MAX,
+  gateLabels,
   type BidEvaluationResult,
   type GateId,
 } from "../data/future-energy/_bid-scoring"
@@ -27,6 +28,15 @@ import {
   type TenderPackage,
 } from "../data/future-energy/_tenders"
 import { BidderNotifyModal } from "../_components/hub/bidder-notify-modal"
+import { personForRole } from "../_diamond/org"
+import { emailForPerson } from "../_components/hub/hub-types"
+import { ACTIVE_USER } from "../_components/hub/active-user"
+import {
+  awardGovernanceStatusFor,
+  awardGovCopy,
+  buildAwardSnapshot,
+} from "@/lib/compass/award-governance"
+import { AwardGovernanceChip } from "@/lib/compass/award-approval-modal"
 
 type EvalStatus = "ready" | "awaiting_returns" | "not_issued" | "awarded"
 
@@ -299,7 +309,7 @@ function EmptyPackageState({ status, pkg }: { status: EvalStatus; pkg: TenderPac
 
 export function BidEvaluationPage() {
   const t = useT()
-  const { focusEvalPackageId, tenderStages, openBidEvaluation, locale } = useStore()
+  const { focusEvalPackageId, tenderStages, openBidEvaluation, locale, awardApprovals, selectAwardRecommendation } = useStore()
   const rows = React.useMemo(() => buildPackageRows(tenderStages, locale), [tenderStages, locale])
 
   const defaultId =
@@ -334,6 +344,36 @@ export function BidEvaluationPage() {
     const top = results.find((r) => r.finalRank === 1) ?? results[0]
     setSelectedBidId(top?.bidId ?? null)
   }, [results])
+
+  const selectedResult = results.find((r) => r.bidId === selectedBidId) ?? null
+  const awardRecord = pkg ? awardApprovals[pkg.id] : undefined
+  const govCopy = awardGovCopy(locale)
+  const govStatus = pkg ? awardGovernanceStatusFor(pkg.stage, awardRecord) : null
+  const awardUnlocked = govStatus === "approved_for_award" || govStatus === "awarded" || pkg?.stage === "outcome_roi"
+
+  const recommendSelected = () => {
+    if (!pkg || !selectedResult || selectedResult.gatingStatus === "Fail") return
+    const approver = personForRole(pkg.sponsorRole, locale)
+    const labels = gateLabels(locale)
+    const snapshot = buildAwardSnapshot({
+      packageId: pkg.id,
+      packageRef: pkg.packageRef,
+      packageTitle: pkg.title,
+      projectName: PROJECT.name,
+      ittRef,
+      budgetUsd: pkg.budget,
+      evidence: pkg.evidence,
+      selected: selectedResult,
+      allResults: results,
+      gateLabel: (id) => labels[id as GateId] ?? id,
+      approver: {
+        name: approver.name,
+        role: approver.role,
+        email: emailForPerson(approver.name),
+      },
+    })
+    selectAwardRecommendation(pkg.id, snapshot, { name: ACTIVE_USER.name, role: ACTIVE_USER.role })
+  }
 
   const selectPackage = (id: string) => {
     setActivePackageId(id)
@@ -467,6 +507,17 @@ export function BidEvaluationPage() {
                 <h2 className="mt-0.5 text-[18px] font-semibold text-[var(--color-text-primary)]">
                   {pkg.title}
                 </h2>
+                {govStatus && (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <AwardGovernanceChip status={govStatus} locale={locale} />
+                    <span className="text-[12px] text-[var(--color-text-secondary)]">
+                      {govCopy.definition[govStatus]}
+                      {awardRecord?.snapshot
+                        ? ` ${awardRecord.snapshot.requiresDirectorApproval ? govCopy.exceedsThreshold : govCopy.withinAuthority}`
+                        : ""}
+                    </span>
+                  </div>
+                )}
                 <p className="mt-1 max-w-2xl text-[12px] text-[var(--color-text-secondary)]">
                   {pkg.quantity} · {t("bidEval.budget")} {formatCurrency(pkg.budget)} · {t("bidEval.closes")}{" "}
                   {pkg.submissionDeadline}
@@ -501,14 +552,27 @@ export function BidEvaluationPage() {
                     </p>
                   </div>
                   {results.some((r) => r.finalRank === 1) && (
-                    <button
-                      type="button"
-                      onClick={() => setNotifyOpen(true)}
-                      className="inline-flex shrink-0 items-center gap-1.5 rounded-[8px] bg-[var(--color-bg-inverse)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-text-inverse)] hover:opacity-90"
-                    >
-                      <SafeIcon name="Mail" className="size-3.5" />
-                      {t("bidEval.notifyBidders")}
-                    </button>
+                    <div className="flex flex-wrap gap-1.5">
+                      <button
+                        type="button"
+                        onClick={recommendSelected}
+                        disabled={!selectedResult || selectedResult.gatingStatus === "Fail"}
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-[8px] bg-[var(--color-bg-inverse)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-text-inverse)] hover:opacity-90 disabled:opacity-50"
+                      >
+                        <SafeIcon name="BadgeCheck" className="size-3.5" />
+                        {awardRecord?.snapshot?.recommendedBidId === selectedBidId
+                          ? govCopy.recommended
+                          : govCopy.recommendForAward}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNotifyOpen(true)}
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-[8px] border border-[var(--color-border-default)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-subtle)]"
+                      >
+                        <SafeIcon name="Mail" className="size-3.5" />
+                        {t("bidEval.notifyBidders")}
+                      </button>
+                    </div>
                   )}
                 </div>
                 <div className="overflow-x-auto">
@@ -615,6 +679,7 @@ export function BidEvaluationPage() {
           ittRef={ittRef}
           packageTitle={pkg?.title ?? ""}
           results={results}
+          awardUnlocked={awardUnlocked}
           onClose={() => setNotifyOpen(false)}
         />
       )}

@@ -196,7 +196,7 @@ export const BIDS_ITT_MER_SCM_2104: BidInput[] = [
     acceptsStandardWarranty: false,
     pdfPath: null,
     insight:
-      "Solid tech package but warranty offered at 16 months — Legal shortfall and high commercial-risk flag if pushed toward award.",
+      "Technical score meets the package gate. Warranty offered at 16 months vs the 24-month standard — Legal shortfall if pushed towards award.",
   },
 ]
 

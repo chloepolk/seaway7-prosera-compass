@@ -1,5 +1,11 @@
 import type { Locale } from "./types"
 import { formatCompactEur, formatEur } from "./currency"
+import {
+  formatFuelPrice,
+  formatFuelVolume,
+  formatFuelSensitivityStep,
+  formatFuelEconomyMpg,
+} from "@/lib/compass/locale-display"
 
 /**
  * Stable locale accessor for legacy, data-backed labels that predate the
@@ -215,13 +221,14 @@ const FR: Record<string, string> = {
   "index": "indice",
   "regional fit": "ajustement régional",
   "Fleet burns": "La flotte consomme",
-  "gal/yr": "gal/an",
-  "every $0.10/gal move": "chaque variation de 0,09 €/gal",
-  "per $0.10/gal": "par 0,09 €/gal",
-  "Every $0.10/gal moves": "Chaque variation de 0,09 €/gal déplace",
-  "Unleaded $/gal": "Sans plomb €/gal",
-  "Unleaded $/gal trend": "Tendance sans plomb €/gal",
-  "annual fleet cost impact per $0.10/gal price move": "impact annuel du coût flotte par variation de 0,09 €/gal",
+  "gal/yr": "L/an",
+  "every $0.10/gal move": "chaque variation de 2 c€/L",
+  "per $0.10/gal": "par 2 c€/L",
+  "Every $0.10/gal moves": "Chaque variation de 2 c€/L déplace",
+  "Unleaded £/L": "Sans plomb €/L",
+  "Unleaded £/L trend": "Tendance sans plomb €/L",
+  "Total litres": "Total litres",
+  "annual fleet cost impact per $0.10/gal price move": "impact annuel du coût flotte par variation de 2 c€/L",
   "yr impact": "an d’impact",
   "baseline": "référence",
   "yr": "an",
@@ -398,7 +405,7 @@ export function activeLocaleTag(): "fr-FR" | "en-GB" {
   }
 }
 
-/** Format a USD seed amount for the active locale (EN → $, FR → €). */
+/** Format a USD seed amount for the active locale (EN → £, FR → €). */
 export function formatActiveUsd(value: number, compact = true): string {
   const locale = activeLocaleTag() === "fr-FR" ? "fr" : "en"
   return compact
@@ -406,10 +413,31 @@ export function formatActiveUsd(value: number, compact = true): string {
     : formatEur(value, locale, { maximumFractionDigits: 2, minimumFractionDigits: 0 })
 }
 
-/** Unit prices (per gal, per hour, etc.) for the active locale. */
+/** Unit prices (per hour, per day) for the active locale. Currency only. */
 export function formatActiveEurUnit(value: number): string {
   const locale = activeLocaleTag() === "fr-FR" ? "fr" : "en"
   return formatEur(value, locale, { maximumFractionDigits: 2, minimumFractionDigits: 2 })
+}
+
+/** USD/gal seed → display currency per litre. */
+export function formatActiveFuelUnit(usdPerGal: number): string {
+  const locale = activeLocaleTag() === "fr-FR" ? "fr" : "en"
+  return formatFuelPrice(usdPerGal, locale)
+}
+
+export function formatActiveFuelVolume(gallons: number): string {
+  const locale = activeLocaleTag() === "fr-FR" ? "fr" : "en"
+  return formatFuelVolume(gallons, locale)
+}
+
+export function formatActiveFuelSensitivityStep(): string {
+  const locale = activeLocaleTag() === "fr-FR" ? "fr" : "en"
+  return formatFuelSensitivityStep(locale)
+}
+
+export function formatActiveFuelEconomy(mpg: number): string {
+  const locale = activeLocaleTag() === "fr-FR" ? "fr" : "en"
+  return formatFuelEconomyMpg(mpg, locale)
 }
 
 export function formatActivePercent(value: number, maximumFractionDigits = 1): string {

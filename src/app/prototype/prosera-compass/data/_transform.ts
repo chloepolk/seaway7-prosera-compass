@@ -11,6 +11,7 @@ import { buildFuelAnalysis, type PortfolioFuelExposure } from "./_fuel";
 import { buildCustomerScores, type CustomerScore } from "./_scorecard";
 import { buildCustomerTams, type CustomerTam } from "./_tam";
 import { buildCustomerAr, type ArProfile } from "./_ar";
+import { formatGbp } from "../_format";
 
 /* ------------------------------------------------------------------ */
 /*  Unified Job Record                                                 */
@@ -759,7 +760,7 @@ function computePriceBands(sortedAmounts: number[], entries: PricedEntry[]): Pri
       bands.push({
         min,
         max: max_,
-        label: `$${fmtK(min)}–$${fmtK(max_)}`,
+        label: `${formatGbp(min)}–${formatGbp(max_)}`,
         totalQuotes: inBand.length,
         wins,
         losses,
@@ -781,11 +782,6 @@ function determineBandSize(maxAmount: number): number {
   if (maxAmount <= 20000 * MONETARY_SCALE) return Math.round(2500 * MONETARY_SCALE);
   if (maxAmount <= 50000 * MONETARY_SCALE) return Math.round(5000 * MONETARY_SCALE);
   return Math.round(10000 * MONETARY_SCALE);
-}
-
-function fmtK(n: number): string {
-  if (n >= 1000) return `${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}k`;
-  return n.toString();
 }
 
 /* ------------------------------------------------------------------ */

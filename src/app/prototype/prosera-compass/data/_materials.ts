@@ -79,7 +79,7 @@ export const materialSeries: Record<MaterialKey, MaterialSeries> = {
     source: "CME/COMEX (via Trading Economics / Argus)",
     confidence: "high",
     points: series([4.45, 4.65, 4.95, 5.20, 5.55, 6.10, 5.85, 5.95, 6.20]),
-    notes: "Core input for tubing, coils, wiring and motors. Crashed to ~$4.35/lb on the Aug-2025 semis-tariff exemption, then climbed to a ~$6.50/lb Jan-2026 record; Section 232 semis at 50% since Apr 2026 keeps US prices elevated.",
+    notes: "Core input for tubing, coils, wiring and motors. Fell to £7.58/kg (source USD $4.35/lb) on the Aug-2025 semis-tariff exemption, then climbed to £11.32/kg (source USD $6.50/lb) in Jan-2026. Section 232 semis at 50% since Apr 2026 keeps US prices elevated. GBP at USD 1 = GBP 0.79 (21 August 2026).",
   },
   steelHRC: {
     key: "steelHRC",
@@ -88,7 +88,7 @@ export const materialSeries: Record<MaterialKey, MaterialSeries> = {
     source: "CRU US Midwest Hot-Rolled Coil (via Steel Market Update)",
     confidence: "high",
     points: series([820, 850, 875, 895, 908, 945, 975, 1002, 1040]),
-    notes: "Sheet steel for ductwork, cabinets, RTU frames and structural supports. Supply-constrained climb (not demand-led) under 50% Section 232 tariffs; crossed $1,000/st in Mar 2026.",
+    notes: "Sheet steel for ductwork, cabinets, RTU frames and structural supports. Supply-constrained climb (not demand-led) under 50% Section 232 tariffs; crossed £871/tonne (source USD $1,000/short ton) in Mar 2026. GBP at USD 1 = GBP 0.79 (21 August 2026).",
   },
   refrigerantR410A: {
     key: "refrigerantR410A",
@@ -97,7 +97,7 @@ export const materialSeries: Record<MaterialKey, MaterialSeries> = {
     source: "ACHR News / ACDirect 2026 (national wholesale midpoint)",
     confidence: "medium",
     points: series([14.0, 15.0, 16.5, 18.0, 19.5, 21.0, 23.0, 25.0, 27.0]),
-    notes: "GWP-2088 HFC blend, banned for new equipment manufacture under the AIM Act. Series midpoint moved from $14/lb to $27/lb. Dispersion $15–$45/lb across markets.",
+    notes: "GWP-2088 HFC blend, banned for new equipment manufacture under the AIM Act. Series midpoint moved from £24.38/kg to £47.02/kg (source USD $14/lb to $27/lb). Dispersion £26.12–£78.37/kg (source USD $15–$45/lb). GBP at USD 1 = GBP 0.79 (21 August 2026).",
   },
   refrigerantA2L: {
     key: "refrigerantA2L",

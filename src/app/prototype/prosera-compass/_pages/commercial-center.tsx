@@ -16,6 +16,7 @@ import { CreateAppModal } from "../_components/create-app-modal"
 import { SpecRenderer, summarizeSpec } from "../_components/spec-renderer"
 import { toastMotion } from "../_components/motion"
 import { KPI_REASONING } from "../_components/reasoning-helpers"
+import { formatGbp } from "../_format"
 
 const BOARD_ID = "commercial-center"
 
@@ -33,11 +34,7 @@ const DEFAULT_TILE_ORDER = [
 ]
 
 function fmtUsd(n: number): string {
-  const abs = Math.abs(n)
-  const sign = n < 0 ? "-" : ""
-  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`
-  if (abs >= 1_000) return `${sign}$${(abs / 1_000).toFixed(0)}k`
-  return `${sign}$${abs.toFixed(0)}`
+  return formatGbp(n)
 }
 
 function fmtPct(n: number): string {
@@ -389,7 +386,7 @@ export function CommercialCenterPage() {
               `${fmtUsd(tam.whitespace)} addressable whitespace`,
               `${fmtUsd(untappedValue)} combined repricing + exit recovery opportunity`,
             ],
-            conclusion: "Prioritize expansion in high-score regions and re-price underperforming bands.",
+            conclusion: "Prioritise expansion in high-score regions and re-price underperforming bands.",
           }}
         />
         <PriorityCard

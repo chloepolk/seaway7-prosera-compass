@@ -226,12 +226,12 @@ function Kpi({ label, value, sub, tone = "default", icon }: {
 /*  Drawer                                                             */
 /* ------------------------------------------------------------------ */
 
-const EXEC_PROMPT = `Produce an EXECUTIVE BRIEFING in Markdown for the ACME Field Services leadership team. It must be pasteable into a briefing memo with no further editing. Synthesize signals that carry a dollar figure, percentage, or named comparison across every intelligence domain.
+const EXEC_PROMPT = `Produce an EXECUTIVE BRIEFING in Markdown for the ACME Field Services leadership team. It must be pasteable into a briefing memo with no further editing. Synthesize signals that carry a pound figure, percentage, or named comparison across every intelligence domain.
 
 Follow this EXACT structure, using Markdown headings (##), bold (**), and lists. Do not add any other sections, preamble, or sign-off.
 
 ## Bottom Line
-One or two sentences (BLUF) naming the opportunity with the largest dollar figure in context and the specific decision being asked for. Bold the headline dollar figure.
+One or two sentences (BLUF) naming the opportunity with the largest pound figure in context and the specific decision being asked for. Bold the headline pound figure.
 
 ## What Changed
 2–3 bullets ("- ") on the most important movement since the prior period. Use portfolioTrend (recent vs. prior margin, direction, delta) and any newly surfaced risk/opportunity. If trend data is thin, say so explicitly.
@@ -256,7 +256,7 @@ A numbered list of 4–6 items, ordered by dollar impact, built from the mission
 ## Assumptions & Data Sources
 1–2 bullets citing the data sources used (Internal job data, BLS, Census, EIA, NOAA weather) and flagging any MOCKED/SIMULATED inputs (e.g. TAM recon/OSINT signals, weather-urgency model, simulated AR/DSO collections signal) so the reader knows confidence levels.
 
-Rules: every recommendation MUST include a specific dollar figure; use ONLY figures present in the provided context (never invent data); no filler, no "as an AI", no closing pleasantries; keep the entire briefing under ~430 words. Every claim sentence must contain a number, date, or named comparison. Do not use unquantified magnitude, hype, or hedging words.`
+Rules: every recommendation MUST include a specific pound figure; use ONLY figures present in the provided context (never invent data); no filler, no "as an AI", no closing pleasantries; keep the entire briefing under ~430 words. Every claim sentence must contain a number, date, or named comparison. Do not use unquantified magnitude, hype, or hedging words.`
 
 export function BiDashboardDrawer() {
   const { biOpen, setBiOpen, data, allFindings, tenderStages, locale } = useStore()

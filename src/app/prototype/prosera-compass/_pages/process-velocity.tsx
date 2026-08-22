@@ -21,6 +21,7 @@ import { toastMotion } from "../_components/motion"
 import { KPI_REASONING, reasoningFromKpi } from "../_components/reasoning-helpers"
 import { getPortfolioWeatherSummary } from "../data/_weather"
 import type { IntelModule, ModuleSummary } from "../_modules/types"
+import { formatGbp } from "../_format"
 
 const BOARD_ID = "process-velocity"
 
@@ -40,11 +41,7 @@ const COHORT_NOW_MS = new Date("2026-06-03T00:00:00Z").getTime()
 /* ------------------------------------------------------------------ */
 
 function fmtUsd(n: number): string {
-  const abs = Math.abs(n)
-  const sign = n < 0 ? "-" : ""
-  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`
-  if (abs >= 1_000) return `${sign}$${(abs / 1_000).toFixed(abs >= 10_000 ? 0 : 1)}k`
-  return `${sign}$${abs.toFixed(0)}`
+  return formatGbp(n)
 }
 
 function fmtDays(n: number): string {

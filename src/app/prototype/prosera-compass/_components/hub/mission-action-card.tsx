@@ -62,6 +62,12 @@ export interface MissionActionCardProps extends React.HTMLAttributes<HTMLElement
   timelineEntries?: ActionTimelineEntry[]
   isReconciling?: boolean
   reconcilePhase?: string
+  /** Award-governance status chip (Procurement review, Approval required, …). */
+  governanceChip?: React.ReactNode
+  /** One-line definition of the current award-governance status. */
+  governanceNote?: string
+  evaluateBidsLabel?: string
+  onEvaluateBids?: () => void
 }
 
 // White fill with a semantic-coloured outline + text (renders white on light,
@@ -104,6 +110,10 @@ export function MissionActionCard({
   timelineEntries = [],
   isReconciling = false,
   reconcilePhase,
+  governanceChip,
+  governanceNote,
+  evaluateBidsLabel,
+  onEvaluateBids,
   className,
   ...props
 }: MissionActionCardProps) {
@@ -207,6 +217,7 @@ export function MissionActionCard({
         </div>
 
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+          {governanceChip}
           <span
             className={cn(
               "rounded-[8px] px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide",
@@ -244,6 +255,9 @@ export function MissionActionCard({
         >
           {narrative}
         </p>
+        {governanceNote && (
+          <p className="mt-1.5 text-[12px] text-[var(--color-text-secondary)]">{governanceNote}</p>
+        )}
         {narrativeIsLong && (
           <button
             type="button"
@@ -340,6 +354,12 @@ export function MissionActionCard({
                     <SafeIcon name="Mail" className="h-4 w-4" />
                     Notify
                   </DropdownMenuItem>
+                  {onEvaluateBids && evaluateBidsLabel && (
+                    <DropdownMenuItem onClick={onEvaluateBids}>
+                      <SafeIcon name="Scale" className="h-4 w-4" />
+                      {evaluateBidsLabel}
+                    </DropdownMenuItem>
+                  )}
                   {hasReasoning && (
                     <>
                       <DropdownMenuSeparator />

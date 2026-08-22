@@ -10,6 +10,7 @@ import { tradeMargins, pricingBenchmarks, whaleCurve } from "./_benchmarks";
 import { metroWageProfiles, nationalBaseline, getWageForRegion } from "./_labor";
 import { getEIAFuelForRegion, getEIAFuelSummaryForRegion } from "./_eia";
 import type { Region } from "./_regions";
+import { formatGbp, formatGbpUnit } from "../_format";
 
 const SCALE = 0.87;
 
@@ -164,7 +165,7 @@ function analyzePricingGap(
 
     const pctDiff = ((entityAvgRev - portfolioAvgRev) / portfolioAvgRev) * 100;
     if (Math.abs(pctDiff) > 10 && jobs.length >= 2) {
-      details.push(`${type}: $${Math.round(entityAvgRev).toLocaleString()} avg vs. portfolio $${Math.round(portfolioAvgRev).toLocaleString()} (${pctDiff > 0 ? "+" : ""}${pctDiff.toFixed(0)}% across ${jobs.length} jobs)`);
+      details.push(`${type}: ${formatGbp(entityAvgRev, false)} avg vs. portfolio ${formatGbp(portfolioAvgRev, false)} (${pctDiff > 0 ? "+" : ""}${pctDiff.toFixed(0)}% across ${jobs.length} jobs)`);
     }
   }
 
@@ -177,7 +178,7 @@ function analyzePricingGap(
     dollarImpact: Math.round(totalDelta),
     detail: details.length > 0
       ? details.join(". ")
-      : `Weighted pricing delta of $${Math.abs(Math.round(totalDelta)).toLocaleString()} across ${valid.length} jobs.`,
+      : `Weighted pricing delta of ${formatGbp(Math.abs(Math.round(totalDelta)), false)} across ${valid.length} jobs.`,
   };
 }
 
@@ -223,7 +224,7 @@ function analyzeLaborCostVariance(
       if (latest && nvLatest) {
         const premium = ((latest.meanAnnualWage - nvLatest.meanAnnualWage) / nvLatest.meanAnnualWage * 100);
         if (Math.abs(premium) > 5) {
-          benchComp = `BLS data: ${wageProfile.metroArea} HVAC techs avg $${(latest.meanAnnualWage / 1000).toFixed(0)}k/yr vs. Metro West-1 $${(nvLatest.meanAnnualWage / 1000).toFixed(0)}k/yr (${premium > 0 ? "+" : ""}${premium.toFixed(0)}% structural premium)`;
+          benchComp = `BLS data: ${wageProfile.metroArea} HVAC techs avg ${formatGbp(latest.meanAnnualWage)}/yr vs. Metro West-1 ${formatGbp(nvLatest.meanAnnualWage)}/yr (${premium > 0 ? "+" : ""}${premium.toFixed(0)}% structural premium)`;
         }
       }
     }
@@ -234,7 +235,7 @@ function analyzeLaborCostVariance(
     category: "cost-structure",
     direction: laborDelta > 0 ? "drag" : "lift",
     dollarImpact: Math.round(-laborDelta),
-    detail: `Labor at ${(entityLaborPct * 100).toFixed(1)}% of revenue vs. portfolio benchmark ${(portfolioLaborPct * 100).toFixed(1)}%. ${laborDelta > 0 ? "Excess" : "Savings"} of $${Math.abs(Math.round(laborDelta)).toLocaleString()}.`,
+    detail: `Labor at ${(entityLaborPct * 100).toFixed(1)}% of revenue vs. portfolio benchmark ${(portfolioLaborPct * 100).toFixed(1)}%. ${laborDelta > 0 ? "Excess" : "Savings"} of ${formatGbp(Math.abs(Math.round(laborDelta)), false)}.`,
     benchmarkComparison: benchComp,
   };
 }
@@ -277,7 +278,7 @@ function analyzeMaterialMarkup(
     category: "pricing",
     direction: materialDelta > 0 ? "drag" : "lift",
     dollarImpact: Math.round(-materialDelta),
-    detail: `Material + equipment at ${(entityMaterialPct * 100).toFixed(1)}% of revenue vs. portfolio ${(portfolioMaterialPct * 100).toFixed(1)}%. Delta: $${Math.abs(Math.round(materialDelta)).toLocaleString()}.`,
+    detail: `Material + equipment at ${(entityMaterialPct * 100).toFixed(1)}% of revenue vs. portfolio ${(portfolioMaterialPct * 100).toFixed(1)}%. Delta: ${formatGbp(Math.abs(Math.round(materialDelta)), false)}.`,
     benchmarkComparison: benchComp,
   };
 }
@@ -365,7 +366,7 @@ function analyzeVolumeTicket(
     category: "volume",
     direction: ticketDelta < 0 ? "drag" : "lift",
     dollarImpact: Math.round(totalImpact),
-    detail: `Avg ticket $${Math.round(entityAvgTicket).toLocaleString()} vs. portfolio $${Math.round(baseline.avgTicket).toLocaleString()} (${ticketPctDiff > 0 ? "+" : ""}${(ticketPctDiff * 100).toFixed(0)}%). ${ticketDelta < 0 ? "Small jobs have higher per-unit dispatch and overhead costs." : "Larger jobs amortize fixed costs more effectively."}`,
+    detail: `Avg ticket ${formatGbp(entityAvgTicket, false)} vs. portfolio ${formatGbp(baseline.avgTicket, false)} (${ticketPctDiff > 0 ? "+" : ""}${(ticketPctDiff * 100).toFixed(0)}%). ${ticketDelta < 0 ? "Small jobs have higher per-unit dispatch and overhead costs." : "Larger jobs amortize fixed costs more effectively."}`,
   };
 }
 
@@ -395,7 +396,7 @@ function analyzeContractStructure(
       category: "contract",
       direction: "drag",
       dollarImpact: Math.round(-Math.abs(potentialLift)),
-      detail: `PM contracts at ${(pmMargin * 100).toFixed(1)}% margin across ${pmJobs.length} jobs ($${Math.round(pmRevenue).toLocaleString()} revenue). Target PM margin: 30-40%.`,
+      detail: `PM contracts at ${(pmMargin * 100).toFixed(1)}% margin across ${pmJobs.length} jobs (${formatGbp(pmRevenue, false)} revenue). Target PM margin: 30-40%.`,
       benchmarkComparison: "Industry PM contracts typically yield 30-40% gross margin due to predictable scope and route density advantages.",
     };
   }
@@ -416,7 +417,7 @@ function analyzeContractStructure(
         category: "contract",
         direction: "drag",
         dollarImpact: Math.round(-frictionCost),
-        detail: `${escalatedJobs.length} jobs exceeded the customer-set NTE threshold, triggering dispatch approval workflow. Escalated jobs average ${avgVisitsEscalated.toFixed(1)} visits vs. ${avgVisitsWithin.toFixed(1)} for within-scope jobs (${visitDelta > 0 ? "+" : ""}${visitDelta.toFixed(1)} visit delta). ${returnTrips} estimated return trips at ~$${estTruckRollCost}/trip = $${frictionCost.toLocaleString()} annual friction cost.`,
+        detail: `${escalatedJobs.length} jobs exceeded the customer-set NTE threshold, triggering dispatch approval workflow. Escalated jobs average ${avgVisitsEscalated.toFixed(1)} visits vs. ${avgVisitsWithin.toFixed(1)} for within-scope jobs (${visitDelta > 0 ? "+" : ""}${visitDelta.toFixed(1)} visit delta). ${returnTrips} estimated return trips at ~$${estTruckRollCost}/trip = ${formatGbp(frictionCost, false)} annual friction cost.`,
         benchmarkComparison: "NTE is a customer-set authorization threshold from the third-party FM platform, not an internal dispatch setting. High escalation rates indicate the customer's NTE is too low for actual job scope — recommend negotiating higher thresholds.",
       };
     }
@@ -462,7 +463,7 @@ function analyzeRegionalCostPremium(
       const national = nationalBaseline[nationalBaseline.length - 1];
       if (latest && national) {
         const premium = ((latest.meanAnnualWage - national.meanAnnualWage) / national.meanAnnualWage * 100);
-        benchComp = `${wageProfile.metroArea} HVAC wages ${premium > 0 ? "+" : ""}${premium.toFixed(0)}% vs. national avg ($${(latest.meanAnnualWage / 1000).toFixed(0)}k vs. $${(national.meanAnnualWage / 1000).toFixed(0)}k). ${costDelta > 0 ? "Structural cost premium should be reflected in regional pricing." : ""}`;
+        benchComp = `${wageProfile.metroArea} HVAC wages ${premium > 0 ? "+" : ""}${premium.toFixed(0)}% vs. national avg (${formatGbp(latest.meanAnnualWage)} vs. ${formatGbp(national.meanAnnualWage)}). ${costDelta > 0 ? "Structural cost premium should be reflected in regional pricing." : ""}`;
       }
     }
   }
@@ -472,7 +473,7 @@ function analyzeRegionalCostPremium(
     category: "regional",
     direction: costDelta > 0 ? "drag" : "lift",
     dollarImpact: Math.round(-costDelta),
-    detail: `Cost at ${(entityCostPct * 100).toFixed(1)}% of revenue vs. portfolio-adjusted expectation ${(expectedCostPct * 100).toFixed(1)}%. Regional operations in ${regionStr} carry a ${costDelta > 0 ? "premium" : "discount"} of $${Math.abs(Math.round(costDelta)).toLocaleString()}.`,
+    detail: `Cost at ${(entityCostPct * 100).toFixed(1)}% of revenue vs. portfolio-adjusted expectation ${(expectedCostPct * 100).toFixed(1)}%. Regional operations in ${regionStr} carry a ${costDelta > 0 ? "premium" : "discount"} of ${formatGbp(Math.abs(Math.round(costDelta)), false)}.`,
     benchmarkComparison: benchComp,
   };
 }
@@ -536,7 +537,7 @@ export function analyzeEntity(
   const estimatedRecovery = topDrags.reduce((s, d) => s + Math.abs(d.dollarImpact), 0);
 
   const topLever = drivers.length > 0
-    ? `${drivers[0].driver}: $${Math.abs(drivers[0].dollarImpact).toLocaleString()} ${drivers[0].direction === "drag" ? "recoverable" : "advantage"}`
+    ? `${drivers[0].driver}: ${formatGbp(Math.abs(drivers[0].dollarImpact), false)} ${drivers[0].direction === "drag" ? "recoverable" : "advantage"}`
     : "No significant margin drivers identified";
 
   return {
@@ -739,11 +740,11 @@ function computeNTEPrescriptions(
       : 1;
 
     actions.push({
-      action: `${roleForLever("Dispatch re-auth workflow")}: cut ${jobType} NTE escalation loops from ${typeEscalated.length}/${typeJobs.length} to ${typeEscalated.length - escalationsEliminated}/${typeJobs.length} jobs/yr via single-queue re-auth — saves $${annualSavings.toLocaleString()}/yr in truck-roll overhead (${escalationsEliminated} loops × $${estTruckRollCost} × ${(returnTripRate * 100).toFixed(0)}% return-trip rate)`,
+      action: `${roleForLever("Dispatch re-auth workflow")}: cut ${jobType} NTE escalation loops from ${typeEscalated.length}/${typeJobs.length} to ${typeEscalated.length - escalationsEliminated}/${typeJobs.length} jobs/yr via single-queue re-auth — saves ${formatGbp(annualSavings, false)}/yr in truck-roll overhead (${escalationsEliminated} loops × $${estTruckRollCost} × ${(returnTripRate * 100).toFixed(0)}% return-trip rate)`,
       lever: "Dispatch re-auth workflow",
-      currentValue: `$${Math.round(avgNTE).toLocaleString()} customer-set NTE, ${typeEscalated.length}/${typeJobs.length} jobs escalate (${(typeEscalated.length / typeJobs.length * 100).toFixed(0)}% escalation rate)`,
+      currentValue: `${formatGbp(avgNTE, false)} customer-set NTE, ${typeEscalated.length}/${typeJobs.length} jobs escalate (${(typeEscalated.length / typeJobs.length * 100).toFixed(0)}% escalation rate)`,
       targetValue: `Single-queue re-auth for ${jobType}, target ${typeEscalated.length - escalationsEliminated}/${typeJobs.length} fewer escalation loops`,
-      math: `Escalated jobs avg ${avgVisitsEscalated.toFixed(1)} visits vs. within-scope ${avgVisitsWithin.toFixed(1)} visits. ${escalationsEliminated} eliminated escalations × $${estTruckRollCost} truck roll × ${(returnTripRate * 100).toFixed(0)}% return-trip rate = $${annualSavings.toLocaleString()}/yr dispatch overhead savings`,
+      math: `Escalated jobs avg ${avgVisitsEscalated.toFixed(1)} visits vs. within-scope ${avgVisitsWithin.toFixed(1)} visits. ${escalationsEliminated} eliminated escalations × $${estTruckRollCost} truck roll × ${(returnTripRate * 100).toFixed(0)}% return-trip rate = ${formatGbp(annualSavings, false)}/yr dispatch overhead savings`,
       projectedAnnualUplift: annualSavings,
       jobCount: typeJobs.length,
       jobType,
@@ -794,11 +795,11 @@ function computeLaborRatePrescriptions(
     const avgHoursPerJob = totalHours / typeJobs.length;
 
     actions.push({
-      action: `${roleForLever("Labor billing rate")}: raise ${jobType} billing from $${Math.round(currentBillingRate)}/hr to $${targetBillingRate}/hr (${LABOR_MULTIPLIER_TARGET}× tech cost) on ~${typeJobs.length} jobs/yr — $${annualRecovery.toLocaleString()}/yr margin recovery at ${avgHoursPerJob.toFixed(1)} hrs/job avg`,
+      action: `${roleForLever("Labor billing rate")}: raise ${jobType} billing from ${formatGbp(currentBillingRate, false)}/hr to $${targetBillingRate}/hr (${LABOR_MULTIPLIER_TARGET}× tech cost) on ~${typeJobs.length} jobs/yr — ${formatGbp(annualRecovery, false)}/yr margin recovery at ${avgHoursPerJob.toFixed(1)} hrs/job avg`,
       lever: "Labor billing rate",
-      currentValue: `$${Math.round(currentBillingRate)}/hr billing (${currentMultiplier.toFixed(1)}× tech cost of $${Math.round(avgCostRate)}/hr)`,
+      currentValue: `${formatGbp(currentBillingRate, false)}/hr billing (${currentMultiplier.toFixed(1)}× tech cost of ${formatGbp(avgCostRate, false)}/hr)`,
       targetValue: `$${targetBillingRate}/hr billing (${LABOR_MULTIPLIER_TARGET}× multiplier)`,
-      math: `Tech cost $${Math.round(avgCostRate)}/hr × ${LABOR_MULTIPLIER_TARGET}× = $${targetBillingRate}/hr target. At current volume (~${typeJobs.length} jobs/yr, ${avgHoursPerJob.toFixed(1)} hrs/job avg), projected annual uplift: $${Math.round(rateUplift)}/hr × ${totalHours.toFixed(0)} hrs = $${annualRecovery.toLocaleString()}/yr`,
+      math: `Tech cost ${formatGbp(avgCostRate, false)}/hr × ${LABOR_MULTIPLIER_TARGET}× = $${targetBillingRate}/hr target. At current volume (~${typeJobs.length} jobs/yr, ${avgHoursPerJob.toFixed(1)} hrs/job avg), projected annual uplift: ${formatGbp(rateUplift, false)}/hr × ${totalHours.toFixed(0)} hrs = ${formatGbp(annualRecovery, false)}/yr`,
       projectedAnnualUplift: annualRecovery,
       jobCount: typeJobs.length,
       jobType,
@@ -834,11 +835,11 @@ function computeMaterialMarkupPrescriptions(
   const primaryType = getPrimaryJobType(matJobs);
 
   actions.push({
-    action: `${roleForLever("Material markup")}: lift material markup from ${(currentMarkupPct * 100).toFixed(1)}% to ${(targetMarkupPct * 100).toFixed(0)}% of revenue on ~${matJobs.length} ${primaryType} jobs/yr — closes ${(markupGapPct * 100).toFixed(1)}pt gap for $${annualRecovery.toLocaleString()}/yr uplift`,
+    action: `${roleForLever("Material markup")}: lift material markup from ${(currentMarkupPct * 100).toFixed(1)}% to ${(targetMarkupPct * 100).toFixed(0)}% of revenue on ~${matJobs.length} ${primaryType} jobs/yr — closes ${(markupGapPct * 100).toFixed(1)}pt gap for ${formatGbp(annualRecovery, false)}/yr uplift`,
     lever: "Material markup",
-    currentValue: `${(currentMarkupPct * 100).toFixed(1)}% material cost as % of revenue ($${Math.round(totalMatCost).toLocaleString()} on $${Math.round(totalRevenue).toLocaleString()})`,
+    currentValue: `${(currentMarkupPct * 100).toFixed(1)}% material cost as % of revenue (${formatGbp(totalMatCost, false)} on ${formatGbp(totalRevenue, false)})`,
     targetValue: `${(targetMarkupPct * 100).toFixed(0)}% (industry standard ${(pricingBenchmarks.materialMarkup.industryStandardRange[0] * 100).toFixed(0)}-${(pricingBenchmarks.materialMarkup.industryStandardRange[1] * 100).toFixed(0)}%)`,
-    math: `Gap: ${(markupGapPct * 100).toFixed(1)} pts. At current volume (~${matJobs.length} jobs/yr, $${Math.round(totalRevenue).toLocaleString()} revenue), applying this markup going forward = $${annualRecovery.toLocaleString()}/yr projected uplift`,
+    math: `Gap: ${(markupGapPct * 100).toFixed(1)} pts. At current volume (~${matJobs.length} jobs/yr, ${formatGbp(totalRevenue, false)} revenue), applying this markup going forward = ${formatGbp(annualRecovery, false)}/yr projected uplift`,
     projectedAnnualUplift: annualRecovery,
     jobCount: matJobs.length,
     jobType: primaryType,
@@ -883,11 +884,11 @@ function computePricingGapPrescriptions(
     const targetMargin = targetTicket > 0 ? ((targetTicket - entityAvgCost) / targetTicket * 100).toFixed(1) : "N/A";
 
     actions.push({
-      action: `${roleForLever("Job ticket pricing")}: reprice ${jobType} quotes from $${Math.round(entityAvgTicket).toLocaleString()} to $${targetTicket.toLocaleString()} (95% of portfolio $${Math.round(portfolioAvgTicket).toLocaleString()}) on ~${typeJobs.length} jobs/yr — $${annualRecovery.toLocaleString()}/yr uplift, margin ${currentMargin}% → ${targetMargin}%`,
+      action: `${roleForLever("Job ticket pricing")}: reprice ${jobType} quotes from ${formatGbp(entityAvgTicket, false)} to ${formatGbp(targetTicket, false)} (95% of portfolio ${formatGbp(portfolioAvgTicket, false)}) on ~${typeJobs.length} jobs/yr — ${formatGbp(annualRecovery, false)}/yr uplift, margin ${currentMargin}% → ${targetMargin}%`,
       lever: "Job ticket pricing",
-      currentValue: `$${Math.round(entityAvgTicket).toLocaleString()} avg ticket (${currentMargin}% margin) vs. portfolio $${Math.round(portfolioAvgTicket).toLocaleString()}`,
-      targetValue: `$${targetTicket.toLocaleString()} (95% of portfolio avg, ${targetMargin}% margin)`,
-      math: `$${Math.round(perJobUplift).toLocaleString()} uplift/job. At current volume (~${typeJobs.length} jobs/yr at $${Math.round(entityAvgCost).toLocaleString()} avg cost), projected annual uplift: $${annualRecovery.toLocaleString()}/yr`,
+      currentValue: `${formatGbp(entityAvgTicket, false)} avg ticket (${currentMargin}% margin) vs. portfolio ${formatGbp(portfolioAvgTicket, false)}`,
+      targetValue: `${formatGbp(targetTicket, false)} (95% of portfolio avg, ${targetMargin}% margin)`,
+      math: `${formatGbp(perJobUplift, false)} uplift/job. At current volume (~${typeJobs.length} jobs/yr at ${formatGbp(entityAvgCost, false)} avg cost), projected annual uplift: ${formatGbp(annualRecovery, false)}/yr`,
       projectedAnnualUplift: annualRecovery,
       jobCount: typeJobs.length,
       jobType,
@@ -928,12 +929,7 @@ export function buildPricingBandInsights(
 ): PricingBandInsight[] {
   const insights: PricingBandInsight[] = [];
 
-  const fmtUsd = (n: number) => {
-    const abs = Math.abs(n);
-    if (abs >= 1_000_000) return `$${(abs / 1_000_000).toFixed(1)}M`;
-    if (abs >= 1_000) return `$${(abs / 1_000).toFixed(1)}k`;
-    return `$${abs.toFixed(0)}`;
-  };
+  const fmtUsd = (n: number) => formatGbp(n);
 
   for (const jt of quoteAnalysis.byJobType) {
     if (jt.totalQuotes < 5) continue;

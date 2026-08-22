@@ -14,7 +14,7 @@ import { avatarColor, avatarSrcFor } from "./avatar-color"
 function formatDate(iso: string): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return iso
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
 }
 
 /** Illustrated (or coloured-initial fallback) avatar for every human on the timeline. */

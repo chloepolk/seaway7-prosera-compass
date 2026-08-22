@@ -50,7 +50,11 @@ export function AuditLogModal({
               <div key={entry.id} className="rounded-lg border bg-muted/20 p-3">
                 <p className="text-[11px] font-medium text-muted-foreground">{formatTimestamp(entry.timestamp, locale)}</p>
                 <p className="mt-1 text-[12px] font-semibold text-foreground">
-                  {entry.field === "completion" ? t("modals.missionConfirmation") : t("modals.recommendation")}
+                  {entry.field === "completion"
+                    ? t("modals.missionConfirmation")
+                    : entry.field === "award_governance"
+                      ? t("modals.awardGovernance")
+                      : t("modals.recommendation")}
                 </p>
                 <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground line-through">{entry.oldValue}</p>
                 <p className="mt-1 text-[12px] leading-relaxed text-foreground">{entry.newValue}</p>

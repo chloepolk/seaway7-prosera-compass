@@ -4,12 +4,11 @@ import * as React from "react"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { cn } from "@/lib/utils"
 import { formatCurrency } from "./stages"
+import { formatGbp } from "../_format"
 import type { PortfolioRoi } from "./adapter"
 
 function compactUsd(n: number): string {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`
-  if (n >= 1_000) return `$${Math.round(n / 1_000)}k`
-  return `$${n}`
+  return formatGbp(n)
 }
 
 function Sparkline({ values }: { values: number[] }) {
