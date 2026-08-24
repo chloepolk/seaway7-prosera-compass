@@ -43,7 +43,7 @@ export const EVAL_PACKAGE_ID = "PKG-2101"
 export const ITT_REF = "ITT-MER-SCM-2101"
 
 /**
- * PKG-2101 — 66kV array cable (full PDF set):
+ * PKG-2101 — 66 kV array cable (full PDF set):
  * - Prysmatic → hard gate fail (refuses DDP Rotterdam)
  * - Viking → warranty 12 mo → Legal −15 + high commercial risk
  * - J-Tech / NexCore → competitive passers

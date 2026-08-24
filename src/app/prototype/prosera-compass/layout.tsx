@@ -1,18 +1,11 @@
-"use client"
+import type { Metadata } from "next"
+import ProseraCompassClientLayout from "./client-layout"
 
-import * as React from "react"
-import { TooltipProvider } from "@/components/ui/prosera/tooltip"
-import { AcmeDemoStoreProvider } from "./_store"
-import { LayoutShell } from "./_shell"
-import { CompassMotionStyles } from "./_components/motion"
+export const metadata: Metadata = {
+  title: "Prosera Compass",
+  description: "Prosera Compass — supply chain intelligence for offshore wind procurement.",
+}
 
-export default function AcmeDemoLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <TooltipProvider>
-      <AcmeDemoStoreProvider>
-        <CompassMotionStyles />
-        <LayoutShell>{children}</LayoutShell>
-      </AcmeDemoStoreProvider>
-    </TooltipProvider>
-  )
+export default function ProseraCompassLayout({ children }: { children: React.ReactNode }) {
+  return <ProseraCompassClientLayout>{children}</ProseraCompassClientLayout>
 }

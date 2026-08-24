@@ -99,7 +99,7 @@ ${JSON.stringify(orchestratorContext.expansionStrategy, null, 1)}`
     const pricingBandSection = orchestratorContext?.pricingBandIntelligence
       ? `\n═══ PRICING-BAND INTELLIGENCE (pre-computed win-rate inflection points) ═══
 Each entry is a job type with its sweet spot, ceiling, win-rate drop above ceiling, pending quotes at risk, and projected uplift from correct future pricing.
-On the Pricing Intel page, surface any job type with pending quotes priced above the ceiling as an immediate, pound-quantified risk.
+On the Pricing Intel page, surface any job type with pending quotes priced above the ceiling as an immediate, euro-quantified risk.
 
 ${JSON.stringify(orchestratorContext.pricingBandIntelligence, null, 1)}`
       : ""
@@ -129,7 +129,7 @@ ${JSON.stringify(orchestratorContext.fuelExposure, null, 1)}`
 
     const userContent = `${languageInstruction}Synthesize the following specialist analyses into a unified intelligence briefing.
 
-HERO HEADLINE: headline.title and headline.narrative appear on Today's Focus. Write them as a calm fact plus the next action. Name the package, the days or date, and the pound figure. Do not use threaten, jeopardise, expedite, crisis, or "Critical …" in the title.
+HERO HEADLINE: headline.title and headline.narrative appear on Today's Focus. Write them as a calm fact plus the next action. Name the package, the days or date, and the euro figure. Do not use threaten, jeopardise, expedite, crisis, or "Critical …" in the title.
 
 Navigation Context: ${JSON.stringify(drillState)}
 Active Page: ${pageContext}

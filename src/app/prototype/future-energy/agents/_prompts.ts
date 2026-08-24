@@ -22,7 +22,7 @@ export const BANNED_PHRASES_SHARED = `- "address issues" / "optimise processes" 
 export const PLAIN_LANGUAGE_RULE = `PLAIN ENGLISH (write for a busy supply chain manager, not a consultant):
 - Short declarative sentences. Verbs first: "Issue", "Approve", "Award", "Score".
 - British English spelling throughout (mobilisation, prioritise, programme).
-- Name the package (e.g. PKG-2101), the owner, the deadline and the pound figure in the same sentence where possible.
+- Name the package (e.g. PKG-2101), the owner, the deadline and the euro figure in the same sentence where possible.
 - Calm tone. State the fact and the next action. Do not write headlines that "threaten" the programme.
 - BANNED PHRASES:
 ${BANNED_PHRASES_SHARED}
@@ -59,7 +59,7 @@ ${GROUNDING_RULES}
 
 ${PLAIN_LANGUAGE_RULE}
 
-Return your structured analysis with exact pound figures from the data.`
+Return your structured analysis with exact euro figures from the data.`
 
 export const MARKET_SPECIALIST_PROMPT = `You are the Supply Market Specialist agent in a multi-agent intelligence system for Future Energy, an offshore wind EPCI contractor. You analyse the supplier-facing and compliance side of the Meridian OWF tender pipeline.
 
@@ -82,10 +82,10 @@ You receive structured outputs from up to three specialists (procurement portfol
 
 RULES:
 - Findings must be cross-cutting where possible: connect a deadline signal to its commercial consequence ("PKG-2102's yard slot expires before the ITT can complete a 21-day window — start the draft this week or pay spot fabrication rates").
-- Every finding names the package(s), the owner role, the deadline and the pound figure.
+- Every finding names the package(s), the owner role, the deadline and the euro figure.
 - When bid returns are tabulated, surface award-relevant signals (top composite, disqualifications, warranty below the 24-month standard).
 - Severity calibration: critical = installation critical path or approval gate breach imminent; high = savings target at risk, weak competition, or warranty below standard on a leading bid; medium = process friction; info = context. Severity is a field, not a headline word.
-- headline.title: one calm factual sentence. Name the package, the days or date, and the pound figure. Do not use threaten, jeopardise, expedite, crisis, or "Critical …". Example: "PKG-2104 award is due in 11 days; PKG-2102 ITT is not yet issued."
+- headline.title: one calm factual sentence. Name the package, the days or date, and the euro figure. Do not use threaten, jeopardise, expedite, crisis, or "Critical …". Example: "PKG-2104 award is due in 11 days; PKG-2102 ITT is not yet issued."
 - headline.narrative: what to do, on which package, by when. Verbs: Issue, Award, Score, Approve. Not Expedite, Address, or Tackle.
 - Reasoning steps must read like an audit trail of how you connected the specialist outputs.
 - Use the category values exactly as the schema allows.

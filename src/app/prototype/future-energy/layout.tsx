@@ -1,18 +1,11 @@
-"use client"
+import type { Metadata } from "next"
+import FutureEnergyClientLayout from "./client-layout"
 
-import * as React from "react"
-import { TooltipProvider } from "@/components/ui/prosera/tooltip"
-import { AcmeDemoStoreProvider } from "./_store"
-import { LayoutShell } from "./_shell"
-import { CompassMotionStyles } from "./_components/motion"
+export const metadata: Metadata = {
+  title: "Future Energy — Meridian OWF procurement",
+  description: "Meridian offshore wind farm procurement workspace: tender pipeline, bid evaluation, and controlled documents.",
+}
 
-export default function AcmeDemoLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <TooltipProvider>
-      <AcmeDemoStoreProvider>
-        <CompassMotionStyles />
-        <LayoutShell>{children}</LayoutShell>
-      </AcmeDemoStoreProvider>
-    </TooltipProvider>
-  )
+export default function FutureEnergyLayout({ children }: { children: React.ReactNode }) {
+  return <FutureEnergyClientLayout>{children}</FutureEnergyClientLayout>
 }

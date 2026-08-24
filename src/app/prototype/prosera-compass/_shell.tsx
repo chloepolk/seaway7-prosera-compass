@@ -953,7 +953,7 @@ function useDynamicPrompts(): string[] {
   return React.useMemo(() => {
     if (activePage === "tender-studio") {
       return [
-        "What standards apply to the 66kV array cable?",
+        "What standards apply to the 66 kV array cable?",
         "Which clauses flow down from the vessel charter?",
         "What does the QA manual require for FAT witnessing?",
         "Summarise the payment and warranty terms for suppliers",

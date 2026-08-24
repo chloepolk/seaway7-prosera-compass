@@ -78,11 +78,11 @@ function fallbackScope(baseSpec: ComponentSpec, quantity: string, locale: Locale
       : `Draft the Invitation to Tender for ${quantity} of ${spec.name} for the ${project.name}.`,
     projectSummary: locale === "fr"
       ? [
-          `Future Energy est chargée de l’ingénierie, des achats, de la construction et de l’installation de ${project.name}, un ${project.scope} développé pour ${project.client}. Le présent appel d’offres couvre la fourniture de ${quantity} de ${spec.name.toLowerCase()}, en pleine conformité avec la spécification contrôlée ${spec.docRef}.`,
+          `Future Energy est chargée de l’ingénierie, des achats, de la construction et de l’installation de ${project.name}, un ${project.scope} développé pour ${project.client}. Le présent appel d’offres couvre la fourniture de ${quantity} de ${spec.name}, en pleine conformité avec la spécification contrôlée ${spec.docRef}.`,
           `${spec.overview} La livraison est exigée DDP (Incoterms 2020) au port de mobilisation du programme à ${project.mobilisationPort}, et les biens fournis s’inscrivent dans la séquence d’installation de la campagne offshore 2027.`,
         ]
       : [
-          `Future Energy has been engaged for the engineering, procurement, construction and installation of the ${project.name}, a ${project.scope.toLowerCase()} developed for ${project.client}. This Invitation to Tender covers the supply of ${quantity} of ${spec.name.toLowerCase()} in full accordance with controlled specification ${spec.docRef}.`,
+          `Future Energy has been engaged for the engineering, procurement, construction and installation of the ${project.name}, a ${project.scope} developed for ${project.client}. This Invitation to Tender covers the supply of ${quantity} of ${spec.name} in full accordance with controlled specification ${spec.docRef}.`,
           `${spec.overview} Delivery is required DDP (Incoterms 2020) to the programme's mobilisation port at ${project.mobilisationPort}, and the supplied goods form part of the installation sequence for the 2027 offshore campaign.`,
         ],
     retrievalPlan,
@@ -583,7 +583,7 @@ export function TenderStudioPage() {
     setQuantity(localizedQuantity)
     setPkg(loadedPkg)
     setPrompt(locale === "fr"
-      ? `Rédiger l’AO pour ${localizedQuantity} de ${localizedSpec.name.toLowerCase()}${loadedPkg ? ` (lot ${loadedPkg.packageRef})` : ""}`
+      ? `Rédiger l’AO pour ${localizedQuantity} de ${localizedSpec.name}${loadedPkg ? ` (lot ${loadedPkg.packageRef})` : ""}`
       : d.prompt)
     setScope(localizedScope)
     setItt(localizedItt)
@@ -610,8 +610,8 @@ export function TenderStudioPage() {
           const localSpec = localizeComponentSpec(s, locale)
           const localQuantity = localizeQuantity(t.quantity, locale)
           setPrompt(locale === "fr"
-            ? `Rédiger l’AO pour ${localQuantity} de ${localSpec.name.toLowerCase()} (lot ${t.packageRef})`
-            : `Draft the ITT for ${localQuantity} of ${localSpec.name.toLowerCase()} (package ${t.packageRef})`)
+            ? `Rédiger l’AO pour ${localQuantity} de ${localSpec.name} (lot ${t.packageRef})`
+            : `Draft the ITT for ${localQuantity} of ${localSpec.name} (package ${t.packageRef})`)
         }
       }
     }
@@ -642,8 +642,8 @@ export function TenderStudioPage() {
         const nextQuantity = localizeQuantity(oldQuantity, locale)
         const nextSpec = localizeComponentSpec(baseSpec, locale)
         setPrompt(locale === "fr"
-          ? `Rédiger l’AO pour ${nextQuantity} de ${nextSpec.name.toLowerCase()}`
-          : `Draft the ITT for ${nextQuantity} of ${nextSpec.name.toLowerCase()}`)
+          ? `Rédiger l’AO pour ${nextQuantity} de ${nextSpec.name}`
+          : `Draft the ITT for ${nextQuantity} of ${nextSpec.name}`)
       }
       return
     }

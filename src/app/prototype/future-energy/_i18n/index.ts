@@ -11,6 +11,7 @@ export { en, fr }
 const CATALOG: Record<Locale, MessageTree> = { en, fr }
 
 const LOCALE_STORAGE_KEY = "fe-locale"
+export const LOCALE_COOKIE_KEY = "fe-locale"
 
 export function isLocale(value: unknown): value is Locale {
   return value === "en" || value === "fr"
@@ -31,6 +32,7 @@ export function persistLocale(locale: Locale) {
   if (typeof window === "undefined") return
   try {
     localStorage.setItem(LOCALE_STORAGE_KEY, locale)
+    document.cookie = `${LOCALE_COOKIE_KEY}=${locale}; path=/; max-age=31536000; SameSite=Lax`
   } catch {
     /* ignore */
   }

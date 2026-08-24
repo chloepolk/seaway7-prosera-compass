@@ -2,7 +2,7 @@
 /**
  * Apply a uniform monetary multiplier to all dollar-denominated fields
  * in the ACME demo's _raw.ts and _atob.ts files.
- * Preserves all ratios, margins, and percentages.
+ * Target directory src/app/prototype/acme-demo/data no longer exists — do not run.
  */
 
 import { readFileSync, writeFileSync } from "fs";

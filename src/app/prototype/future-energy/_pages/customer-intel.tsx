@@ -314,7 +314,7 @@ function useExecutiveBrief(
     return {
       severity: exitCustomers.length > 10 ? "high" : "medium",
       sentences: [
-        `ACME Field Services operates ${portfolioSummary.totalCustomers} customers across ${regions.length} states generating ${fmtUsd(portfolioSummary.validated.totalRevenue)} in revenue at ${fmtPct(portfolioSummary.validated.avgMarginPct)} blended gross margin.`,
+        `Future Energy operates ${portfolioSummary.totalCustomers} customers across ${regions.length} states generating ${fmtUsd(portfolioSummary.validated.totalRevenue)} in revenue at ${fmtPct(portfolioSummary.validated.avgMarginPct)} blended gross margin.`,
         `The top ${portfolioSummary.topMarginCustomerPct.toFixed(0)}% of customers deliver ${portfolioSummary.topMarginSharePct}% of total margin.`,
         `${bestRegion && worstRegion ? `${regionLabels[bestRegion.region] ?? bestRegion.region} leads at ${fmtPct(bestRegion.validated.avgMarginPct)} while ${regionLabels[worstRegion.region] ?? worstRegion.region} trails at ${fmtPct(worstRegion.validated.avgMarginPct)} — a ${regionSpread}pt spread.` : `No prior-period data to compare regional performance.`}`,
         `${exitCustomers.length} Dogs accounts are destroying ${fmtUsd(Math.abs(exitLoss))} in margin, while ${nteEscalations.length} NTE scope escalation events add dispatch friction when jobs exceed customer-set authorization caps.`,

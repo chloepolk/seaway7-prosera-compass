@@ -47,7 +47,7 @@ interface SpecialistStatuses {
 }
 
 const SUGGESTED_PROMPTS = [
-  "Draft the ITT for 5,000 metres of 66kV subsea array cable",
+  "Draft the ITT for 5,000 metres of 66 kV subsea array cable",
   "Prepare an invitation to tender for 24 monopile transition pieces",
   "Draft the tender for the replacement 3000T crane hook block",
   "Draft an ITT for 60 diverless J-tube seals",
@@ -66,7 +66,7 @@ function fallbackScope(spec: ComponentSpec, quantity: string): ScopeOutput {
   return {
     objective: `Draft the Invitation to Tender for ${quantity} of ${spec.name} for the ${PROJECT.name}.`,
     projectSummary: [
-      `Seaway7 has been engaged for the engineering, procurement, construction and installation of the ${PROJECT.name}, a ${PROJECT.scope.toLowerCase()} developed for ${PROJECT.client}. This Invitation to Tender covers the supply of ${quantity} of ${spec.name.toLowerCase()} in full accordance with controlled specification ${spec.docRef}.`,
+      `Seaway7 has been engaged for the engineering, procurement, construction and installation of the ${PROJECT.name}, a ${PROJECT.scope} developed for ${PROJECT.client}. This Invitation to Tender covers the supply of ${quantity} of ${spec.name} in full accordance with controlled specification ${spec.docRef}.`,
       `${spec.overview} Delivery is required DDP (Incoterms 2020) to the programme's mobilisation port at ${PROJECT.mobilisationPort}, and the supplied goods form part of the installation sequence for the 2027 offshore campaign.`,
     ],
     retrievalPlan,
@@ -522,7 +522,7 @@ export function TenderStudioPage() {
         loadDraft(existing)
       } else {
         const s = COMPONENT_SPECS.find(c => c.id === t.componentId)
-        if (s) setPrompt(`Draft the ITT for ${t.quantity} of ${s.name.toLowerCase()} (package ${t.packageRef})`)
+        if (s) setPrompt(`Draft the ITT for ${t.quantity} of ${s.name} (package ${t.packageRef})`)
       }
     }
     openTenderStudio(null)

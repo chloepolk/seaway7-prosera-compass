@@ -7,12 +7,16 @@ cd "$ROOT"
 SCAN_DIRS=(
   "src/app/prototype/silver-state"
   "src/app/prototype/prosera-compass"
+  "src/app/prototype/future-energy"
   "src/app/login"
 )
 
 fail=0
 for dir in "${SCAN_DIRS[@]}"; do
-  [[ -d "$dir" ]] || continue
+  if [[ ! -d "$dir" ]]; then
+    echo "WARN: scan directory missing: $dir"
+    continue
+  fi
   while IFS= read -r -d '' file; do
     while IFS= read -r line; do
       [[ "$line" =~ ^import ]] || continue
@@ -28,7 +32,7 @@ for dir in "${SCAN_DIRS[@]}"; do
 done
 
 if [[ $fail -ne 0 ]]; then
-  echo "Guard failed: use @/components/ui/prosera/* in silver-state and login."
+  echo "Guard failed: use @/components/ui/prosera/* in scanned prototype trees and login."
   exit 1
 fi
 

@@ -109,7 +109,7 @@ export interface AssignRecommendation {
 
 const PRIMARY_REASONS: Record<string, string> = {
   "Senior Project SCM Manager":
-    "Daniel owns the Meridian tender pipeline end-to-end — package sequencing, ITT issue and award recommendations route through him.",
+    "Daniel owns the Meridian tender pipeline — package sequencing, ITT issue and award recommendations route through him.",
   "SCM Director":
     "Approval authority sits with Claire — ITT issue, deviations from standard terms, and award decisions above delegated limits need her sign-off.",
   "Package Manager — Cables":

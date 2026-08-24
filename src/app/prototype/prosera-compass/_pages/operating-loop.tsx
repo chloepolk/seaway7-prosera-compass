@@ -263,7 +263,7 @@ export function OperatingLoopPage() {
 
   const staticHeroHeadline = `${compactUsd(protectTotal + createTotal)} of negotiated savings is in play across the Meridian tender pipeline.`
   const staticHeroBody =
-    `${openMissions.length} packages are live. Four returns are in on the 66kV array cable ITT — run the gated evaluation before the award recommendation.`
+    `${openMissions.length} packages are live. Four returns are in on the 66 kV array cable ITT — run the gated evaluation before the award recommendation.`
 
   const heroReasoning = React.useMemo(
     () =>

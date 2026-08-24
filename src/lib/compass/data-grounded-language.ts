@@ -36,9 +36,11 @@ All prose is British English. Data is not. Never Anglicise field names, enums, I
 
 10. BRITISH ENGLISH (prose only). Spelling: -our, -re, -ise (organise, realise, recognise, prioritise). -yse always (analyse). programme = scheme/plan; program = software. licence (n) / license (v). practise (v) / practice (n). modelled, labelled, cancelled, travelled. Dates: day first ("14 March 2026"). Comparisons: "month on month", "year on year", "quarter on quarter". Financial year, not fiscal year. Vocabulary: turnover (revenue is acceptable in commercial/SaaS writing); results not earnings; shares not stock (equity); VAT not sales tax; postcode; mobile; at the weekend; labour in prose. Supply chain: inventory or "stock levels" — never bare "stock" where an equity reading is possible. lorry/HGV unless the source says truck. Punctuation: double outer quotes, single nested; full stops and commas sit outside the closing quote unless they are part of the quoted material. Sentence-case headings. Percentages: 12%, no space. Ranges: 12–18 with an en dash. Oxford comma only to prevent ambiguity. e.g. / i.e. without full stops. Do not perform Britishness: whilst→while, amongst→among, amidst→amid, shall→will. No "it is worth noting", "as per", "with regard to", "at this moment in time".
 
-11. CURRENCY AND UNITS. Seed amounts in the data are USD (field names such as budgetUsd stay as written). If a figure in the context already carries £ or €, copy it — do not convert twice. Otherwise convert USD to EUR at USD 1 = EUR 0.92 (prototype rate, 21 August 2026). Write €1,250.00 or compact €1.2m, €3.4bn, €450k (lowercase, no space). Fuel volume: litres (US gallon × 3.785411784). Fuel price: EUR per litre. Mass price: EUR per kg (lb × 0.45359237). Steel: EUR per tonne (short ton × 0.90718474). Road distance and speed stay miles / mph. Temperatures: °C ((°F − 32) × 5/9). Follow converted display units in the supplied data. Time: 24-hour clock with timezone; if the source is UTC, say UTC.
+11. CURRENCY AND UNITS. Figures in context are already in EUR. Never convert. Copy the figure as supplied. Write €1,250.00 or compact €1.2m, €3.4bn, €450k (lowercase, no space). Fuel volume: litres. Fuel price: EUR per litre. Mass price: EUR per kg. Steel: EUR per tonne. Road distance and speed stay miles / mph. Temperatures: °C. Follow display units in the supplied data. Time: 24-hour clock with timezone; if the source is UTC, say UTC. Never lowercase acronyms or unit symbols in prose (EPCI, kV, UK, ISO, DNV, IMCA, API, XLPE, FAT, ITT, DDP).
 
-CHECK BEFORE OUTPUT: scan for banned words in rules 1–3, 9 and 10; replace each with the data point or delete it; every claim sentence must contain a number, date, or named comparison; dates day-first; currency carries € as supplied; no -yze; no Anglicised field names or enum values.`
+CHECK BEFORE OUTPUT: scan for banned words in rules 1–3, 9 and 10; replace each with the data point or delete it; every claim sentence must contain a number, date, or named comparison; dates day-first; currency carries € as supplied; no -yze; no Anglicised field names or enum values.
+
+GLOSSARY (defined product terms, not generated copy): BluePilot, Intelligence Panel, Future Energy, Prosera Compass, and "On track" as a mission-health label. These rules govern generated output and authored narrative (insights, bios, email templates, ITT fallbacks). UI chrome is out of scope except where it is a sentence claiming magnitude.`
 
 /** French counterpart — inject whenever locale is `fr`. */
 export const DATA_GROUNDED_LANGUAGE_RULES_FR = `SORTIE ANCRÉE DANS LES DONNÉES pour ${DATA_GROUNDED_PRODUCT_NAME} (non négociable — lu par des décideurs, pas un texte marketing) :
@@ -61,6 +63,12 @@ Toute affirmation de taille, de direction ou d’importance doit renvoyer à un 
 8. N’INVENTEZ PAS DE TERMES. Utilisez uniquement les termes des données, d’un glossaire produit, ou de l’usage métier standard. Ne créez pas d’étiquette pour un motif. Décrivez les valeurs.
 
 9. PAS DE TON ALARMISTE. Les titres disent le fait et l’action. Interdits : menacer, compromettre, crise, catastrophique, alarmant, urgemment, mettre en péril. N’ouvrez pas un titre par « Critique ». Ne dites pas « risques commerciaux élevés » — citez la clause et le chiffre (« garantie de 12 mois contre le standard de 24 mois »). Calme : « L’attribution de PKG-2104 est due dans 11 jours. » Pas : « Des échéances critiques menacent le programme. »
+
+10. TYPOGRAPHIE FRANÇAISE. Espace fine insécable avant : ; ? ! et à l’intérieur des guillemets « ». Mois en minuscules (« 14 mars 2026 »). Virgule décimale dans les nombres en prose (1,2 et non 1.2).
+
+11. DEVISE ET UNITÉS. Les montants dans le contexte sont déjà en EUR. Ne convertissez jamais. Recopiez le chiffre tel quel. Format : 1 250 € ou compact 1,2 M€, 3,4 Md€, 450 k€. Volume carburant : litres. Prix carburant : EUR par litre. Prix massique : EUR par kg. Acier : EUR par tonne. Distances et vitesses routières restent miles / mph. Températures : °C. Ne mettez jamais en minuscules les sigles et symboles d’unité (EPCI, kV, UK, ISO, DNV, IMCA, API, XLPE, FAT, ITT, DDP).
+
+GLOSSAIRE PRODUIT (termes définis, pas de la copie générée) : BluePilot, Intelligence Panel, Future Energy, Prosera Compass, « On track » / « Dans les temps » comme état de santé de mission.
 
 CONTRÔLE AVANT SORTIE : cherchez les mots interdits ; remplacez-les par le chiffre ou supprimez-les ; chaque phrase d’affirmation doit contenir un nombre, une date ou une comparaison nommée.
 Rédigez pour un lecteur de lycée / premier cycle universitaire : clair pour un junior comme pour un dirigeant.`
@@ -87,42 +95,52 @@ export function outputLanguageInstruction(
 }
 
 const ALARMIST_BODY_RE =
-  /\b(threaten|threatens|threatening|jeopardis(?:e|es|ed|ing)|jeopardiz(?:e|es|ed|ing)|jeopardy|crisis|catastrophic|dire|alarming|looming|endanger(?:s|ed|ing)?|expedite|urgently|immediate action|rapidly(?:\s+approaching)?|risking|slot risk|path risk|high commercial risks?|weak competition|approval bottlenecks?|this is critical|is critical)\b|\b(menace|menacent|menacer|menaç(?:e|ent)|compromettre|compromettent|péril|crise|catastrophique|alarmant|urgemment|action immédiate|risques? commerciaux? élevés?)\b/i
+  /\b(threaten|threatens|threatening|jeopardis(?:e|es|ed|ing)|jeopardiz(?:e|es|ed|ing)|jeopardy|crisis|catastrophic|dire|alarming|looming|endanger(?:s|ed|ing)?|urgently|immediate action|rapidly(?:\s+approaching)?|risking|slot risk|path risk|high commercial risks?|weak competition|approval bottlenecks?|this is critical|is critical)\b|\b(menace|menacent|menacer|menaç(?:e|ent)|compromettre|compromettent|péril|crise|catastrophique|alarmant|urgemment|action immédiate|risques? commerciaux? élevés?)\b/i
 
 /** True when copy uses drama instead of a fact + next action. */
 export function copyUsesAlarmistLanguage(text: string | null | undefined): boolean {
   if (!text) return false
   const t = text.trim()
   if (!t) return false
+  // RULE 9: do not open a headline with Critical / Urgent — keep "critical path".
+  if (/^critical\s+path\b/i.test(t)) {
+    return ALARMIST_BODY_RE.test(t)
+  }
   if (/^(critical|immediate|urgent|critique)\b/i.test(t)) return true
   return ALARMIST_BODY_RE.test(t)
 }
 
-/** Strip drama wording. Does not blank the line. */
+/**
+ * Grammar-safe calm-downs only. Does not substitute a specific claim for a
+ * generic one, delete verbs, or blank the line.
+ */
 export function softenGeneratedText(text: string | null | undefined): string {
   if (!text) return ""
-  let s = text
+  return text
     .replace(/\bImmediate action is required on\b/gi, "Next:")
     .replace(/\bImmediate action is required\b/gi, "Next step:")
     .replace(/\brapidly approaching\b/gi, "upcoming")
-    .replace(/\brisking\b/gi, "and may miss")
-    .replace(/\bhigh commercial risks?\b/gi, "warranty below the 24-month standard")
-    .replace(/\bWeak competition\b/g, "Two or fewer bidders")
-    .replace(/\bFabrication slot risk for (\S+) is critical\.?/gi, "$1 fabrication slot still needs a decision.")
-    .replace(/\bCritical Path Risk for\b/gi, "")
-    .replace(/\bCritical Deadlines and Approval Bottlenecks Threaten Key Packages\b/gi, "")
-    .replace(/\b(threaten|threatens|threatening|jeopardise|jeopardize|endanger|expedite)\b/gi, "")
-    .replace(/\b(menace|menacent|menacer|compromettent|urgemment)\b/gi, "")
     .replace(/\s{2,}/g, " ")
     .replace(/\s+([,.;:])/g, "$1")
     .trim()
-  return s.replace(/^(critical|immediate|urgent|critique)\b[:,]?\s*/i, "").trim()
 }
 
-/** Soften, then blank the line if it is still alarmist (callers fall back). */
+const LANGUAGE_GUARD = "[language-guard]"
+
+/**
+ * Soften wording. If the line is still alarmist, keep the original and log —
+ * never blank. Callers (e.g. AgenticFocusHero) choose static copy via the detector.
+ */
 export function sanitizeGeneratedText(text: string | null | undefined): string {
+  if (!text) return ""
+  const original = text
   const s = softenGeneratedText(text)
-  if (copyUsesAlarmistLanguage(s)) return ""
+  if (copyUsesAlarmistLanguage(s)) {
+    console.warn(`${LANGUAGE_GUARD} suppressed rewrite; keeping original`, {
+      preview: original.slice(0, 120),
+    })
+    return original
+  }
   return s
 }
 
@@ -149,13 +167,12 @@ export function sanitizeOrchestratorOutput<T>(output: T): T {
   const o = output as OrchestratorLike
   const title = sanitizeGeneratedText(o.headline.title)
   const narrative = sanitizeGeneratedText(o.headline.narrative)
-  const headlineOk = Boolean(title) && Boolean(narrative)
   return {
     ...o,
     headline: {
       ...o.headline,
-      title: headlineOk ? title : "",
-      narrative: headlineOk ? narrative : "",
+      title,
+      narrative,
     },
     executiveSummary: o.executiveSummary
       ? {

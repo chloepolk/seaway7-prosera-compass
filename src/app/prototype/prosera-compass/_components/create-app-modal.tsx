@@ -95,7 +95,7 @@ export function CreateAppModal({ onClose, onCreated }: { onClose: () => void; on
   const startDiscovery = React.useCallback(async () => {
     clearTimers()
     setPhase("working"); setIdeas([]); setSelectedId(null); setFeatures(null); setError(null)
-    setLogs(["Reading the live portfolio dataset…", "Matching external signals to commercial field services…"])
+    setLogs(["Reading the live portfolio dataset…", "Matching external signals to offshore wind procurement…"])
     const ctrl = new AbortController(); abortRef.current = ctrl
 
     const sleep = (ms: number) => new Promise<void>(resolve => {

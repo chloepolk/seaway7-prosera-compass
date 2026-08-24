@@ -99,7 +99,7 @@ export function CreateAppModal({ onClose, onCreated }: { onClose: () => void; on
     setPhase("working"); setIdeas([]); setSelectedId(null); setFeatures(null); setError(null)
     setLogs(locale === "fr"
       ? ["Lecture des données du portefeuille en direct…", "Rapprochement des signaux externes avec les services techniques commerciaux…"]
-      : ["Reading the live portfolio dataset…", "Matching external signals to commercial field services…"])
+      : ["Reading the live portfolio dataset…", "Matching external signals to offshore wind procurement…"])
     const ctrl = new AbortController(); abortRef.current = ctrl
 
     const sleep = (ms: number) =>new Promise<void>(resolve => {

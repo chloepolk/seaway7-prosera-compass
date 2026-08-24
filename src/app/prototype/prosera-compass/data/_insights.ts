@@ -1167,7 +1167,7 @@ function procurementFindings(): BPFinding[] {
       id: "s7-cable-critical-path",
       category: "deadline-risk",
       severity: "critical",
-      title: "66kV array cable ITT is on the programme critical path",
+      title: "66 kV array cable ITT is on the programme critical path",
       narrative:
         "PKG-2101 has a 21-day tender window. Issue it this week so the Q2 2027 cable-lay campaign still holds. Cable lead times set the installation sequence: each week of tender slip moves the lay window by the same amount.",
       evidence: [

@@ -77,7 +77,7 @@ INSTRUCTIONS:
 2. Compare the modeled price against fleet card baseline and current actuals.
 3. If the price represents an increase, quantify the margin erosion and which divisions absorb the most impact.
 4. Recommend the contract fuel clause strategy: escalation clauses pegged to fleet card actuals with quarterly review.
-5. Do NOT recommend per-trip surcharges. Use the pound figures in the projected-impact block; do not add a per-trip surcharge recommendation.
+5. Do NOT recommend per-trip surcharges. Use the euro figures in the projected-impact block; do not add a per-trip surcharge recommendation.
 6. Reference industry practice: how do top PE-backed field services companies handle fuel exposure in their contracts?`;
 }
 

@@ -13,7 +13,7 @@
     "check:routes": "bash scripts/check.sh",
     "clean": "rm -rf .next node_modules package-lock.json",
     "build:clean": "rm -rf .next && npm run build",
-    "verify": "bash scripts/guard-prosera-only.sh && bash scripts/guard-primitives-only.sh && node -e \"const fs=require('fs'); const t=JSON.parse(fs.readFileSync('tsconfig.json','utf8')); const ex=(t.exclude||[]).join(' '); if(!ex.includes('vendor/**')) { console.error('FAIL: tsconfig.json must exclude vendor/**'); process.exit(1);} console.log('OK: vendor/** excluded');\" && npm run build:clean",
+    "verify": "bash scripts/guard-prosera-only.sh && bash scripts/guard-primitives-only.sh && node scripts/check-language-contracts.mjs && node -e \"const fs=require('fs'); const t=JSON.parse(fs.readFileSync('tsconfig.json','utf8')); const ex=(t.exclude||[]).join(' '); if(!ex.includes('vendor/**')) { console.error('FAIL: tsconfig.json must exclude vendor/**'); process.exit(1);} console.log('OK: vendor/** excluded');\" && npm run build:clean",
     "build:strict": "rm -rf .next && (npm run build 2>&1 | tee .build.log | grep -q \"vendor/\" && echo \"FAIL: vendor/ appeared in build output\" && exit 1 || echo \"OK: no vendor/ in build output\") && rm -f .build.log || true",
     "bootstrap": "bash scripts/bootstrap.sh",
     "guard:prosera-only": "bash scripts/guard-prosera-only.sh"

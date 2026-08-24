@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Anonymize _raw.ts and _raw_quotes.ts for the ACME demo copy.
- * Preserves numeric values, dates, structural fields. Replaces all PII.
+ * Target directory src/app/prototype/acme-demo/data no longer exists — do not run.
  *
  * Usage: node scripts/anonymize-raw.mjs
  */

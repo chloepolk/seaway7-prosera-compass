@@ -54,7 +54,7 @@ export const TENDER_PACKAGES: TenderPackage[] = [
   {
     id: "PKG-2101",
     packageRef: "MER-SCM-2101",
-    title: "66kV Subsea Array Cable — Supply",
+    title: "66 kV Subsea Array Cable — Supply",
     componentId: "cable-66kv",
     quantity: "5,000 metres",
     stage: "execute",

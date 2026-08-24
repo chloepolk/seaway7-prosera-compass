@@ -164,7 +164,7 @@ const FR_DOCUMENT_TITLES: Record<string, string> = {
 
 export const TENDER_SUGGESTIONS: Record<Locale, string[]> = {
   en: [
-    "Draft the ITT for 5,000 metres of 66kV subsea array cable",
+    "Draft the ITT for 5,000 metres of 66 kV subsea array cable",
     "Prepare an invitation to tender for 24 monopile transition pieces",
     "Draft the tender for the replacement 3000T crane hook block",
     "Draft an ITT for 60 diverless J-tube seals",

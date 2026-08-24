@@ -10,7 +10,6 @@ export type DisplayLocale = "en" | "fr"
 
 /** Prototype FX, 21 August 2026. USD seed × rate = display currency. */
 export const FX_RATE_DATE = "21 August 2026"
-export const USD_TO_GBP = 0.79
 export const USD_TO_EUR = 0.92
 
 export const US_GAL_TO_LITRE = 3.785411784

@@ -8,6 +8,7 @@
 
 import type { ComputedData } from "../data/_transform"
 import { formatActiveUsd } from "../_i18n/legacy"
+import { formatEurFigure, usdToEur } from "@/lib/compass/locale-display"
 import type { DrillState, OrchestratorOutput, SpecialistOutput } from "./_types"
 import { TENDER_PACKAGES, CLOSED_PACKAGES, PROJECT, TODAY, tenderById } from "../data/future-energy/_tenders"
 import {
@@ -41,6 +42,10 @@ import {
 import type { Locale } from "../_i18n"
 import { localizedTenderPackages } from "../_i18n/domain"
 
+function eur(n: number): number {
+  return Math.round(usdToEur(n))
+}
+
 /* ------------------------------------------------------------------ */
 /*  Shared serializers                                                 */
 /* ------------------------------------------------------------------ */
@@ -52,10 +57,10 @@ function serializePipeline() {
     title: p.title,
     quantity: p.quantity,
     stage: p.stage,
-    budgetUsd: p.budget,
-    savingsTargetUsd: p.targetSavings,
-    realisedSavingsUsd: p.realisedSavings ?? null,
-    tenderCostUsd: p.tenderCost,
+    budgetEur: eur(p.budget),
+    savingsTargetEur: eur(p.targetSavings),
+    realisedSavingsEur: p.realisedSavings != null ? eur(p.realisedSavings) : null,
+    tenderCostEur: eur(p.tenderCost),
     owner: p.ownerRole,
     bidders: p.bidders,
     submissionDeadline: p.submissionDeadline,
@@ -90,8 +95,8 @@ function serializeCharter() {
     vessel: CHARTER.vessel,
     vesselType: CHARTER.vesselType,
     charterPeriod: CHARTER.charterPeriod,
-    hireRateUsdPerDay: CHARTER.hireRate,
-    mobilisationFeeUsd: CHARTER.mobilisationFee,
+    hireRateEurPerDay: eur(CHARTER.hireRate),
+    mobilisationFeeEur: eur(CHARTER.mobilisationFee),
     law: CHARTER.law,
   }
 }
@@ -101,8 +106,8 @@ function ledgerSummary() {
   const invested = CLOSED_PACKAGES.reduce((s, c) => s + c.cost, 0)
   return {
     closedPackages: CLOSED_PACKAGES.length,
-    realisedSavingsUsd: realised,
-    tenderCostsUsd: invested,
+    realisedSavingsEur: eur(realised),
+    tenderCostsEur: eur(invested),
     blendedReturn: invested > 0 ? Math.round((realised / invested) * 10) / 10 : 0,
     entries: CLOSED_PACKAGES,
   }
@@ -133,7 +138,7 @@ function explainBidCalculation(bid: BidInput, result: BidEvaluationResult, pMin:
     return `Disqualified — failed hard gate(s): ${fails}. No composite score.`
   }
   if (pMin == null || result.priceScore == null) return result.recommendation
-  const priceStep = `Price ${result.priceScore} = ${PRICE_MAX} × (${pMin.toLocaleString()} / ${bid.totalPrice.toLocaleString()})`
+  const priceStep = `Price ${result.priceScore} = ${PRICE_MAX} × (${eur(pMin).toLocaleString("en-GB")} / ${eur(bid.totalPrice).toLocaleString("en-GB")})`
   const techStep = `Tech ${result.techScore} (conformity input ${bid.techCompliancePts})`
   const qaStep = `QA/HSEQ ${result.qaScore} (traceability ${bid.isoTraceabilityPts}/10; FAT notice ${bid.fatNoticeDays} days vs ${FAT_STANDARD_DAYS}-day standard)`
   const legalStep = `Legal ${result.legalScore} (warranty ${bid.warrantyMonths} months vs ${STANDARD_WARRANTY_MONTHS}-month standard${bid.warrantyMonths < STANDARD_WARRANTY_MONTHS ? `; −${WARRANTY_SHORTFALL_PENALTY} shortfall applied` : ""})`
@@ -158,15 +163,15 @@ export function buildBidEvaluationContext(locale: Locale = "en"): Record<string,
       title: pkg?.title ?? null,
       ittRef: bids[0]?.ittRef ?? null,
       stage: pkg?.stage ?? null,
-      budgetUsd: pkg?.budget ?? null,
+      budgetEur: pkg?.budget != null ? eur(pkg.budget) : null,
       returnCount: bids.length,
-      lowestEligiblePriceUsd: pMin,
+      lowestEligiblePriceEur: pMin != null ? eur(pMin) : null,
       evaluations: results.map((r) => {
         const bid = bids.find((b) => b.id === r.bidId)!
         return {
           supplier: r.supplier,
           ittRef: bid.ittRef,
-          totalPriceUsd: r.totalPrice,
+          totalPriceEur: eur(r.totalPrice),
           gatingStatus: r.gatingStatus,
           gateFailures: r.gateFailures.map((g) => labels[g]),
           priceScore: r.priceScore,
@@ -217,10 +222,10 @@ function formatBidEvaluationBriefing(): string {
     packageRef: string | null
     title: string | null
     ittRef: string | null
-    lowestEligiblePriceUsd: number | null
+    lowestEligiblePriceEur: number | null
     evaluations: Array<{
       supplier: string
-      totalPriceUsd: number
+      totalPriceEur: number
       gatingStatus: string
       gateFailures: string[]
       priceScore: number | null
@@ -237,11 +242,11 @@ function formatBidEvaluationBriefing(): string {
   const blocks = packages.map((p) => {
     const lines = p.evaluations.map((e) => {
       if (e.gatingStatus === "Fail") {
-        return `  - ${e.supplier}: DISQUALIFIED (${e.gateFailures.join("; ")}); bid ${formatActiveUsd(e.totalPriceUsd)}. ${e.calculation}`
+        return `  - ${e.supplier}: DISQUALIFIED (${e.gateFailures.join("; ")}); bid ${formatEurFigure(e.totalPriceEur)}. ${e.calculation}`
       }
-      return `  - ${e.supplier}: Rank #${e.finalRank}, composite ${e.compositeScore}/100 (Price ${e.priceScore}/${PRICE_MAX}, Tech ${e.techScore}/${TECH_MAX}, QA ${e.qaScore}/${QA_MAX}, Legal ${e.legalScore}/${LEGAL_MAX}); bid ${formatActiveUsd(e.totalPriceUsd)}${e.highCommercialRisk ? "; HIGH COMMERCIAL RISK" : ""}. Calculation: ${e.calculation}`
+      return `  - ${e.supplier}: Rank #${e.finalRank}, composite ${e.compositeScore}/100 (Price ${e.priceScore}/${PRICE_MAX}, Tech ${e.techScore}/${TECH_MAX}, QA ${e.qaScore}/${QA_MAX}, Legal ${e.legalScore}/${LEGAL_MAX}); bid ${formatEurFigure(e.totalPriceEur)}${e.highCommercialRisk ? "; HIGH COMMERCIAL RISK" : ""}. Calculation: ${e.calculation}`
     })
-    return `${p.packageId} ${p.title} (${p.ittRef}): P_min eligible ${formatActiveUsd((p.lowestEligiblePriceUsd ?? 0))}\n${lines.join("\n")}`
+    return `${p.packageId} ${p.title} (${p.ittRef}): P_min eligible ${formatEurFigure(p.lowestEligiblePriceEur ?? 0)}\n${lines.join("\n")}`
   })
 
   const pending = (ctx.packagesWithoutReturns as Array<{ packageId: string; title: string; status: string }>)
@@ -301,8 +306,8 @@ export function buildPricingContext(_data: ComputedData, drill: DrillState): Rec
     packages: TENDER_PACKAGES.map(p => ({
       package: p.id,
       title: p.title,
-      budgetUsd: p.budget,
-      savingsTargetUsd: p.targetSavings,
+      budgetEur: eur(p.budget),
+      savingsTargetEur: eur(p.targetSavings),
       savingsTargetPct: Math.round((p.targetSavings / p.budget) * 1000) / 10,
       bidders: p.bidders,
       valueType: p.valueType,
@@ -311,7 +316,7 @@ export function buildPricingContext(_data: ComputedData, drill: DrillState): Rec
     commercialTerms: PROCUREMENT_CLAUSES.filter(c => ["4.1", "6.2", "7.1", "7.2"].includes(c.ref)),
     charterEconomics: {
       ...serializeCharter(),
-      spotMarketAssessmentUsdPerDay: { low: 96_000, high: 99_500, window: "Q3 2026" },
+      spotMarketAssessmentEurPerDay: { low: eur(96_000), high: eur(99_500), window: "Q3 2026" },
     },
     savingsLedger: ledgerSummary(),
     bidEvaluation: buildBidEvaluationContext(),
@@ -431,7 +436,7 @@ WORKSPACE SURFACES:
 TENDER PIPELINE:
 ${pipeline}
 
-SAVINGS LEDGER: ${ledger.closedPackages} packages awarded to date, ${formatActiveUsd(ledger.realisedSavingsUsd)} realised savings against ${formatActiveUsd(ledger.tenderCostsUsd)} of tender costs (${ledger.blendedReturn}× blended return).
+SAVINGS LEDGER: ${ledger.closedPackages} packages awarded to date, ${formatEurFigure(ledger.realisedSavingsEur)} realised savings against ${formatEurFigure(ledger.tenderCostsEur)} of tender costs (${ledger.blendedReturn}× blended return).
 
 CONTROLLED DOCUMENT REGISTER:
 ${docs}

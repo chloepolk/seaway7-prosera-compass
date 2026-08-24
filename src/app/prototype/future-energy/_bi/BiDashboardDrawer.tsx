@@ -226,12 +226,12 @@ function Kpi({ label, value, sub, tone = "default", icon }: {
 /*  Drawer                                                             */
 /* ------------------------------------------------------------------ */
 
-const EXEC_PROMPT = `Produce an EXECUTIVE BRIEFING in Markdown for the ACME Field Services leadership team. It must be pasteable into a briefing memo with no further editing. Synthesize signals that carry a pound figure, percentage, or named comparison across every intelligence domain.
+const EXEC_PROMPT = `Produce an EXECUTIVE BRIEFING in Markdown for the Future Energy leadership team. It must be pasteable into a briefing memo with no further editing. Synthesize signals that carry a euro figure, percentage, or named comparison across every intelligence domain.
 
 Follow this EXACT structure, using Markdown headings (##), bold (**), and lists. Do not add any other sections, preamble, or sign-off.
 
 ## Bottom Line
-One or two sentences (BLUF) naming the opportunity with the largest pound figure in context and the specific decision being asked for. Bold the headline pound figure.
+One or two sentences (BLUF) naming the opportunity with the largest euro figure in context and the specific decision being asked for. Bold the headline euro figure.
 
 ## What Changed
 2–3 bullets ("- ") on the most important movement since the prior period. Use portfolioTrend (recent vs. prior margin, direction, delta) and any newly surfaced risk/opportunity. If trend data is thin, say so explicitly.
@@ -256,7 +256,7 @@ A numbered list of 4–6 items, ordered by dollar impact, built from the mission
 ## Assumptions & Data Sources
 1–2 bullets citing the data sources used (Internal job data, BLS, Census, EIA, NOAA weather) and flagging any MOCKED/SIMULATED inputs (e.g. TAM recon/OSINT signals, weather-urgency model, simulated AR/DSO collections signal) so the reader knows confidence levels.
 
-Rules: every recommendation MUST include a specific pound figure; use ONLY figures present in the provided context (never invent data); no filler, no "as an AI", no closing pleasantries; keep the entire briefing under ~430 words. Every claim sentence must contain a number, date, or named comparison. Do not use unquantified magnitude, hype, or hedging words.`
+Rules: every recommendation MUST include a specific euro figure; use ONLY figures present in the provided context (never invent data); no filler, no "as an AI", no closing pleasantries; keep the entire briefing under ~430 words. Every claim sentence must contain a number, date, or named comparison. Do not use unquantified magnitude, hype, or hedging words.`
 
 export function BiDashboardDrawer() {
   const { biOpen, setBiOpen, data, allFindings, tenderStages, locale } = useStore()
@@ -370,7 +370,7 @@ export function BiDashboardDrawer() {
 
   const buildReportText = React.useCallback(() => {
     return [
-      locale === "fr" ? "═══ Synthèse BI de direction BluePilot — ACME Field Services ═══" : "═══ BluePilot Executive BI Summary — ACME Field Services ═══",
+      locale === "fr" ? "═══ Synthèse BI de direction BluePilot — Future Energy ═══" : "═══ BluePilot Executive BI Summary — Future Energy ═══",
       "",
       `${locale === "fr" ? "Date" : "Date"}: ${new Date().toLocaleString(localeTag(locale))}`,
       "",
@@ -413,7 +413,7 @@ export function BiDashboardDrawer() {
     const recs = getSection("Operating Loop").filter(l => /\d|\$/.test(l)).slice(0, 3)
     if (locale === "fr") {
       return [
-        "À : Direction d’ACME Field Services",
+        "À : Direction de Future Energy",
         "Objet : Synthèse BI de direction — actions prioritaires",
         "",
         "Bonjour,",
@@ -431,7 +431,7 @@ export function BiDashboardDrawer() {
       ].join("\n")
     }
     return [
-      "To: ACME Field Services Leadership",
+      "To: Future Energy Leadership",
       "Subject: Executive BI Summary — Prioritized Actions",
       "",
       "Team,",
@@ -456,7 +456,7 @@ export function BiDashboardDrawer() {
       return [
         "[Script de narration — environ 45 secondes]",
         "",
-        "Bonjour. Voici votre synthèse de direction ACME Field Services.",
+        "Bonjour. Voici votre synthèse de direction Future Energy.",
         bottomLine.length > 0 ? bottomLine.join(" ") : `Le portefeuille atteint ${fmtUsd(v.totalRevenue)} de chiffre d’affaires validé et ${fmtPct(v.avgMarginPct)} de marge.`,
         "",
         "Les points clés :",
@@ -468,7 +468,7 @@ export function BiDashboardDrawer() {
     return [
       "[Narration script — ~45 seconds]",
       "",
-      "Good morning. Here's your ACME Field Services executive brief.",
+      "Good morning. Here's your Future Energy executive brief.",
       bottomLine.length > 0 ? bottomLine.join(" ") : `The portfolio is running at ${fmtUsd(v.totalRevenue)} in validated revenue and ${fmtPct(v.avgMarginPct)} margin.`,
       "",
       "The headlines:",

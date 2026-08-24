@@ -625,12 +625,14 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
   const [locale, setLocaleState] = React.useState<Locale>("en")
 
   React.useEffect(() => {
-    setLocaleState(loadStoredLocale())
+    const stored = loadStoredLocale()
+    setLocaleState(stored)
+    persistLocale(stored)
   }, [])
 
   React.useEffect(() => {
     if (typeof document !== "undefined") {
-      document.documentElement.lang = locale === "fr" ? "fr" : "en"
+      document.documentElement.lang = locale === "fr" ? "fr-FR" : "en-GB"
     }
   }, [locale])
 

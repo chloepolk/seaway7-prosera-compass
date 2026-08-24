@@ -132,7 +132,7 @@ const en = {
     via: "via",
   },
   askSuggestions: {
-    standards: "What standards apply to the 66kV array cable?",
+    standards: "What standards apply to the 66 kV array cable?",
     charter: "Which clauses flow down from the vessel charter?",
     fat: "What does the QA manual require for FAT witnessing?",
     warranty: "Summarise the payment and warranty terms for suppliers",
@@ -166,7 +166,7 @@ const en = {
     heroHeadline:
       "{amount} of negotiated savings is in play across the Meridian tender pipeline.",
     heroBody:
-      "{count} packages are live. Four returns are in on the 66kV array cable ITT — run the gated evaluation before the award recommendation.",
+      "{count} packages are live. Four returns are in on the 66 kV array cable ITT — run the gated evaluation before the award recommendation.",
     heroReasoningSummary:
       "BluePilot prioritised the tender pipeline by submission deadline, savings target and installation critical path.",
     ingestingEdit: "Ingesting your edit…",
@@ -538,7 +538,7 @@ const en = {
     intelligence: "BluePilot analysis",
     confidential: "Confidential",
     emptyTitle: "Generate an executive briefing",
-    emptyBody: "BluePilot turns the signals on the left into a prioritised, pound-quantified summary. Signals are available now.",
+    emptyBody: "BluePilot turns the signals on the left into a prioritised, euro-quantified summary. Signals are available now.",
     unable: "Unable to reach BluePilot. Check API key configuration — the deterministic signals below remain available.",
     error: "Something went wrong generating the summary. The deterministic signals below remain available.",
   },
@@ -569,7 +569,7 @@ const en = {
     recommendation: "Recommendation",
     awardGovernance: "Award governance",
     emailBody:
-      "Dear colleague,\n\nI am writing with regard to {name}, currently active on the Action Centre.\n\n{narrative}\n\nThe target is {target}, due by {date}.\n\nPlease review this and confirm the next steps. You can contact me if you need more information.\n\nKind regards,\n[Your name]",
+      "Dear colleague,\n\nI am writing about {name}, currently active on the Action Centre.\n\n{narrative}\n\nThe target is {target}, due by {date}.\n\nPlease review this and confirm the next steps. You can contact me if you need more information.\n\nKind regards,\n[Your name]",
   },
   focus: {
     whyThisFocus: "Why this focus",
@@ -589,7 +589,7 @@ const en = {
     actionsCount: "{count} action(s)",
     more: "+{count} more",
     matrixTitle: "Compass Profitability Matrix",
-    matrixBody: "Every recommendation and the pounds behind it — what it does to margin, and how fast.",
+    matrixBody: "Every recommendation and the euros behind it — what it does to margin, and how fast.",
     totalAtStake: "Total at stake",
     protectionBlurb: "Defend margin we already have",
     creationBlurb: "Grow new revenue and margin",

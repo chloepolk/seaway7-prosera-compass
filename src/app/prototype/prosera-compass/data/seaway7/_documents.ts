@@ -98,8 +98,8 @@ export const COMPONENT_SPECS: ComponentSpec[] = [
     id: "cable-66kv",
     docId: "ts-cbl-66kv-001",
     docRef: "TS-CBL-66KV-001",
-    name: "66kV Subsea Array Cable",
-    shortName: "66kV Array Cable",
+    name: "66 kV Subsea Array Cable",
+    shortName: "66 kV Array Cable",
     overview: "Three-core submarine power cable with XLPE insulation and integrated fibre optic cable for the offshore wind farm inter-array grid.",
     parameters: [
       { parameter: "Rated Voltage (Uo/U)", requirement: "36/66 kV" },
@@ -200,7 +200,7 @@ export const COMPONENT_SPECS: ComponentSpec[] = [
     docRef: "TS-SUB-JTS-005",
     name: "Subsea J-Tube Seal",
     shortName: "J-Tube Seals",
-    overview: "Diverless installation mechanical seal used to secure and protect the 66kV array cable entry into the foundation J-tube.",
+    overview: "Diverless installation mechanical seal used to secure and protect the 66 kV array cable entry into the foundation J-tube.",
     parameters: [
       { parameter: "Cable Outer Diameter Range", requirement: "120 mm – 180 mm" },
       { parameter: "J-Tube Inner Diameter Range", requirement: "300 mm – 450 mm" },
