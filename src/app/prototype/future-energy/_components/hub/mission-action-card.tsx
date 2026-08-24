@@ -18,7 +18,7 @@ import { isReasoningEmpty } from "../reasoning-helpers"
 import type { MissionObjective } from "@/app/prototype/future-energy/_diamond/types"
 import { useT } from "../../_i18n/use-t"
 import { VALUE_BADGE_CLS, valueBadgeAmount } from "../value-tones"
-import { ACTIVE_USER, displayName, NOTIFY_DELEGATE } from "./active-user"
+import { ACTIVE_USER, NOTIFY_DELEGATE } from "./active-user"
 import { avatarColor, avatarSrcFor } from "./avatar-color"
 import { employeeForCurrentTimelineStep } from "./mission-timeline-helpers"
 import { EmailIcon, SlackIcon, TeamsIcon } from "./brand-icons"
@@ -179,9 +179,9 @@ export function MissionActionCard({
   ...props
 }: MissionActionCardProps) {
   const t = useT()
-  const displayOwner = displayName(owner)
+  const displayOwner = isAssignedToYou ? t("common.you") : owner
   const ownerAvatarSrc = avatarSrcFor(owner, EMPLOYEES, ACTIVE_USER.name)
-  const initials = isAssignedToYou ? "Y" : getInitials(owner)
+  const initials = isAssignedToYou ? t("common.you").charAt(0).toUpperCase() : getInitials(owner)
   const panelMotion = expandPanelMotion()
   const [contentMounted, setContentMounted] = React.useState(expanded)
   const [closing, setClosing] = React.useState(false)
@@ -270,10 +270,7 @@ export function MissionActionCard({
               {isAssignedToYou ? (
                 <span className="font-medium text-[var(--color-text-primary)]">{t("missionCard.assignedToYou")}</span>
               ) : (
-                <>
-                  <span className="font-medium text-[var(--color-text-primary)]">{displayOwner}</span>
-                  {` ${t("missionCard.assigned")}`}
-                </>
+                <span className="font-medium text-[var(--color-text-primary)]">{t("missionCard.assignedNamed", { name: displayOwner })}</span>
               )}
             </span>
           </p>
@@ -536,7 +533,7 @@ export function MissionActionCard({
               <p className="mt-3 text-[13px] leading-relaxed text-[var(--color-text-inverse)]/70">
                 {notifyTarget ? (
                   t("missionCard.notificationPreview", {
-                    name: displayName(notifyTarget.name),
+                    name: notifyTarget.name,
                     email: notifyTarget.email,
                   })
                 ) : (

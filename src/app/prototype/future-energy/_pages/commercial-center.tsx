@@ -428,19 +428,19 @@ export function CommercialCenterPage() {
           <h2 className="text-[18px] font-semibold text-[var(--color-text-primary)]">{localizeActiveCopy("All apps")}</h2>
           <div className="flex gap-2">
             <ControlButton onClick={() => setCreateOpen(true)}>
-              Create app
+              {localizeActiveCopy("Create app")}
             </ControlButton>
             {!editing ? (
               <ControlButton icon="LayoutGrid" onClick={() => setEditing(true)}>
-                Customize
+                {localizeActiveCopy("Customize")}
               </ControlButton>
             ) : (
               <>
                 <ControlButton icon="Plus" onClick={() => setLibraryOpen(true)}>
-                  Add New
+                  {localizeActiveCopy("Add New")}
                 </ControlButton>
                 <ControlButton active icon="Check" onClick={() => setEditing(false)}>
-                  Save
+                  {localizeActiveCopy("Save")}
                 </ControlButton>
               </>
             )}
@@ -509,7 +509,7 @@ export function CommercialCenterPage() {
         >
           <SafeIcon name="Trash2" className="h-3.5 w-3.5 text-[var(--color-text-muted)]" />
           <span className="text-[12px] text-[var(--color-text-primary)]">
-            Removed <span className="font-medium">{undoState.title}</span>
+            {localizeActiveCopy("Removed")} <span className="font-medium">{undoState.title}</span>
           </span>
           <button
             type="button"
@@ -519,7 +519,7 @@ export function CommercialCenterPage() {
             }}
             className="inline-flex items-center gap-1 rounded-[10px] px-2 py-1 text-[12px] font-semibold text-[var(--color-brand-strong)] hover:bg-[var(--color-tint-brand)]"
           >
-            <SafeIcon name="Undo2" className="h-3.5 w-3.5" /> Undo
+            <SafeIcon name="Undo2" className="h-3.5 w-3.5" /> {localizeActiveCopy("Undo")}
           </button>
         </div>
       )}

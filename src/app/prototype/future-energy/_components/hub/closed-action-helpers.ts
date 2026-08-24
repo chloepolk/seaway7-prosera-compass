@@ -99,7 +99,7 @@ function buildClosedTimeline(record: ClosedRecord, locale: Locale): ActionTimeli
     },
     {
       id: `${record.id}-book`,
-      label: fr ? "Bon de commande émis et économies comptabilisées dans le ledger projet" : "Purchase order issued and savings booked to the project ledger",
+      label: fr ? "Bon de commande émis et économies comptabilisées dans le registre projet" : "Purchase order issued and savings booked to the project ledger",
       assignee: decisionMaker.name,
       assigneeRole: decisionMaker.role,
       status: "done",

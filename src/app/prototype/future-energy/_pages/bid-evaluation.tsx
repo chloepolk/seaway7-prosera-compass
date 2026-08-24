@@ -5,8 +5,8 @@ import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { cn } from "@/lib/utils"
 import { useStore } from "../_store"
 import { useT } from "../_i18n/use-t"
-import { type Locale } from "../_i18n"
-import { formatEur } from "../_i18n/currency"
+import { localeTag, type Locale } from "../_i18n"
+import { formatEur, formatFixed } from "../_i18n/currency"
 import { localizedTenderPackages } from "../_i18n/domain"
 import { enterMotion, listItemMotion, pcmCard } from "../_components/motion"
 import { formatCurrency, type MissionStage } from "../_diamond/stages"
@@ -81,13 +81,14 @@ function ScoreBar({
   value: number | null
   max: number
 }) {
+  const { locale } = useStore()
   const pct = value == null ? 0 : Math.min(100, (value / max) * 100)
   return (
     <div className="space-y-1">
       <div className="flex items-baseline justify-between gap-2 text-[11px]">
         <span className="text-[var(--color-text-muted)]">{label}</span>
         <span className="tabular-nums font-medium text-[var(--color-text-primary)]">
-          {value == null ? "—" : `${value.toFixed(1)} / ${max}`}
+          {value == null ? "—" : `${formatFixed(value, locale)} / ${max}`}
         </span>
       </div>
       <div className="h-1.5 overflow-hidden rounded-full bg-[var(--color-bg-subtle)]">
@@ -176,7 +177,7 @@ function BidBaseballCard({
                 {formatPriceFull(result.totalPrice, locale)}
                 {result.compositeScore != null && (
                   <span className="ml-2 text-[var(--color-text-secondary)]">
-                    · {t("bidEval.compositeLabel")} {result.compositeScore.toFixed(1)}
+                    · {t("bidEval.compositeLabel")} {formatFixed(result.compositeScore, locale)}
                   </span>
                 )}
               </p>
@@ -478,7 +479,7 @@ export function BidEvaluationPage() {
                       <span className="tabular-nums">{row.bidCount} {t("bidEval.returns")}</span>
                       {row.topScore != null && (
                         <span className="tabular-nums">
-                          {t("bidEval.top")} {row.topScore.toFixed(1)}
+                          {t("bidEval.top")} {formatFixed(row.topScore, locale)}
                           {row.topSupplier ? ` · ${row.topSupplier}` : ""}
                         </span>
                       )}
@@ -523,8 +524,8 @@ export function BidEvaluationPage() {
                   </div>
                 )}
                 <p className="mt-1 max-w-2xl text-[12px] text-[var(--color-text-secondary)]">
-                  {pkg.quantity} · {t("bidEval.budget")} {formatCurrency(pkg.budget)} · {t("bidEval.closes")}{" "}
-                  {pkg.submissionDeadline}
+                  {pkg.quantity} · {t("bidEval.budget")} {formatCurrency(pkg.budget, locale)} · {t("bidEval.closes")}{" "}
+                  {new Date(pkg.submissionDeadline).toLocaleDateString(localeTag(locale), { day: "numeric", month: "long", year: "numeric" })}
                 </p>
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -611,10 +612,10 @@ export function BidEvaluationPage() {
                           >
                             <MatrixCell className="font-medium">{r.supplier}</MatrixCell>
                             <MatrixCell>{formatPriceFull(r.totalPrice, locale)}</MatrixCell>
-                            <MatrixCell>{r.priceScore?.toFixed(1) ?? "—"}</MatrixCell>
-                            <MatrixCell>{r.techScore?.toFixed(1) ?? "—"}</MatrixCell>
-                            <MatrixCell>{r.qaScore?.toFixed(1) ?? "—"}</MatrixCell>
-                            <MatrixCell>{r.legalScore?.toFixed(1) ?? "—"}</MatrixCell>
+                            <MatrixCell>{r.priceScore != null ? formatFixed(r.priceScore, locale) : "—"}</MatrixCell>
+                            <MatrixCell>{r.techScore != null ? formatFixed(r.techScore, locale) : "—"}</MatrixCell>
+                            <MatrixCell>{r.qaScore != null ? formatFixed(r.qaScore, locale) : "—"}</MatrixCell>
+                            <MatrixCell>{r.legalScore != null ? formatFixed(r.legalScore, locale) : "—"}</MatrixCell>
                             <MatrixCell>
                               <span
                                 className={cn(
@@ -628,7 +629,7 @@ export function BidEvaluationPage() {
                               </span>
                             </MatrixCell>
                             <MatrixCell className="font-semibold">
-                              {r.compositeScore?.toFixed(1) ?? "—"}
+                              {r.compositeScore != null ? formatFixed(r.compositeScore, locale) : "—"}
                             </MatrixCell>
                             <MatrixCell className="font-semibold">
                               {r.finalRank != null ? `#${r.finalRank}` : "DQ"}
@@ -657,7 +658,7 @@ export function BidEvaluationPage() {
                   </h3>
                   <p className="text-[11px] text-[var(--color-text-muted)]">
                     {t("bidEval.bidCardsExplain")}
-                    {pkg ? ` · ${t("bidEval.budgetBaseline")} ${formatCurrency(pkg.budget)}` : ""}.
+                    {pkg ? ` · ${t("bidEval.budgetBaseline")} ${formatCurrency(pkg.budget, locale)}` : ""}.
                   </p>
                 </div>
                 <div className="grid gap-3 lg:grid-cols-2">

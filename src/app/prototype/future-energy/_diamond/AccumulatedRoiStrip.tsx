@@ -8,6 +8,7 @@ import type { PortfolioRoi } from "./adapter"
 import { useT } from "../_i18n/use-t"
 import { useStore } from "../_store"
 import { localeTag } from "../_i18n"
+import { formatMultiple } from "../_i18n/currency"
 import { localizeRole } from "../_i18n/domain"
 
 function Sparkline({ values }: { values: number[] }) {
@@ -77,9 +78,9 @@ export function AccumulatedRoiStrip({ roi }: { roi: PortfolioRoi }) {
         </div>
 
         <Metric label={t("ledger.realized")} value={formatCurrency(roi.realizedToDate, locale)} tone="green" sub={t("diamond.investedSub", { amount: formatCurrency(roi.totalInvested, locale) })} />
-        <Metric label={t("ledger.blendedRoi")} value={`${roi.blendedRoi.toLocaleString(localeTag(locale), { maximumFractionDigits: 1 })}x`} tone="green" sub={t("diamond.portfolioReturn")} />
+        <Metric label={t("ledger.blendedRoi")} value={formatMultiple(roi.blendedRoi, locale)} tone="green" sub={t("diamond.portfolioReturn")} />
         <Metric label={t("diamond.inFlightPipeline")} value={formatCurrency(roi.inFlightProjected, locale)} tone="blue" sub={t("diamond.activeMissions", { count: roi.inFlightCount })} />
-        <Metric label={t("ledger.avgMultiple")} value={`${avgMultiple.toLocaleString(localeTag(locale), { maximumFractionDigits: 1 })}x`} tone="gold" sub={t("diamond.perClosedMission")} />
+        <Metric label={t("ledger.avgMultiple")} value={formatMultiple(avgMultiple, locale)} tone="gold" sub={t("diamond.perClosedMission")} />
 
         <div className="ml-auto flex items-center gap-3">
           <div className="hidden sm:block">
@@ -115,7 +116,7 @@ export function AccumulatedRoiStrip({ roi }: { roi: PortfolioRoi }) {
                 </div>
                 <span className="text-right tabular-nums text-muted-foreground">{formatCurrency(e.cost, locale)}</span>
                 <span className="text-right font-medium tabular-nums text-[var(--color-accent-positive-text)]">{formatCurrency(e.realizedValue, locale)}</span>
-                <span className="text-right font-semibold tabular-nums text-[var(--color-accent-positive-text)]">{e.roiMultiple.toLocaleString(localeTag(locale), { maximumFractionDigits: 1 })}x</span>
+                <span className="text-right font-semibold tabular-nums text-[var(--color-accent-positive-text)]">{formatMultiple(e.roiMultiple, locale)}</span>
                 <span className="text-right tabular-nums text-muted-foreground">{new Date(e.completionDate).toLocaleDateString(localeTag(locale))}</span>
               </div>
             ))}

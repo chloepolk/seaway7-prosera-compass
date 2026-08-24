@@ -12,6 +12,7 @@ import { buildSandboxPrompt } from "./prompt"
 import { buildPortfolioContext } from "../agents/_context"
 import { useT } from "../_i18n/use-t"
 import { localeTag } from "../_i18n"
+import { formatFixed, formatMultiple } from "../_i18n/currency"
 import { activeLocaleTag, formatActiveUsd, formatActiveFuelUnit } from "../_i18n/legacy"
 import { fuelPriceDisplay } from "@/lib/compass/locale-display"
 import type { Locale } from "../_i18n/types"
@@ -425,6 +426,7 @@ function PricingLevers({ scenario, onUpdate }: {
   onUpdate: (fn: (s: ScenarioState) => ScenarioState) => void
 }) {
   const t = useT()
+  const { locale } = useStore()
   return (
     <>
       <div className="flex items-center gap-1.5 text-xs font-semibold">
@@ -437,7 +439,7 @@ function PricingLevers({ scenario, onUpdate }: {
         min={0}
         max={4.0}
         step={0.1}
-        displayValue={scenario.pricing.laborMultiplier === 0 ? t("sandbox.off") : `${scenario.pricing.laborMultiplier.toFixed(1)}x`}
+        displayValue={scenario.pricing.laborMultiplier === 0 ? t("sandbox.off") : formatMultiple(scenario.pricing.laborMultiplier, locale)}
         onChange={v => onUpdate(s => ({ ...s, pricing: { ...s.pricing, laborMultiplier: v } }))}
       />
       <LeverSlider
@@ -481,7 +483,7 @@ function FuelLevers({ scenario, currentPrice, onUpdate }: {
       <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
         <span>{t("sandbox.current")}: {fuelGal(currentPrice)}</span>
         <span className={cn(delta > 0 ? "text-[var(--color-accent-critical-text)]" : delta < 0 ? "text-[var(--color-accent-positive-text)]" : "")}>
-          {shownDelta > 0 ? "+" : ""}{shownDelta.toFixed(2)}/L
+          {shownDelta > 0 ? "+" : ""}{formatFixed(shownDelta, locale, 2)}/L
         </span>
       </div>
     </>
@@ -493,6 +495,7 @@ function NteLevers({ scenario, onUpdate }: {
   onUpdate: (fn: (s: ScenarioState) => ScenarioState) => void
 }) {
   const t = useT()
+  const { locale } = useStore()
   return (
     <>
       <div className="flex items-center gap-1.5 text-xs font-semibold">
@@ -505,7 +508,7 @@ function NteLevers({ scenario, onUpdate }: {
         min={1.0}
         max={2.0}
         step={0.1}
-        displayValue={`${scenario.nte.thresholdMultiplier.toFixed(1)}x`}
+        displayValue={formatMultiple(scenario.nte.thresholdMultiplier, locale)}
         onChange={v => onUpdate(s => ({ ...s, nte: { thresholdMultiplier: v } }))}
       />
       <p className="text-[10px] text-muted-foreground leading-relaxed">

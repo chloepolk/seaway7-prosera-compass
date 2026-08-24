@@ -14,6 +14,7 @@ import {
   USD_TO_EUR,
   type DisplayLocale,
   formatEurFigure,
+  formatFixed,
   formatUsdAsEur,
   usdToEur,
 } from "./locale-display"
@@ -858,8 +859,8 @@ export function formatScoreAndRank(
   const scorePart =
     score != null
       ? locale === "fr"
-        ? `score composite ${score.toFixed(1)} sur 100`
-        : `composite ${score.toFixed(1)}`
+        ? `score composite ${formatFixed(score, locale)} sur 100`
+        : `composite ${formatFixed(score, locale)}`
       : locale === "fr"
         ? "score non calculé"
         : "score not calculated"
@@ -907,8 +908,8 @@ export function buildResubmitComparison(
         ? `Prix augmenté de ${formatUsdAsEur(priceDelta, locale)}`
         : `Price increased by ${formatUsdAsEur(priceDelta, locale)}`
   } else if (original.compositeScore !== revised.compositeScore) {
-    const from = original.compositeScore?.toFixed(1) ?? "—"
-    const to = revised.compositeScore?.toFixed(1) ?? "—"
+    const from = original.compositeScore != null ? formatFixed(original.compositeScore, locale) : "—"
+    const to = revised.compositeScore != null ? formatFixed(revised.compositeScore, locale) : "—"
     change = locale === "fr" ? `Score ${from} → ${to}` : `Score ${from} → ${to}`
   }
 
@@ -933,8 +934,8 @@ export function buildResubmitComparison(
     },
     {
       field: copy.compositeScore,
-      original: original.compositeScore != null ? original.compositeScore.toFixed(1) : "—",
-      revised: revised.compositeScore != null ? revised.compositeScore.toFixed(1) : "—",
+      original: original.compositeScore != null ? formatFixed(original.compositeScore, locale) : "—",
+      revised: revised.compositeScore != null ? formatFixed(revised.compositeScore, locale) : "—",
       change: original.compositeScore === revised.compositeScore ? "—" : change,
     },
   ]
@@ -1207,8 +1208,8 @@ export function buildAwardApprovalEmail(
             const c =
               row.compositeScore != null
                 ? locale === "fr"
-                  ? `composite ${row.compositeScore.toFixed(1)}`
-                  : `composite ${row.compositeScore.toFixed(1)}`
+                  ? `composite ${formatFixed(row.compositeScore, locale)}`
+                  : `composite ${formatFixed(row.compositeScore, locale)}`
                 : "—"
             return locale === "fr"
               ? `${row.supplier} — ${r}, ${c}, offre ${formatUsdAsEur(row.totalPriceUsd, locale)}, ${signedDelta(row.priceDeltaUsd, locale)}.`

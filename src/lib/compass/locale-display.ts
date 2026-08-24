@@ -22,6 +22,27 @@ export function localeTag(locale: DisplayLocale = "en"): "en-GB" | "fr-FR" {
   return locale === "fr" ? "fr-FR" : "en-GB"
 }
 
+/** Decimal with a fixed fraction length. EN: 20.1 · FR: 20,1 */
+export function formatFixed(
+  n: number,
+  locale: DisplayLocale = "en",
+  digits = 1,
+): string {
+  return n.toLocaleString(localeTag(locale), {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  })
+}
+
+/** ROI / score multiple. EN: 20.1x · FR: 20,1x */
+export function formatMultiple(
+  n: number,
+  locale: DisplayLocale = "en",
+  digits = 1,
+): string {
+  return `${formatFixed(n, locale, digits)}x`
+}
+
 export function fxRate(_locale: DisplayLocale = "en"): number {
   return USD_TO_EUR
 }

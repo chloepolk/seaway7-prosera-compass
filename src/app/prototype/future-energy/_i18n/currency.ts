@@ -6,6 +6,8 @@ import {
   formatMoney as sharedFormatMoney,
   formatCompactMoney as sharedFormatCompactMoney,
   formatMoneyUnit as sharedFormatMoneyUnit,
+  formatFixed as sharedFormatFixed,
+  formatMultiple as sharedFormatMultiple,
   money as sharedMoney,
   type DisplayLocale,
 } from "@/lib/compass/locale-display"
@@ -65,4 +67,14 @@ export const formatEurUnit = formatMoneyUnit
 
 export function money(usdAmount: number, locale: Locale = "en", compact = true): string {
   return sharedMoney(usdAmount, asDisplay(locale), compact)
+}
+
+/** Decimal with a fixed fraction length. EN: 20.1 · FR: 20,1 */
+export function formatFixed(n: number, locale: Locale = "en", digits = 1): string {
+  return sharedFormatFixed(n, asDisplay(locale), digits)
+}
+
+/** ROI / score multiple. EN: 20.1x · FR: 20,1x */
+export function formatMultiple(n: number, locale: Locale = "en", digits = 1): string {
+  return sharedFormatMultiple(n, asDisplay(locale), digits)
 }

@@ -4,6 +4,8 @@ import * as React from "react"
 import { Button } from "@/components/ui/prosera/button"
 import { cn } from "@/lib/utils"
 import { useT } from "../../_i18n/use-t"
+import { localizeLegacyCopy } from "../../_i18n/legacy"
+import { useStore } from "../../_store"
 import { enterMotion, insightsHeroShell, pcmButton } from "../motion"
 import { BluePilotReasoningButton, ReasoningExpand, ReasoningTooltip, type ReasoningContent } from "../reasoning-disclosure"
 import { isReasoningEmpty } from "../reasoning-helpers"
@@ -52,12 +54,15 @@ export function FocusHero({
   className,
 }: FocusHeroProps) {
   const t = useT()
+  const { locale } = useStore()
   const enter = enterMotion(0)
   const [reasoningOpen, setReasoningOpen] = React.useState(false)
   const hasReasoning = !isReasoningEmpty(reasoning)
   const showBpButton = hasReasoning && reasoningDisclosure === "expand"
   const showCta = Boolean(ctaLabel && onCta)
   const showActionRow = showCta || showBpButton
+  const localizedEyebrow = localizeLegacyCopy(eyebrow, locale)
+  const localizedCta = ctaLabel ? localizeLegacyCopy(ctaLabel, locale) : ctaLabel
 
   return (
     <section
@@ -73,7 +78,7 @@ export function FocusHero({
         <div className="flex items-center gap-2">
           <span className="size-[7px] shrink-0 rounded-full bg-[#5BD2F2]" aria-hidden />
           <p className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#5BD2F2]">
-            {eyebrow}
+            {localizedEyebrow}
             {reasoningDisclosure === "tooltip" && (
               <ReasoningTooltip
                 reasoning={reasoning}
@@ -101,7 +106,7 @@ export function FocusHero({
                 onClick={onCta}
                 className={cn(pcmButton, HERO_CTA_BTN)}
               >
-                {ctaLabel}
+                {localizedCta}
               </Button>
             )}
           </div>
@@ -121,6 +126,7 @@ export function FocusHero({
         <div className="grid shrink-0 grid-cols-2 gap-3 self-center">
           {stats.map((s, i) => {
             const tone = s.tone ?? (i === 1 ? "positive" : "brand")
+            const localizedLabel = localizeLegacyCopy(s.label, locale)
             return (
               <div
                 key={s.label}
@@ -128,8 +134,8 @@ export function FocusHero({
               >
                 <p className={cn("text-[22px] font-bold leading-none tabular-nums", STAT_VALUE_TONE[tone])}>{s.value}</p>
                 <p className="mt-1.5 flex items-center justify-center gap-0.5 text-[11px] font-medium leading-snug text-[#AECBDC]">
-                  <span>{s.label}</span>
-                  <ReasoningTooltip reasoning={s.reasoning} iconClassName="text-[#AECBDC]/70" label={`Why ${s.label}`} />
+                  <span>{localizedLabel}</span>
+                  <ReasoningTooltip reasoning={s.reasoning} iconClassName="text-[#AECBDC]/70" label={t("common.whyNamed", { name: localizedLabel })} />
                 </p>
               </div>
             )

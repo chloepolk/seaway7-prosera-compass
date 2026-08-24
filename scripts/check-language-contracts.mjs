@@ -58,6 +58,15 @@ const lowerPattern = /\.(scope|name)\.toLowerCase\(\)/
 if (lowerPattern.test(fe)) fail("future-energy tender-studio still lowercases scope/name")
 if (lowerPattern.test(pc)) fail("prosera-compass tender-studio still lowercases scope/name")
 
+const ledgerPath = join(root, "src/app/prototype/future-energy/_components/hub/portfolio-ledger.tsx")
+const ledger = read(ledgerPath)
+if (ledger.includes("Negotiated savings") || ledger.includes("Booked across")) {
+  fail("portfolio-ledger still hardcodes English savings copy")
+}
+if (!ledger.includes('t("ledger.title")')) {
+  fail("portfolio ledger must translate negotiated-savings title")
+}
+
 if (failed > 0) {
   console.error(`${failed} language contract(s) failed`)
   process.exit(1)

@@ -31,6 +31,7 @@ export function AgenticFocusHero({
 }: AgenticFocusHeroProps) {
   const { isAgentLoading, useStaticFallback, bpHeadline, bpReasoning, agentPhase, locale } = useStore()
   const t = useT()
+  const localizedSummary = localizeLegacyCopy(agentReasoningSummary, locale)
 
   if (isAgentLoading) {
     const phaseText =
@@ -52,7 +53,7 @@ export function AgenticFocusHero({
     ?? (useStaticFallback
       ? staticReasoning
       : bpReasoning.length > 0
-        ? { summary: agentReasoningSummary, steps: bpReasoning.map((s) => s.text) }
+        ? { summary: localizedSummary, steps: bpReasoning.map((s) => s.text) }
         : staticReasoning)
 
   return (

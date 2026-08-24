@@ -1369,6 +1369,7 @@ function IntelligencePanelDrawer({
 /* ------------------------------------------------------------------ */
 
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
+  const t = useT()
   const [email, setEmail] = React.useState("d.hoffmann@future-energy.com")
   const [password, setPassword] = React.useState("********")
   const [error, setError] = React.useState("")
@@ -1376,7 +1377,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email.trim() || !password.trim()) { setError("Please enter your credentials"); return }
+    if (!email.trim() || !password.trim()) { setError(t("common.credentialsError")); return }
     setError("")
     setLoading(true)
     setTimeout(() => { setLoading(false); onLogin() }, 800)
@@ -1393,16 +1394,20 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
           <img src={FE_LOGO_FOR_DARK_UI} alt="Future Energy" className="h-11 w-auto drop-shadow-lg" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />
           <div className="text-center">
             <h1 className="text-2xl font-bold text-white tracking-tight">Future Energy Compass</h1>
+            <p className="mt-1.5 text-[13px] text-white/60">{t("login.subtitle")}</p>
           </div>
         </div>
         <form onSubmit={handleSubmit} className="rounded-2xl border border-white/10 bg-white/[0.06] p-8 shadow-2xl backdrop-blur-xl">
+          <div className="mb-5 flex justify-end">
+            <LanguageToggle />
+          </div>
           <div className="space-y-5">
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-xs font-medium uppercase tracking-wider text-white/60">Email</label>
+              <label htmlFor="email" className="block text-xs font-medium uppercase tracking-wider text-white/60">{t("common.email")}</label>
               <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@future-energy.com" autoComplete="email" autoFocus className="w-full rounded-lg border border-white/15 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-white/40 focus:bg-white/15 focus:ring-1 focus:ring-white/20" />
             </div>
             <div className="space-y-2">
-              <label htmlFor="password" className="block text-xs font-medium uppercase tracking-wider text-white/60">Password</label>
+              <label htmlFor="password" className="block text-xs font-medium uppercase tracking-wider text-white/60">{t("common.password")}</label>
               <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="********" autoComplete="current-password" className="w-full rounded-lg border border-white/15 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-white/40 focus:bg-white/15 focus:ring-1 focus:ring-white/20" />
             </div>
             {error && <p className="text-xs text-red-300 text-center">{error}</p>}
@@ -1410,13 +1415,13 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" /><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
-                  Refreshing BluePilot intelligence...
+                  {t("login.loading")}
                 </span>
-              ) : "Sign In"}
+              ) : t("common.signIn")}
             </button>
           </div>
         </form>
-        <p className="mt-6 text-center text-[11px] text-white/30">Powered by Future Energy</p>
+        <p className="mt-6 text-center text-[11px] text-white/30">{t("login.footer")}</p>
       </div>
     </div>
   )

@@ -10,6 +10,7 @@ import { buildDiamondMissions, buildPortfolioRoi } from "../_diamond/adapter"
 import { useT } from "../_i18n/use-t"
 import { localeTag } from "../_i18n"
 import { formatActivePercent, formatActiveUsd } from "../_i18n/legacy"
+import { formatFixed, formatMultiple } from "../_i18n/currency"
 import { outputLanguageInstruction } from "@/lib/compass/data-grounded-language"
 
 /* ------------------------------------------------------------------ */
@@ -311,7 +312,7 @@ export function BiDashboardDrawer() {
     const horizonFor = (c: string) => (c === "days" ? "0-2 weeks" : c === "weeks" ? "4-6 weeks" : "this quarter")
     dataContext.operatingLoop = {
       realizedToDate: fmtUsd(roi.realizedToDate),
-      blendedRoi: `${roi.blendedRoi.toFixed(1)}x`,
+      blendedRoi: formatMultiple(roi.blendedRoi, locale),
       inFlightProjected: fmtUsd(roi.inFlightProjected),
       actionRegister: [...missions]
         .sort((a, b) => b.projectedValue - a.projectedValue)
@@ -378,7 +379,7 @@ export function BiDashboardDrawer() {
       `${locale === "fr" ? "Chiffre d’affaires validé" : "Revenue (validated)"}: ${fmtUsd(v.totalRevenue)}`,
       `${locale === "fr" ? "Marge moyenne" : "Avg margin"}: ${fmtPct(v.avgMarginPct)}`,
       `${locale === "fr" ? "Score client moyen (CI-04)" : "Avg Customer Score (CI-04)"}: ${avgScore}/100`,
-      `${locale === "fr" ? "Centre d’actions — réalisé à ce jour" : "Operating Loop — realized to date"}: ${fmtUsd(roi.realizedToDate)} (${roi.blendedRoi.toFixed(1)}× ROI)`,
+      `${locale === "fr" ? "Centre d’actions — réalisé à ce jour" : "Operating Loop — realized to date"}: ${fmtUsd(roi.realizedToDate)} (${formatMultiple(roi.blendedRoi, locale)} ROI)`,
       `${locale === "fr" ? "Centre d’actions — pipeline en cours" : "Operating Loop — in-flight pipeline"}: ${fmtUsd(roi.inFlightProjected)} · ${roi.inFlightCount} missions`,
       `${locale === "fr" ? "Constats de gravité élevée" : "High-severity findings"}: ${highSeverity}`,
       "",
@@ -425,7 +426,7 @@ export function BiDashboardDrawer() {
         "Actions prioritaires :",
         ...(recs.length > 0 ? recs.map((r, i) => `${i + 1}. ${r}`) : [`1. Pipeline du Centre d’actions : ${fmtUsd(roi.inFlightProjected)} sur ${roi.inFlightCount} missions.`]),
         "",
-        `Le Centre d’actions a réalisé ${fmtUsd(roi.realizedToDate)} à ce jour (${roi.blendedRoi.toFixed(1)}× de ROI combiné).`,
+        `Le Centre d’actions a réalisé ${fmtUsd(roi.realizedToDate)} à ce jour (${formatMultiple(roi.blendedRoi, locale)} de ROI combiné).`,
         "",
         "Synthèse complète dans le résumé BI. — BluePilot",
       ].join("\n")
@@ -443,7 +444,7 @@ export function BiDashboardDrawer() {
       "Top actions:",
       ...(recs.length > 0 ? recs.map((r, i) => `${i + 1}. ${r}`) : [`1. Operating Loop in-flight pipeline: ${fmtUsd(roi.inFlightProjected)} across ${roi.inFlightCount} missions.`]),
       "",
-      `Operating Loop has realized ${fmtUsd(roi.realizedToDate)} to date (${roi.blendedRoi.toFixed(1)}x blended ROI).`,
+      `Operating Loop has realized ${fmtUsd(roi.realizedToDate)} to date (${formatMultiple(roi.blendedRoi, locale)} blended ROI).`,
       "",
       "Full briefing in the BI Summary. — BluePilot",
     ].join("\n")
@@ -586,7 +587,7 @@ export function BiDashboardDrawer() {
             <Kpi label={t("bi.revenue")} value={fmtUsd(v.totalRevenue)} sub={t("bi.validatedJobs", { count: v.jobCount })} icon="DollarSign" />
             <Kpi label={t("bi.avgMargin")} value={fmtPct(v.avgMarginPct)} tone="blue" sub={t("bi.customers", { count: data.portfolioSummary.totalCustomers })} icon="Percent" />
             <Kpi label={t("bi.avgCustomerScore")} value={`${avgScore}/100`} tone="green" sub={t("bi.composite")} icon="Gauge" />
-            <Kpi label={t("bi.roiRealized")} value={fmtUsd(roi.realizedToDate)} tone="green" sub={t("bi.blended", { value: roi.blendedRoi.toFixed(1) })} icon="TrendingUp" />
+            <Kpi label={t("bi.roiRealized")} value={fmtUsd(roi.realizedToDate)} tone="green" sub={t("bi.blended", { value: formatFixed(roi.blendedRoi, locale) })} icon="TrendingUp" />
             <Kpi label={t("bi.inFlight")} value={fmtUsd(roi.inFlightProjected)} tone="blue" sub={t("bi.missions", { count: roi.inFlightCount })} icon="Rocket" />
             <Kpi label={t("bi.needsAttention")} value={String(highSeverity)} tone={highSeverity > 0 ? "amber" : "default"} sub={t("bi.priorityItems")} icon="TriangleAlert" />
           </div>

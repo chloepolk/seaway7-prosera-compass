@@ -24,7 +24,7 @@ import {
   reconcileMissionAfterComplete,
   type MissionSessionPatch,
 } from "../_components/hub/bluepilot-action-reconcile"
-import { displayName, isMissionOwnedByActiveUser, ACTIVE_USER } from "../_components/hub/active-user"
+import { isMissionOwnedByActiveUser, ACTIVE_USER } from "../_components/hub/active-user"
 import { listItemMotion } from "../_components/motion"
 import { reasoningFromMission, buildActionBoardHeroReasoning } from "../_components/reasoning-helpers"
 import type { Locale } from "../_i18n"
@@ -438,8 +438,9 @@ export function OperatingLoopPage() {
           stageLabel={t("actionCentre.landedStage")}
           flightPathSteps={flightPathSteps}
           currentFlightStepId="landed"
-          owner={displayName(person.name)}
+          owner={person.name}
           ownerRole={person.role}
+          isAssignedToYou={person.name === ACTIVE_USER.name}
           confidence={fields.confidence}
           cost={mission.cost}
           risk={fields.risk}
@@ -472,8 +473,9 @@ export function OperatingLoopPage() {
           stageLabel={t("actionCentre.landedStage")}
           flightPathSteps={flightPathSteps}
           currentFlightStepId="landed"
-          owner={displayName(card.owner)}
+          owner={card.owner}
           ownerRole={card.ownerRole}
+          isAssignedToYou={card.owner === ACTIVE_USER.name}
           confidence={card.confidence}
           cost={card.cost}
           risk={card.risk}

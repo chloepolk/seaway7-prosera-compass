@@ -13,7 +13,7 @@ import {
   type Employee,
 } from "@/app/prototype/future-energy/data/_people"
 import { BluePilotMark } from "../bluepilot-mark"
-import { displayName } from "./active-user"
+import { isActiveUser } from "./active-user"
 import { avatarColor, avatarSrcById } from "./avatar-color"
 import { useT } from "../../_i18n/use-t"
 import { useStore } from "../../_store"
@@ -128,7 +128,7 @@ export function AssigneePicker({ ownerRole, selectedId, onSelect, className }: A
                   </Avatar>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[13px] font-medium text-[var(--color-text-primary)]">
-                      {displayName(employee.name)}
+                      {isActiveUser(employee.name) ? t("common.you") : employee.name}
                     </p>
                     <p className="truncate text-[11px] text-[var(--color-text-muted)]">{localizeRole(employee.role, locale)}</p>
                   </div>

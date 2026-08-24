@@ -194,6 +194,7 @@ const en = {
     cost: "Cost",
     risk: "Risk",
     assigned: "assigned",
+    assignedNamed: "{name} assigned",
     reassign: "Reassign",
     moreActions: "More actions",
     showReasoning: "Show BluePilot reasoning",
@@ -295,6 +296,9 @@ const en = {
     Scored: "Scored",
   },
   ledger: {
+    title: "Negotiated savings",
+    bookedAcross: "Booked across {count} awarded packages",
+    bookedAcrossOne: "Booked across 1 awarded package",
     realized: "Realized to date",
     blendedRoi: "Blended ROI",
     inFlight: "In-flight",

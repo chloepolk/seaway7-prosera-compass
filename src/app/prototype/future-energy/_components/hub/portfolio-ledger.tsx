@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import type { PortfolioRoi } from "../../_diamond/adapter"
 
 import { formatCurrency } from "../../_diamond/stages"
-import { formatCompactEur } from "../../_i18n/currency"
+import { formatCompactEur, formatMultiple } from "../../_i18n/currency"
 import { useT } from "../../_i18n/use-t"
 import { useStore } from "../../_store"
 import { enterMotion, sparkDrawMotion } from "../motion"
@@ -114,6 +114,7 @@ function LedgerMetric({
   index: number
   reasoning?: string
 }) {
+  const t = useT()
 
   const motion = enterMotion(index + 1)
 
@@ -125,7 +126,7 @@ function LedgerMetric({
 
       <p className="flex items-center gap-1 text-[11px] font-medium text-[var(--color-text-muted)]">
         {label}
-        {reasoning && <ReasoningTooltip reasoning={{ summary: reasoning }} label={`Why ${label}`} />}
+        {reasoning && <ReasoningTooltip reasoning={{ summary: reasoning }} label={t("common.whyNamed", { name: label })} />}
       </p>
 
     </div>
@@ -172,13 +173,15 @@ export function PortfolioLedger({ roi, className }: { roi: PortfolioRoi; classNa
 
         <p className="text-[10px] font-semibold uppercase tracking-[1px] text-[var(--color-text-muted)]">
 
-          Negotiated savings
+          {t("ledger.title")}
 
         </p>
 
         <p className="text-[12px] text-[var(--color-text-muted)]">
 
-          Booked across {roi.missionsClosed} awarded packages
+          {roi.missionsClosed === 1
+            ? t("ledger.bookedAcrossOne")
+            : t("ledger.bookedAcross", { count: roi.missionsClosed })}
 
         </p>
 
@@ -192,7 +195,7 @@ export function PortfolioLedger({ roi, className }: { roi: PortfolioRoi; classNa
           reasoning={t("ledger.realizedReasoning")}
         />
         <LedgerMetric
-          value={`${roi.blendedRoi.toFixed(1)}x`}
+          value={formatMultiple(roi.blendedRoi, locale)}
           label={t("ledger.blendedRoi")}
           index={1}
           reasoning={t("ledger.blendedReasoning")}
@@ -204,7 +207,7 @@ export function PortfolioLedger({ roi, className }: { roi: PortfolioRoi; classNa
           reasoning={t("ledger.inFlightReasoning")}
         />
         <LedgerMetric
-          value={`${avgMultiple.toFixed(1)}x`}
+          value={formatMultiple(avgMultiple, locale)}
           label={t("ledger.avgMultiple")}
           index={3}
           reasoning={t("ledger.avgReasoning")}

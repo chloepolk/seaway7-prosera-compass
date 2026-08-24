@@ -310,6 +310,20 @@ const FR: Record<string, string> = {
   "Next {months} mo: {range} weather-driven margin opportunity": "Sur les {months} prochains mois : {range} de potentiel de marge lié à la météo",
   "Forecast = seasonal climatology × fitted elasticity × region ticket/margin. Range widens with fit uncertainty.": "Prévision = climatologie saisonnière × élasticité ajustée × panier/marge régionale. La plage s’élargit avec l’incertitude de l’ajustement.",
   "Each forecast window is scored on the same severity index; its demand lift is the fitted model's estimate (floored by severity where the pooled fit is thin), which drives the surcharge and crew-staging sizing below. Recalibrate after each window as outcomes land.": "Chaque fenêtre de prévision est évaluée selon le même indice de gravité ; sa hausse de demande correspond à l’estimation du modèle ajusté (avec un plancher fondé sur la gravité lorsque l’ajustement mutualisé est limité), qui détermine ci-dessous la majoration et le dimensionnement des équipes. Recalibrez après chaque fenêtre à mesure que les résultats arrivent.",
+  "Portfolio focus · from BluePilot": "Focus portefeuille · BluePilot",
+  "A few accounts carry most of your margin.": "Quelques comptes portent l’essentiel de votre marge.",
+  "BluePilot synthesized portfolio concentration, tier mix, and repricing opportunity from live job and quote data.": "BluePilot a synthétisé la concentration du portefeuille, le mix de niveaux et les possibilités de réajustement tarifaire à partir des données d’interventions et de devis.",
+  "BluePilot synthesized analysis for this view.": "BluePilot a synthétisé l’analyse de cette vue.",
+  "See recommended actions": "Voir les actions recommandées",
+  "from top 4%": "des 4 % les plus rentables",
+  "untapped": "inexploité",
+  "Create app": "Créer une app",
+  "Customize": "Personnaliser",
+  "Add New": "Ajouter",
+  "Save": "Enregistrer",
+  "Undo": "Annuler",
+  "Removed": "Retiré",
+  "STRIPA (S·TR·I·P·A)": "STRIPA (S·TR·I·P·A)",
 }
 
 export function localizeLegacyCopy(text: string, locale: Locale): string {
