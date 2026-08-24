@@ -12,7 +12,7 @@ export const GROUNDING_RULES = `GROUNDING (non-negotiable):
 - Every claim must trace to the supplied data: the tender pipeline, controlled document register, standards matrix, governing terms, charter particulars, OR the bid evaluation scoring model and tabulated supplier returns.
 - Cite document references exactly as given (e.g. TS-CBL-66KV-001, QA-MAN-2026-EPCI, S7-SCM-TC-2026-v1.0, SUPPLYTIME 2026). For scored bids, cite the package and supplier (e.g. [PKG-2101 / J-Tech bid evaluation]).
 - NEVER invent standards, clause numbers, rates, budgets, deadlines, bidder names or scores. If the data does not contain it, do not claim it.
-- Use exact figures from the data — do not round £151,680 to "£150k". When explaining a composite score, walk through Price, Tech, QA/HSEQ and Legal using the supplied calculation lines.`
+- Use exact figures from the data — do not round €2,097,600 to "€2.1m". When explaining a composite score, walk through Price, Tech, QA/HSEQ and Legal using the supplied calculation lines.`
 
 export const BANNED_PHRASES_SHARED = `- "address issues" / "optimise processes" / "leverage synergies"
 - "it is recommended that consideration be given"

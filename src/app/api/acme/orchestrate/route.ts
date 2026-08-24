@@ -37,16 +37,16 @@ export async function POST(req: Request) {
       ? `\n═══ ROOT CAUSE ANALYSIS FOR CURRENT ENTITY ═══
 INSTRUCTIONS: The data below contains RAW NUMBERS (decimals for percentages, integers for USD seed amounts). Field names such as dollarImpact stay as written.
 - "currentMarginPct": 0.557 means 55.7% margin
-- "dollarImpact": 6200 means £4,898 at USD 1 = GBP 0.79 (prototype rate, 21 August 2026)
-- "estimatedRecoveryDollars": 12000 means £9,480
+- "dollarImpact": 6200 means €5,704 at USD 1 = EUR 0.92 (prototype rate, 21 August 2026)
+- "estimatedRecoveryDollars": 12000 means €11,040
 
 For each driver below, you MUST write a prescription that:
 1. Names the customer (from "entity")
 2. Names the root cause (from "driver" — e.g., "pricing gap", "labor cost variance")
 3. Shows the MATH: take the dollarImpact, the detail, and the benchmarkComparison to compute a specific corrective action
-4. States the recovery in pounds from that corrective action
+4. States the recovery in euros from that corrective action
 
-CRITICAL: Do NOT round "£4,898" to "£5k" — use exact converted figures. Do NOT say "address" or "optimise" — say exactly WHAT to change, by HOW MUCH, for WHICH customer.
+CRITICAL: Do NOT round "€5,704" to "€6k" — use exact converted figures. Do NOT say "address" or "optimise" — say exactly WHAT to change, by HOW MUCH, for WHICH customer.
 
 Entity Root Cause Data:
 ${JSON.stringify(orchestratorContext.currentEntityRootCause, null, 1)}`
@@ -61,15 +61,15 @@ ${JSON.stringify(orchestratorContext.regionExternalData, null, 1)}`
       ? `\n═══ MARGIN DRAGS REQUIRING PRESCRIPTIVE ACTION ═══
 INSTRUCTIONS: Each object below is a customer dragging portfolio margin. ALL values are RAW NUMBERS. Field names such as dollarImpact stay as written.
 - "currentMarginPct": 0.25 → 25% margin; "gapToPortfolioPct": -0.30 → 30 points below portfolio
-- "dollarImpact": 3500 → £2,765 at USD 1 = GBP 0.79 (prototype rate, 21 August 2026)
-- "estimatedRecoveryDollars": 8000 → £6,320 total recoverable
+- "dollarImpact": 3500 → €3,220 at USD 1 = EUR 0.92 (prototype rate, 21 August 2026)
+- "estimatedRecoveryDollars": 8000 → €7,360 total recoverable
 
 For EACH drag below you MUST produce a separate bullet that:
 1. Starts with the customer name from "entity"
 2. Identifies the #1 driver from the "drivers" array (highest dollarImpact)
-3. Quotes the converted pound figure (e.g., £2,765 — NOT £3k)
+3. Quotes the converted euro figure (e.g., €3,220 — NOT €3k)
 4. Reads the "detail" and "benchmarkComparison" fields and converts them into a specific action (change X from Y to Z)
-5. Computes the recovery: corrective action × volume = pounds recovered
+5. Computes the recovery: corrective action × volume = euros recovered
 
 DO NOT combine multiple drags into one bullet like "address negative-margin accounts." Each drag = one bullet with one customer's specific prescription.
 

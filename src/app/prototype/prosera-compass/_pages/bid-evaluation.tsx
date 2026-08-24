@@ -33,8 +33,9 @@ import {
   awardGovernanceStatusFor,
   awardGovCopy,
   buildAwardSnapshot,
+  type AwardApprovalSnapshot,
 } from "@/lib/compass/award-governance"
-import { AwardGovernanceChip } from "@/lib/compass/award-approval-modal"
+import { AwardGovernanceChip, AwardRecommendPanel, AwardNotificationToast } from "@/lib/compass/award-approval-modal"
 
 type EvalStatus = "ready" | "awaiting_returns" | "not_issued" | "awarded"
 
@@ -298,7 +299,7 @@ function EmptyPackageState({ status, pkg }: { status: EvalStatus; pkg: TenderPac
 }
 
 export function BidEvaluationPage() {
-  const { focusEvalPackageId, tenderStages, openBidEvaluation, awardApprovals, selectAwardRecommendation } = useStore()
+  const { focusEvalPackageId, tenderStages, openBidEvaluation, awardApprovals, submitAwardRecommendation } = useStore()
   const rows = React.useMemo(() => buildPackageRows(tenderStages), [tenderStages])
 
   const defaultId =
@@ -328,6 +329,8 @@ export function BidEvaluationPage() {
   )
 
   const [notifyOpen, setNotifyOpen] = React.useState(false)
+  const [recommendSnapshot, setRecommendSnapshot] = React.useState<AwardApprovalSnapshot | null>(null)
+  const [toastName, setToastName] = React.useState<string | null>(null)
   const [selectedBidId, setSelectedBidId] = React.useState<string | null>(null)
   React.useEffect(() => {
     const top = results.find((r) => r.finalRank === 1) ?? results[0]
@@ -342,6 +345,7 @@ export function BidEvaluationPage() {
 
   const recommendSelected = () => {
     if (!pkg || !selectedResult || selectedResult.gatingStatus === "Fail") return
+    if (awardRecord && awardRecord.status !== "procurement_review") return
     const approver = personForRole(pkg.sponsorRole)
     const snapshot = buildAwardSnapshot({
       packageId: pkg.id,
@@ -360,7 +364,7 @@ export function BidEvaluationPage() {
         email: emailForPerson(approver.name),
       },
     })
-    selectAwardRecommendation(pkg.id, snapshot, { name: ACTIVE_USER.name, role: ACTIVE_USER.role })
+    setRecommendSnapshot(snapshot)
   }
 
   const selectPackage = (id: string) => {
@@ -545,7 +549,7 @@ export function BidEvaluationPage() {
                       <button
                         type="button"
                         onClick={recommendSelected}
-                        disabled={!selectedResult || selectedResult.gatingStatus === "Fail"}
+                        disabled={!selectedResult || selectedResult.gatingStatus === "Fail" || (awardRecord != null && awardRecord.status !== "procurement_review")}
                         className="inline-flex shrink-0 items-center gap-1.5 rounded-[8px] bg-[var(--color-bg-inverse)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-text-inverse)] hover:opacity-90 disabled:opacity-50"
                       >
                         <SafeIcon name="BadgeCheck" className="size-3.5" />
@@ -671,6 +675,27 @@ export function BidEvaluationPage() {
           onClose={() => setNotifyOpen(false)}
         />
       )}
+      {recommendSnapshot && (
+        <AwardRecommendPanel
+          snapshot={recommendSnapshot}
+          locale="en"
+          onClose={() => setRecommendSnapshot(null)}
+          onSubmit={(note) => {
+            if (!pkg) return
+            submitAwardRecommendation(
+              pkg.id,
+              recommendSnapshot,
+              { name: ACTIVE_USER.name, role: ACTIVE_USER.role, email: ACTIVE_USER.email },
+              note,
+            )
+            if (recommendSnapshot.requiresDirectorApproval) {
+              setToastName(recommendSnapshot.requiredApproverName)
+            }
+            setRecommendSnapshot(null)
+          }}
+        />
+      )}
+      {toastName && <AwardNotificationToast name={toastName} locale="en" onDismiss={() => setToastName(null)} />}
     </div>
   )
 }

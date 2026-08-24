@@ -366,6 +366,7 @@ export function ReasoningExpand({
   open: controlledOpen,
   onOpenChange,
 }: ReasoningExpandProps) {
+  const t = useT()
   const [internalOpen, setInternalOpen] = React.useState(defaultOpen)
   const isControlled = controlledOpen !== undefined
   const open = isControlled ? controlledOpen : internalOpen
@@ -413,12 +414,30 @@ export function ReasoningExpand({
             <div
               className={cn(
                 "space-y-2",
-                !isCompact && "mt-2 rounded-[10px] border pt-3",
+                !isCompact && "mt-2 rounded-[10px] border pt-2",
                 !isCompact && panelBorderCls,
                 !isCompact && (isDark ? "bg-white/5 px-3 pb-3" : "bg-[var(--color-bg-subtle)] px-3 pb-3"),
                 isCompact && "mt-1.5",
               )}
             >
+              {!isCompact && open && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    aria-label={t("reasoning.collapse")}
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-[6px] px-1.5 py-0.5 text-[11px] font-medium transition-colors",
+                      isDark
+                        ? "text-[#AECBDC] hover:bg-white/10 hover:text-white"
+                        : "text-[var(--color-text-muted)] hover:bg-[var(--color-bg-surface)] hover:text-[var(--color-text-primary)]",
+                    )}
+                  >
+                    <SafeIcon name="ChevronUp" className="size-3.5" />
+                    {t("reasoning.collapse")}
+                  </button>
+                </div>
+              )}
               <ReasoningBody
                 reasoning={reasoning!}
                 variant={isDark ? "dark" : "default"}

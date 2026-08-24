@@ -225,8 +225,8 @@ const FR: Record<string, string> = {
   "every $0.10/gal move": "chaque variation de 2 c€/L",
   "per $0.10/gal": "par 2 c€/L",
   "Every $0.10/gal moves": "Chaque variation de 2 c€/L déplace",
-  "Unleaded £/L": "Sans plomb €/L",
-  "Unleaded £/L trend": "Tendance sans plomb €/L",
+  "Unleaded €/L": "Sans plomb €/L",
+  "Unleaded €/L trend": "Tendance sans plomb €/L",
   "Total litres": "Total litres",
   "annual fleet cost impact per $0.10/gal price move": "impact annuel du coût flotte par variation de 2 c€/L",
   "yr impact": "an d’impact",
@@ -405,7 +405,7 @@ export function activeLocaleTag(): "fr-FR" | "en-GB" {
   }
 }
 
-/** Format a USD seed amount for the active locale (EN → £, FR → €). */
+/** Format a USD seed amount for the active locale (EN and FR → €). */
 export function formatActiveUsd(value: number, compact = true): string {
   const locale = activeLocaleTag() === "fr-FR" ? "fr" : "en"
   return compact

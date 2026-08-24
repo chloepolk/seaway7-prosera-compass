@@ -24,11 +24,15 @@ import {
   type AwardActor,
   type AwardApprovalRecord,
   type AwardApprovalSnapshot,
-  type AwardDecision,
+  type AwardSupportingDocument,
+  type RevisionReasonCategory,
+  approveAwardRecommendation,
   confirmSupplierAward,
-  recordAwardDecision,
-  selectRecommendedSupplier,
-  submitAwardApprovalRequest,
+  requestAwardClarification,
+  resubmitAwardApproval,
+  returnAwardForRevision,
+  submitAwardRecommendation as commitAwardRecommendation,
+  submitClarificationResponse,
 } from "@/lib/compass/award-governance"
 import {
   buildPortfolioContext,
@@ -182,9 +186,24 @@ export interface AcmeDemoStore {
 
   /** Session award-approval workflow, keyed by package / mission id. */
   awardApprovals: Record<string, AwardApprovalRecord>
-  selectAwardRecommendation: (packageId: string, snapshot: AwardApprovalSnapshot, actor: AwardActor) => void
-  submitAwardApproval: (packageId: string, actor: AwardActor) => void
-  decideAwardApproval: (packageId: string, decision: AwardDecision, comments: string, actor: AwardActor) => void
+  submitAwardRecommendation: (packageId: string, snapshot: AwardApprovalSnapshot, actor: AwardActor, noteToApprover?: string) => void
+  approveAward: (packageId: string, comments: string, actor: AwardActor) => void
+  requestAwardClarification: (packageId: string, question: string, actor: AwardActor) => void
+  respondToAwardClarification: (
+    packageId: string,
+    args: { response: string; attachments: AwardSupportingDocument[]; sourceReferences: string[] },
+    actor: AwardActor,
+  ) => void
+  returnAwardForRevision: (
+    packageId: string,
+    args: { reasonCategory: RevisionReasonCategory; instructions: string; supportingReference: string; dueDate: string | null },
+    actor: AwardActor,
+  ) => void
+  resubmitAwardApproval: (
+    packageId: string,
+    args: { snapshot: AwardApprovalSnapshot; actionTaken: string; explanation: string; attachments: AwardSupportingDocument[] },
+    actor: AwardActor,
+  ) => void
   confirmAward: (packageId: string, actor: AwardActor) => void
 
   /** Catalogue of completed ITT drafts (persisted across navigation and reloads). */
@@ -1039,26 +1058,62 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
     setTenderStages(prev => ({ ...prev, [packageId]: stage }))
   }, [])
 
-  const selectAwardRecommendation = React.useCallback((packageId: string, snapshot: AwardApprovalSnapshot, actor: AwardActor) => {
+  const submitAwardRecommendation = React.useCallback((packageId: string, snapshot: AwardApprovalSnapshot, actor: AwardActor, noteToApprover = "") => {
     setAwardApprovals(prev => ({
       ...prev,
-      [packageId]: selectRecommendedSupplier(prev[packageId], snapshot, actor),
+      [packageId]: commitAwardRecommendation(prev[packageId], snapshot, actor, noteToApprover),
     }))
   }, [])
 
-  const submitAwardApproval = React.useCallback((packageId: string, actor: AwardActor) => {
+  const approveAward = React.useCallback((packageId: string, comments: string, actor: AwardActor) => {
     setAwardApprovals(prev => {
       const current = prev[packageId]
       if (!current) return prev
-      return { ...prev, [packageId]: submitAwardApprovalRequest(current, actor) }
+      return { ...prev, [packageId]: approveAwardRecommendation(current, comments, actor) }
     })
   }, [])
 
-  const decideAwardApproval = React.useCallback((packageId: string, decision: AwardDecision, comments: string, actor: AwardActor) => {
+  const requestAwardClarificationFn = React.useCallback((packageId: string, question: string, actor: AwardActor) => {
     setAwardApprovals(prev => {
       const current = prev[packageId]
       if (!current) return prev
-      return { ...prev, [packageId]: recordAwardDecision(current, decision, comments, actor) }
+      return { ...prev, [packageId]: requestAwardClarification(current, question, actor) }
+    })
+  }, [])
+
+  const respondToAwardClarification = React.useCallback((
+    packageId: string,
+    args: { response: string; attachments: AwardSupportingDocument[]; sourceReferences: string[] },
+    actor: AwardActor,
+  ) => {
+    setAwardApprovals(prev => {
+      const current = prev[packageId]
+      if (!current) return prev
+      return { ...prev, [packageId]: submitClarificationResponse(current, args, actor) }
+    })
+  }, [])
+
+  const returnAwardForRevisionFn = React.useCallback((
+    packageId: string,
+    args: { reasonCategory: RevisionReasonCategory; instructions: string; supportingReference: string; dueDate: string | null },
+    actor: AwardActor,
+  ) => {
+    setAwardApprovals(prev => {
+      const current = prev[packageId]
+      if (!current) return prev
+      return { ...prev, [packageId]: returnAwardForRevision(current, args, actor) }
+    })
+  }, [])
+
+  const resubmitAwardApprovalFn = React.useCallback((
+    packageId: string,
+    args: { snapshot: AwardApprovalSnapshot; actionTaken: string; explanation: string; attachments: AwardSupportingDocument[] },
+    actor: AwardActor,
+  ) => {
+    setAwardApprovals(prev => {
+      const current = prev[packageId]
+      if (!current) return prev
+      return { ...prev, [packageId]: resubmitAwardApproval(current, args, actor) }
     })
   }, [])
 
@@ -1318,9 +1373,12 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
       focusEvalPackageId,
       openBidEvaluation,
       awardApprovals,
-      selectAwardRecommendation,
-      submitAwardApproval,
-      decideAwardApproval,
+      submitAwardRecommendation,
+      approveAward,
+      requestAwardClarification: requestAwardClarificationFn,
+      respondToAwardClarification,
+      returnAwardForRevision: returnAwardForRevisionFn,
+      resubmitAwardApproval: resubmitAwardApprovalFn,
       confirmAward,
       draftedTenders,
       saveDraftedTender,
@@ -1344,7 +1402,7 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
       deletedCustomApps,
       restoreCustomApp,
     }),
-    [state, actions, derived, authenticated, login, agentState, chatMessages, chatLoading, sendChatMessage, clearChat, sandboxOpen, biOpen, intelPanelOpen, savedScenarios, saveScenario, deleteScenario, missionPriority, setMissionPriority, focusMissionId, setFocusMission, tenderStages, advanceTenderStage, focusTenderId, openTenderStudio, focusEvalPackageId, openBidEvaluation, awardApprovals, selectAwardRecommendation, submitAwardApproval, decideAwardApproval, confirmAward, draftedTenders, saveDraftedTender, deleteDraftedTender, taskActions, markTaskComplete, overrideTask, postponeTask, sendTaskAlert, boards, getBoard, setBoardOrder, setModuleHidden, setBoardHero, openModuleId, openModule, closeModule, customApps, saveCustomApp, deleteCustomApp, deletedCustomApps, restoreCustomApp]
+    [state, actions, derived, authenticated, login, agentState, chatMessages, chatLoading, sendChatMessage, clearChat, sandboxOpen, biOpen, intelPanelOpen, savedScenarios, saveScenario, deleteScenario, missionPriority, setMissionPriority, focusMissionId, setFocusMission, tenderStages, advanceTenderStage, focusTenderId, openTenderStudio, focusEvalPackageId, openBidEvaluation, awardApprovals, submitAwardRecommendation, approveAward, requestAwardClarificationFn, respondToAwardClarification, returnAwardForRevisionFn, resubmitAwardApprovalFn, confirmAward, draftedTenders, saveDraftedTender, deleteDraftedTender, taskActions, markTaskComplete, overrideTask, postponeTask, sendTaskAlert, boards, getBoard, setBoardOrder, setModuleHidden, setBoardHero, openModuleId, openModule, closeModule, customApps, saveCustomApp, deleteCustomApp, deletedCustomApps, restoreCustomApp]
   )
 
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>

@@ -2,8 +2,8 @@
 /*  EN-GB / FR display — currency, metric units, compact money         */
 /*                                                                     */
 /*  Seed amounts stay USD (and imperial where the source series is).   */
-/*  User-facing English uses GBP and metric. French uses EUR and       */
-/*  metric. Do not reconvert a figure that already carries a symbol.   */
+/*  User-facing English and French both display EUR and metric.        */
+/*  Do not reconvert a figure that already carries a symbol.           */
 /* ------------------------------------------------------------------ */
 
 export type DisplayLocale = "en" | "fr"
@@ -23,12 +23,12 @@ export function localeTag(locale: DisplayLocale = "en"): "en-GB" | "fr-FR" {
   return locale === "fr" ? "fr-FR" : "en-GB"
 }
 
-export function fxRate(locale: DisplayLocale = "en"): number {
-  return locale === "fr" ? USD_TO_EUR : USD_TO_GBP
+export function fxRate(_locale: DisplayLocale = "en"): number {
+  return USD_TO_EUR
 }
 
-export function currencyCode(locale: DisplayLocale = "en"): "GBP" | "EUR" {
-  return locale === "fr" ? "EUR" : "GBP"
+export function currencyCode(_locale: DisplayLocale = "en"): "EUR" {
+  return "EUR"
 }
 
 export function displayAmount(usdAmount: number, locale: DisplayLocale = "en"): number {
@@ -70,7 +70,7 @@ export function formatMoney(
 
 /**
  * Compact money for chips/KPIs.
- * EN: £230k / £1.2m / £3.4bn
+ * EN: €230k / €1.2m / €3.4bn
  * FR: 230 k€ / 1,2 M€ / 3,4 Md€
  */
 export function formatCompactMoney(usdAmount: number, locale: DisplayLocale = "en"): string {
@@ -85,7 +85,7 @@ export function formatCompactMoney(usdAmount: number, locale: DisplayLocale = "e
       minimumFractionDigits: digits,
       maximumFractionDigits: digits,
     })
-    return locale === "fr" ? `${sign}${n} Md€` : `${sign}£${n}bn`
+    return locale === "fr" ? `${sign}${n} Md€` : `${sign}€${n}bn`
   }
 
   if (abs >= 1_000_000) {
@@ -94,20 +94,20 @@ export function formatCompactMoney(usdAmount: number, locale: DisplayLocale = "e
       minimumFractionDigits: digits,
       maximumFractionDigits: digits,
     })
-    return locale === "fr" ? `${sign}${n} M€` : `${sign}£${n}m`
+    return locale === "fr" ? `${sign}${n} M€` : `${sign}€${n}m`
   }
 
   if (abs >= 1_000) {
     const n = Math.round(abs / 1_000).toLocaleString(tag, {
       maximumFractionDigits: 0,
     })
-    return locale === "fr" ? `${sign}${n} k€` : `${sign}£${n}k`
+    return locale === "fr" ? `${sign}${n} k€` : `${sign}€${n}k`
   }
 
   const n = Math.round(abs).toLocaleString(tag, {
     maximumFractionDigits: 0,
   })
-  return locale === "fr" ? `${sign}${n} €` : `${sign}£${n}`
+  return locale === "fr" ? `${sign}${n} €` : `${sign}€${n}`
 }
 
 /** Unit prices (per hour, per day) with two decimals. Currency only. */
@@ -180,12 +180,8 @@ export function formatTonnePrice(usdPerShortTon: number, locale: DisplayLocale =
 /** Label for the converted $0.10/gal sensitivity step. */
 export function formatFuelSensitivityStep(locale: DisplayLocale = "en"): string {
   const perLitre = fuelPriceDisplay(USD_PER_GAL_SENSITIVITY, locale)
-  if (locale === "fr") {
-    const cents = Math.round(perLitre * 100)
-    return `${cents} c€/L`
-  }
-  const pence = Math.round(perLitre * 100)
-  return `${pence}p/litre`
+  const cents = Math.round(perLitre * 100)
+  return locale === "fr" ? `${cents} c€/L` : `${cents} c€/L`
 }
 
 export function fahrenheitToCelsius(f: number): number {
@@ -216,8 +212,8 @@ export function formatFuelEconomyMpg(mpg: number, locale: DisplayLocale = "en"):
   return `${n} L/100 km`
 }
 
-export function displayMaterialUnit(nativeUnit: string, locale: DisplayLocale = "en"): string {
-  const symbol = locale === "fr" ? "€" : "£"
+export function displayMaterialUnit(nativeUnit: string, _locale: DisplayLocale = "en"): string {
+  const symbol = "€"
   if (/short\s*ton/i.test(nativeUnit)) return `${symbol} / tonne`
   if (/\blb\b/i.test(nativeUnit)) return `${symbol} / kg`
   if (/USD/i.test(nativeUnit)) return nativeUnit.replace(/USD/gi, symbol)

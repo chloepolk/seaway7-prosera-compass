@@ -12,7 +12,7 @@ import {
 
 /**
  * Seed amounts are USD-denominated.
- * English displays GBP; French displays EUR. Prototype FX is in locale-display.ts.
+ * English and French display EUR. Prototype FX is in locale-display.ts.
  */
 export const USD_TO_EUR = SHARED_USD_TO_EUR
 
@@ -24,16 +24,16 @@ export function toEur(usdAmount: number): number {
   return usdAmount * USD_TO_EUR
 }
 
-/** Amount to display for the active locale (USD seed → GBP when en, EUR when fr). */
+/** Amount to display (USD seed → EUR). */
 export function displayAmount(usdAmount: number, locale: Locale = "en"): number {
   return sharedDisplayAmount(usdAmount, asDisplay(locale))
 }
 
-export function currencyCode(locale: Locale = "en"): "GBP" | "EUR" {
+export function currencyCode(locale: Locale = "en"): "EUR" {
   return sharedCurrencyCode(asDisplay(locale))
 }
 
-/** Full currency format. EN: £229,632 · FR: 229 632 € */
+/** Full currency format. EN: €229,632 · FR: 229 632 € */
 export function formatMoney(
   usdAmount: number,
   locale: Locale = "en",
@@ -44,7 +44,7 @@ export function formatMoney(
 
 /**
  * Compact money for chips/KPIs.
- * EN: £230k / £1.2m
+ * EN: €230k / €1.2m
  * FR: 230 k€ / 1,2 M€
  */
 export function formatCompactMoney(usdAmount: number, locale: Locale = "en"): string {

@@ -15,7 +15,7 @@ import {
 
 const EN = "en" as const
 
-/** Compact GBP for chips/KPIs: £230k / £1.2m */
+/** Compact EUR for chips/KPIs: €230k / €1.2m */
 export function formatGbp(usdAmount: number, compact = true): string {
   return compact ? formatCompactMoney(usdAmount, EN) : formatMoney(usdAmount, EN)
 }

@@ -28,7 +28,7 @@ import { displayName, isMissionOwnedByActiveUser, ACTIVE_USER } from "../_compon
 import { listItemMotion } from "../_components/motion"
 import { reasoningFromMission, buildActionBoardHeroReasoning } from "../_components/reasoning-helpers"
 import type { Locale } from "../_i18n"
-import { AwardApprovalModal, AwardGovernanceChip } from "@/lib/compass/award-approval-modal"
+import { AwardGovernanceChip, AwardGovernanceCardBlock, AwardNotificationToast } from "@/lib/compass/award-approval-modal"
 import {
   awardGovernanceStatusFor,
   awardGovCopy,
@@ -107,8 +107,11 @@ export function OperatingLoopPage() {
     openBidEvaluation,
     locale,
     awardApprovals,
-    submitAwardApproval,
-    decideAwardApproval,
+    approveAward,
+    requestAwardClarification,
+    respondToAwardClarification,
+    returnAwardForRevision,
+    resubmitAwardApproval,
     confirmAward,
   } = useStore()
   const flightPathSteps = translatedFlightPathSteps(t)
@@ -126,7 +129,7 @@ export function OperatingLoopPage() {
   const [completingMissionId, setCompletingMissionId] = React.useState<string | null>(null)
   const [emailPreviewMissionId, setEmailPreviewMissionId] = React.useState<string | null>(null)
   const [auditViewMissionId, setAuditViewMissionId] = React.useState<string | null>(null)
-  const [awardModalMissionId, setAwardModalMissionId] = React.useState<string | null>(null)
+  const [toastName, setToastName] = React.useState<string | null>(null)
 
   const openEdit = React.useCallback((id: string) => {
     setExpandedId(id)
@@ -291,34 +294,40 @@ export function OperatingLoopPage() {
     const canDraft = fields.stage === "mission_created" || fields.stage === "understand"
     const canEvaluate = fields.stage === "execute"
     const govCopy = awardGovCopy(locale)
-    const govStatus = awardGovernanceStatusFor(fields.stage, awardApprovals[mission.id])
-    const govCta =
-      govStatus === "approval_required"
-        ? { label: govCopy.requestApproval, openModal: true }
-        : govStatus === "awaiting_approver"
-          ? { label: govCopy.reviewApproval, openModal: true }
-          : govStatus === "clarification_requested"
-            ? { label: govCopy.respondClarification, openModal: true }
-            : govStatus === "approved_for_award"
-              ? { label: govCopy.confirmAward, openModal: true }
-              : null
-    const primaryActionLabel = govCta
-      ? govCta.label
+    const awardRecord = awardApprovals[mission.id]
+    const govStatus = awardGovernanceStatusFor(fields.stage, awardRecord)
+    const inAwardFlow =
+      govStatus === "awaiting_approver" ||
+      govStatus === "clarification_requested" ||
+      govStatus === "revision_required" ||
+      govStatus === "approved_for_award"
+    const primaryActionLabel = inAwardFlow
+      ? undefined
       : canEvaluate
         ? t("actionCentre.evaluateBids")
         : canDraft
           ? t("actionCentre.draftItt")
           : undefined
-    const onPrimaryAction = govCta
-      ? () => {
-          setExpandedId(mission.id)
-          setAwardModalMissionId(mission.id)
-        }
+    const onPrimaryAction = inAwardFlow
+      ? undefined
       : canEvaluate
         ? () => openBidEvaluation(mission.id)
         : canDraft
           ? () => openTenderStudio(mission.id)
           : undefined
+    const assignedName = awardRecord?.assignedToName ?? person.name
+    const assignedRole = awardRecord?.assignedToRole ?? person.role
+    const assignedToYouNow = assignedName === ACTIVE_USER.name || assignedToYou
+    const forceExpand = govStatus === "clarification_requested" || govStatus === "revision_required"
+    const procurementActor = { name: ACTIVE_USER.name, role: ACTIVE_USER.role, email: ACTIVE_USER.email }
+    const approverActor = {
+      name: awardRecord?.snapshot?.requiredApproverName ?? ACTIVE_USER.name,
+      role: awardRecord?.snapshot?.requiredApproverRole ?? "SCM Director",
+      email: awardRecord?.snapshot?.requiredApproverEmail,
+    }
+    const ping = (name: string | null | undefined) => {
+      if (name) setToastName(name)
+    }
     const awardAuditEntries: AuditEntry[] = (awardApprovals[mission.id]?.audit ?? []).map((entry) => ({
       id: entry.id,
       timestamp: entry.at,
@@ -344,21 +353,20 @@ export function OperatingLoopPage() {
           stageLabel={flightProgressLabel(fields.stage, t)}
           flightPathSteps={flightPathSteps}
           currentFlightStepId={flightStepIdForStage(fields.stage)}
-          owner={person.name}
-          ownerRole={person.role}
-          isAssignedToYou={assignedToYou}
+          owner={assignedName}
+          ownerRole={assignedRole}
+          isAssignedToYou={assignedToYouNow}
           confidence={fields.confidence}
           cost={mission.cost}
           risk={fields.risk}
           reasoning={fields.reasoning}
-          expanded={expanded}
+          expanded={expanded || forceExpand}
           onToggleExpand={() => setExpandedId(expanded ? null : mission.id)}
           onEditClick={() => openEdit(mission.id)}
           onEmailClick={() => openEmail(mission.id)}
           onCompleteClick={() => {
             if (fields.stage === "execute" && awardApprovals[mission.id]?.status !== "approved_for_award") {
               setExpandedId(mission.id)
-              setAwardModalMissionId(mission.id)
               return
             }
             openComplete(mission.id)
@@ -371,9 +379,41 @@ export function OperatingLoopPage() {
           governanceChip={
             govStatus ? <AwardGovernanceChip status={govStatus} locale={locale} /> : undefined
           }
-          governanceNote={govStatus ? `${govCopy.status[govStatus]} — ${govCopy.definition[govStatus]}` : undefined}
-          evaluateBidsLabel={canEvaluate && govCta ? t("actionCentre.evaluateBids") : undefined}
-          onEvaluateBids={canEvaluate && govCta ? () => openBidEvaluation(mission.id) : undefined}
+          governanceNote={
+            govStatus === "clarification_requested" || govStatus === "revision_required"
+              ? undefined
+              : govStatus
+                ? `${govCopy.status[govStatus]}${awardRecord?.approvalId ? ` — ${awardRecord.approvalId}` : ""} — ${govCopy.definition[govStatus]}`
+                : undefined
+          }
+          governancePanel={
+            awardRecord ? (
+              <AwardGovernanceCardBlock
+                record={awardRecord}
+                locale={locale}
+                onApprove={(comments) => approveAward(mission.id, comments, approverActor)}
+                onRequestClarification={(question) => {
+                  requestAwardClarification(mission.id, question, approverActor)
+                  ping(awardRecord.procurementOwnerName)
+                }}
+                onReturnForRevision={(args) => {
+                  returnAwardForRevision(mission.id, args, approverActor)
+                  ping(awardRecord.procurementOwnerName)
+                }}
+                onSubmitClarification={(args) => {
+                  respondToAwardClarification(mission.id, args, procurementActor)
+                  ping(awardRecord.snapshot?.requiredApproverName)
+                }}
+                onResubmit={(args) => {
+                  resubmitAwardApproval(mission.id, args, procurementActor)
+                  ping(awardRecord.snapshot?.requiredApproverName)
+                }}
+                onConfirmAward={() => confirmAward(mission.id, procurementActor)}
+              />
+            ) : undefined
+          }
+          evaluateBidsLabel={canEvaluate && inAwardFlow ? t("actionCentre.evaluateBids") : undefined}
+          onEvaluateBids={canEvaluate && inAwardFlow ? () => openBidEvaluation(mission.id) : undefined}
         />
       </div>
     )
@@ -572,38 +612,8 @@ export function OperatingLoopPage() {
           onClose={() => setAuditViewMissionId(null)}
         />
       )}
-      {awardModalMissionId && (
-        <AwardApprovalModal
-          record={awardApprovals[awardModalMissionId]}
-          locale={locale}
-          fromName={ACTIVE_USER.name}
-          fromEmail={ACTIVE_USER.email}
-          onClose={() => setAwardModalMissionId(null)}
-          onOpenBidEvaluation={() => {
-            setAwardModalMissionId(null)
-            openBidEvaluation(awardModalMissionId)
-          }}
-          onSendRequest={() =>
-            submitAwardApproval(awardModalMissionId, { name: ACTIVE_USER.name, role: ACTIVE_USER.role })
-          }
-          onDecide={(decision, comments) => {
-            const rec = awardApprovals[awardModalMissionId]
-            const approver = rec?.snapshot
-            decideAwardApproval(
-              awardModalMissionId,
-              decision,
-              comments,
-              {
-                name: approver?.requiredApproverName ?? ACTIVE_USER.name,
-                role: approver?.requiredApproverRole ?? "SCM Director",
-              },
-            )
-          }}
-          onConfirmAward={() => {
-            confirmAward(awardModalMissionId, { name: ACTIVE_USER.name, role: ACTIVE_USER.role })
-            setAwardModalMissionId(null)
-          }}
-        />
+      {toastName && (
+        <AwardNotificationToast name={toastName} locale={locale} onDismiss={() => setToastName(null)} />
       )}
     </div>
   )

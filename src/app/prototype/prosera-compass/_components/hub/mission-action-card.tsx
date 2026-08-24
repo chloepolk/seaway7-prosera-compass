@@ -66,6 +66,8 @@ export interface MissionActionCardProps extends React.HTMLAttributes<HTMLElement
   governanceChip?: React.ReactNode
   /** One-line definition of the current award-governance status. */
   governanceNote?: string
+  /** Inline award-approval body (clarification, revision, approver actions). */
+  governancePanel?: React.ReactNode
   evaluateBidsLabel?: string
   onEvaluateBids?: () => void
 }
@@ -112,6 +114,7 @@ export function MissionActionCard({
   reconcilePhase,
   governanceChip,
   governanceNote,
+  governancePanel,
   evaluateBidsLabel,
   onEvaluateBids,
   className,
@@ -258,6 +261,7 @@ export function MissionActionCard({
         {governanceNote && (
           <p className="mt-1.5 text-[12px] text-[var(--color-text-secondary)]">{governanceNote}</p>
         )}
+        {governancePanel}
         {narrativeIsLong && (
           <button
             type="button"

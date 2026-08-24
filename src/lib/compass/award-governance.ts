@@ -4,6 +4,9 @@
 /*  Rule: a proposed award above €200,000 requires recorded approval   */
 /*  before the package can move to Approved for Award. Seed amounts    */
 /*  stay USD; the check converts with USD_TO_EUR dated 21 August 2026. */
+/*  One approval record per package. Submit for approval assigns the   */
+/*  Action Centre item, sends the approver email, and writes the audit */
+/*  trail in a single transition.                                      */
 /* ------------------------------------------------------------------ */
 
 import {
@@ -22,18 +25,41 @@ export const STANDARD_FAT_NOTICE_DAYS = 30
 
 export type AwardGovernanceStatus =
   | "procurement_review"
-  | "approval_required"
   | "awaiting_approver"
   | "clarification_requested"
+  | "revision_required"
   | "approved_for_award"
-  | "rejected"
   | "awarded"
 
-export type AwardDecision = "approve" | "reject" | "clarification"
+export type AwardDecision = "approve" | "clarification"
+
+export type RevisionReasonCategory =
+  | "price_negotiation"
+  | "supplier_reconsider"
+  | "technical_deviation"
+  | "qa_hseq"
+  | "legal_warranty"
+  | "budget_funding"
+  | "evaluation_incomplete"
+  | "approval_route"
+  | "other"
+
+export const REVISION_REASON_ORDER: RevisionReasonCategory[] = [
+  "price_negotiation",
+  "supplier_reconsider",
+  "technical_deviation",
+  "qa_hseq",
+  "legal_warranty",
+  "budget_funding",
+  "evaluation_incomplete",
+  "approval_route",
+  "other",
+]
 
 export type AwardActor = {
   name: string
   role: string
+  email?: string
 }
 
 export type AwardSupportingDocument = {
@@ -42,6 +68,7 @@ export type AwardSupportingDocument = {
 }
 
 export type AwardComparisonRow = {
+  bidId: string
   supplier: string
   totalPriceUsd: number
   rank: number | null
@@ -103,19 +130,79 @@ export type AwardAuditEntry = {
   statusTo: AwardGovernanceStatus
 }
 
+export type AwardNotificationKind =
+  | "approval_request"
+  | "clarification_to_procurement"
+  | "clarification_response"
+  | "revision_to_procurement"
+  | "resubmit"
+
+export type AwardNotification = {
+  id: string
+  at: string
+  kind: AwardNotificationKind
+  toName: string
+  toEmail: string
+  subject: string
+  body: string
+}
+
+export type AwardClarification = {
+  question: string
+  askedByName: string
+  askedByRole: string
+  askedAt: string
+  response: string
+  attachments: AwardSupportingDocument[]
+  sourceReferences: string[]
+  status: "open" | "closed"
+  respondedAt: string | null
+}
+
+export type AwardRevision = {
+  reasonCategory: RevisionReasonCategory
+  instructions: string
+  supportingReference: string
+  dueDate: string | null
+  requestedByName: string
+  requestedByRole: string
+  requestedAt: string
+  actionTaken: string
+  explanation: string
+  attachments: AwardSupportingDocument[]
+}
+
 export type AwardApprovalRecord = {
   packageId: string
+  approvalId: string | null
   status: AwardGovernanceStatus
   snapshot: AwardApprovalSnapshot | null
+  originalSnapshot: AwardApprovalSnapshot | null
+  noteToApprover: string
   requestedAt: string | null
   decidedAt: string | null
   comments: string
+  clarification: AwardClarification | null
+  revision: AwardRevision | null
+  notifications: AwardNotification[]
   audit: AwardAuditEntry[]
+  assignedToName: string | null
+  assignedToRole: string | null
+  procurementOwnerName: string | null
+  procurementOwnerRole: string | null
+  procurementOwnerEmail: string | null
 }
 
 export type AwardEmailCopy = {
   subject: string
   body: string
+}
+
+export type AwardComparisonField = {
+  field: string
+  original: string
+  revised: string
+  change: string
 }
 
 export function requiresAwardApproval(proposedAwardUsd: number): boolean {
@@ -125,12 +212,23 @@ export function requiresAwardApproval(proposedAwardUsd: number): boolean {
 export function emptyAwardRecord(packageId: string): AwardApprovalRecord {
   return {
     packageId,
+    approvalId: null,
     status: "procurement_review",
     snapshot: null,
+    originalSnapshot: null,
+    noteToApprover: "",
     requestedAt: null,
     decidedAt: null,
     comments: "",
+    clarification: null,
+    revision: null,
+    notifications: [],
     audit: [],
+    assignedToName: null,
+    assignedToRole: null,
+    procurementOwnerName: null,
+    procurementOwnerRole: null,
+    procurementOwnerEmail: null,
   }
 }
 
@@ -145,9 +243,7 @@ export function awardGovernanceStatusFor(
 }
 
 export function canEnterApprovedForAward(record: AwardApprovalRecord | undefined): boolean {
-  if (!record?.snapshot) return false
-  if (!record.snapshot.requiresDirectorApproval) return record.status === "approved_for_award"
-  return record.status === "approved_for_award"
+  return record?.status === "approved_for_award"
 }
 
 export function canConfirmSupplierAward(record: AwardApprovalRecord | undefined): boolean {
@@ -162,6 +258,14 @@ export function awardNotificationHeld(record: AwardApprovalRecord | undefined, s
 function newId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID()
   return `awd-${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
+let approvalSeq = 147
+
+export function mintApprovalId(at = new Date().toISOString()): string {
+  const year = new Date(at).getFullYear()
+  const n = String(approvalSeq++).padStart(4, "0")
+  return `APR-${year}-${n}`
 }
 
 function appendAudit(
@@ -186,6 +290,31 @@ function appendAudit(
         comments,
         statusFrom: record.status,
         statusTo,
+      },
+    ],
+  }
+}
+
+function appendNotification(
+  record: AwardApprovalRecord,
+  kind: AwardNotificationKind,
+  toName: string,
+  toEmail: string,
+  copy: AwardEmailCopy,
+  at: string,
+): AwardApprovalRecord {
+  return {
+    ...record,
+    notifications: [
+      ...record.notifications,
+      {
+        id: newId(),
+        at,
+        kind,
+        toName,
+        toEmail,
+        subject: copy.subject,
+        body: copy.body,
       },
     ],
   }
@@ -235,6 +364,7 @@ export function buildAwardSnapshot(args: {
   const otherCompliantBids: AwardComparisonRow[] = allResults
     .filter((r) => r.bidId !== selected.bidId && r.gatingStatus === "Pass")
     .map((r) => ({
+      bidId: r.bidId,
       supplier: r.supplier,
       totalPriceUsd: r.totalPrice,
       rank: r.finalRank,
@@ -287,80 +417,386 @@ export function buildAwardSnapshot(args: {
   }
 }
 
-export function selectRecommendedSupplier(
+export function withProposedAwardUsd(
+  snapshot: AwardApprovalSnapshot,
+  proposedAwardUsd: number,
+): AwardApprovalSnapshot {
+  return {
+    ...snapshot,
+    proposedAwardUsd,
+    varianceUsd: proposedAwardUsd - snapshot.budgetUsd,
+    requiresDirectorApproval: requiresAwardApproval(proposedAwardUsd),
+    otherCompliantBids: snapshot.otherCompliantBids.map((row) => ({
+      ...row,
+      priceDeltaUsd: row.totalPriceUsd - proposedAwardUsd,
+    })),
+  }
+}
+
+export function applyRecommendedRow(
+  snapshot: AwardApprovalSnapshot,
+  row: AwardComparisonRow,
+  proposedAwardUsd = row.totalPriceUsd,
+): AwardApprovalSnapshot {
+  const currentAsRow: AwardComparisonRow = {
+    bidId: snapshot.recommendedBidId,
+    supplier: snapshot.recommendedSupplier,
+    totalPriceUsd: snapshot.proposedAwardUsd,
+    rank: snapshot.rank,
+    compositeScore: snapshot.compositeScore,
+    gatingStatus: "Pass",
+    priceDeltaUsd: snapshot.proposedAwardUsd - proposedAwardUsd,
+  }
+  const others = [
+    currentAsRow,
+    ...snapshot.otherCompliantBids.filter((r) => r.bidId !== row.bidId),
+  ].map((r) => ({ ...r, priceDeltaUsd: r.totalPriceUsd - proposedAwardUsd }))
+  return {
+    ...snapshot,
+    recommendedBidId: row.bidId,
+    recommendedSupplier: row.supplier,
+    proposedAwardUsd,
+    varianceUsd: proposedAwardUsd - snapshot.budgetUsd,
+    rank: row.rank,
+    compositeScore: row.compositeScore,
+    requiresDirectorApproval: requiresAwardApproval(proposedAwardUsd),
+    otherCompliantBids: others.sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99)),
+  }
+}
+
+export function eligibleSupplierRows(snapshot: AwardApprovalSnapshot): AwardComparisonRow[] {
+  return [
+    {
+      bidId: snapshot.recommendedBidId,
+      supplier: snapshot.recommendedSupplier,
+      totalPriceUsd: snapshot.proposedAwardUsd,
+      rank: snapshot.rank,
+      compositeScore: snapshot.compositeScore,
+      gatingStatus: "Pass",
+      priceDeltaUsd: 0,
+    },
+    ...snapshot.otherCompliantBids,
+  ]
+}
+
+export function compassLinkForPackage(snapshot: AwardApprovalSnapshot, approvalId: string | null): string {
+  const id = approvalId ? `${approvalId} · ` : ""
+  return `Open in Compass: Action Centre → ${id}${snapshot.packageRef} / ${snapshot.ittRef}`
+}
+
+export function submitAwardRecommendation(
   prev: AwardApprovalRecord | undefined,
   snapshot: AwardApprovalSnapshot,
   actor: AwardActor,
+  noteToApprover = "",
   at = new Date().toISOString(),
+  locale: DisplayLocale = "en",
 ): AwardApprovalRecord {
   const base = prev ?? emptyAwardRecord(snapshot.packageId)
-  if (base.status === "awarded") return base
+  if (base.status === "awarded" || base.status === "approved_for_award") return base
+  if (
+    base.status === "awaiting_approver" ||
+    base.status === "clarification_requested" ||
+    base.status === "revision_required"
+  ) {
+    return base
+  }
 
-  const nextStatus: AwardGovernanceStatus = snapshot.requiresDirectorApproval
-    ? "approval_required"
-    : "approved_for_award"
-  const comments = snapshot.requiresDirectorApproval
-    ? `Proposed award ${formatUsdAsEur(snapshot.proposedAwardUsd)} exceeds the ${formatEurFigure(AWARD_APPROVAL_THRESHOLD_EUR)} threshold.`
-    : `Proposed award ${formatUsdAsEur(snapshot.proposedAwardUsd)} is at or below the ${formatEurFigure(AWARD_APPROVAL_THRESHOLD_EUR)} threshold, so the award remains within procurement authority.`
+  const note = noteToApprover.trim()
+  const thresholdComment = snapshot.requiresDirectorApproval
+    ? `Proposed award ${formatUsdAsEur(snapshot.proposedAwardUsd, locale)} exceeds the ${formatEurFigure(AWARD_APPROVAL_THRESHOLD_EUR, locale)} threshold.`
+    : `Proposed award ${formatUsdAsEur(snapshot.proposedAwardUsd, locale)} is at or below the ${formatEurFigure(AWARD_APPROVAL_THRESHOLD_EUR, locale)} threshold, so the award remains within procurement authority.`
 
-  const withSnapshot: AwardApprovalRecord = {
+  const seeded: AwardApprovalRecord = {
     ...base,
     snapshot,
-    requestedAt: snapshot.requiresDirectorApproval ? base.requestedAt : at,
-    decidedAt: snapshot.requiresDirectorApproval ? null : at,
-    comments,
+    originalSnapshot: base.originalSnapshot ?? snapshot,
+    noteToApprover: note,
+    comments: note ? `${thresholdComment} Note to approver: ${note}` : thresholdComment,
+    procurementOwnerName: actor.name,
+    procurementOwnerRole: actor.role,
+    procurementOwnerEmail: actor.email ?? null,
   }
+
+  if (!snapshot.requiresDirectorApproval) {
+    return {
+      ...appendAudit(
+        {
+          ...seeded,
+          requestedAt: at,
+          decidedAt: at,
+          assignedToName: actor.name,
+          assignedToRole: actor.role,
+        },
+        actor,
+        "Recommended supplier selected — within procurement authority",
+        thresholdComment,
+        "approved_for_award",
+        at,
+      ),
+    }
+  }
+
+  const approvalId = seeded.approvalId ?? mintApprovalId(at)
+  const withId: AwardApprovalRecord = {
+    ...seeded,
+    approvalId,
+    requestedAt: at,
+    decidedAt: null,
+    assignedToName: snapshot.requiredApproverName,
+    assignedToRole: snapshot.requiredApproverRole,
+    clarification: null,
+  }
+  const email = buildAwardApprovalEmail(snapshot, locale, {
+    approvalId,
+    note,
+  })
+  const notified = appendNotification(
+    withId,
+    "approval_request",
+    snapshot.requiredApproverName,
+    snapshot.requiredApproverEmail,
+    email,
+    at,
+  )
   return appendAudit(
-    withSnapshot,
+    notified,
     actor,
-    snapshot.requiresDirectorApproval ? "Recommended supplier selected" : "Recommended supplier selected — within procurement authority",
-    comments,
-    nextStatus,
+    "Approval request submitted",
+    `Request assigned to ${snapshot.requiredApproverName}, ${snapshot.requiredApproverRole}. ${thresholdComment}`,
+    "awaiting_approver",
     at,
   )
 }
 
-export function submitAwardApprovalRequest(
+export function approveAwardRecommendation(
   prev: AwardApprovalRecord,
-  actor: AwardActor,
-  at = new Date().toISOString(),
-): AwardApprovalRecord {
-  if (!prev.snapshot?.requiresDirectorApproval) return prev
-  if (prev.status !== "approval_required" && prev.status !== "clarification_requested") return prev
-  return {
-    ...appendAudit(
-      prev,
-      actor,
-      "Approval request assigned",
-      `Request assigned to ${prev.snapshot.requiredApproverName}, ${prev.snapshot.requiredApproverRole}.`,
-      "awaiting_approver",
-      at,
-    ),
-    requestedAt: at,
-  }
-}
-
-export function recordAwardDecision(
-  prev: AwardApprovalRecord,
-  decision: AwardDecision,
   comments: string,
   actor: AwardActor,
   at = new Date().toISOString(),
 ): AwardApprovalRecord {
-  if (prev.status !== "awaiting_approver" && prev.status !== "clarification_requested") return prev
-  const statusTo: AwardGovernanceStatus =
-    decision === "approve" ? "approved_for_award" : decision === "reject" ? "rejected" : "clarification_requested"
-  const action =
-    decision === "approve"
-      ? "Award recommendation approved"
-      : decision === "reject"
-        ? "Award recommendation rejected"
-        : "Clarification requested"
+  if (prev.status !== "awaiting_approver") return prev
+  const text = comments.trim()
   return {
-    ...appendAudit(prev, actor, action, comments.trim(), statusTo, at),
-    decidedAt: decision === "clarification" ? null : at,
-    comments: comments.trim(),
+    ...appendAudit(prev, actor, "Award recommendation approved", text, "approved_for_award", at),
+    decidedAt: at,
+    comments: text,
+    assignedToName: prev.procurementOwnerName,
+    assignedToRole: prev.procurementOwnerRole,
   }
+}
+
+export function requestAwardClarification(
+  prev: AwardApprovalRecord,
+  question: string,
+  actor: AwardActor,
+  at = new Date().toISOString(),
+  locale: DisplayLocale = "en",
+): AwardApprovalRecord {
+  if (prev.status !== "awaiting_approver") return prev
+  const snapshot = prev.snapshot
+  if (!snapshot) return prev
+  const text = question.trim()
+  if (!text) return prev
+
+  const clarification: AwardClarification = {
+    question: text,
+    askedByName: actor.name,
+    askedByRole: actor.role,
+    askedAt: at,
+    response: "",
+    attachments: [],
+    sourceReferences: [],
+    status: "open",
+    respondedAt: null,
+  }
+  const withQ: AwardApprovalRecord = {
+    ...prev,
+    clarification,
+    decidedAt: null,
+    comments: text,
+    assignedToName: prev.procurementOwnerName,
+    assignedToRole: prev.procurementOwnerRole,
+  }
+  const toName = prev.procurementOwnerName ?? "Procurement"
+  const toEmail = prev.procurementOwnerEmail ?? ""
+  const email = buildClarificationEmail(prev, text, locale)
+  const notified = appendNotification(
+    withQ,
+    "clarification_to_procurement",
+    toName,
+    toEmail,
+    email,
+    at,
+  )
+  return appendAudit(notified, actor, "Clarification requested", text, "clarification_requested", at)
+}
+
+export function submitClarificationResponse(
+  prev: AwardApprovalRecord,
+  args: {
+    response: string
+    attachments: AwardSupportingDocument[]
+    sourceReferences: string[]
+  },
+  actor: AwardActor,
+  at = new Date().toISOString(),
+  locale: DisplayLocale = "en",
+): AwardApprovalRecord {
+  if (prev.status !== "clarification_requested") return prev
+  const snapshot = prev.snapshot
+  const open = prev.clarification
+  if (!snapshot || !open || open.status !== "open") return prev
+  const response = args.response.trim()
+  if (!response) return prev
+
+  const closed: AwardClarification = {
+    ...open,
+    response,
+    attachments: args.attachments,
+    sourceReferences: args.sourceReferences,
+    status: "closed",
+    respondedAt: at,
+  }
+  const withResponse: AwardApprovalRecord = {
+    ...prev,
+    clarification: closed,
+    assignedToName: snapshot.requiredApproverName,
+    assignedToRole: snapshot.requiredApproverRole,
+  }
+  const email = buildClarificationResponseEmail(prev, closed, locale)
+  const notified = appendNotification(
+    withResponse,
+    "clarification_response",
+    snapshot.requiredApproverName,
+    snapshot.requiredApproverEmail,
+    email,
+    at,
+  )
+  const comments = `Question: ${open.question} Response: ${response}`
+  return appendAudit(notified, actor, "Approval resubmitted", comments, "awaiting_approver", at)
+}
+
+export function returnAwardForRevision(
+  prev: AwardApprovalRecord,
+  args: {
+    reasonCategory: RevisionReasonCategory
+    instructions: string
+    supportingReference?: string
+    dueDate?: string | null
+  },
+  actor: AwardActor,
+  at = new Date().toISOString(),
+  locale: DisplayLocale = "en",
+): AwardApprovalRecord {
+  if (prev.status !== "awaiting_approver") return prev
+  const snapshot = prev.snapshot
+  if (!snapshot) return prev
+  const instructions = args.instructions.trim()
+  if (!instructions) return prev
+
+  const revision: AwardRevision = {
+    reasonCategory: args.reasonCategory,
+    instructions,
+    supportingReference: args.supportingReference?.trim() ?? "",
+    dueDate: args.dueDate ?? null,
+    requestedByName: actor.name,
+    requestedByRole: actor.role,
+    requestedAt: at,
+    actionTaken: "",
+    explanation: "",
+    attachments: [],
+  }
+  const withRev: AwardApprovalRecord = {
+    ...prev,
+    revision,
+    decidedAt: null,
+    comments: instructions,
+    assignedToName: prev.procurementOwnerName,
+    assignedToRole: prev.procurementOwnerRole,
+  }
+  const email = buildRevisionEmail(prev, revision, locale)
+  const notified = appendNotification(
+    withRev,
+    "revision_to_procurement",
+    prev.procurementOwnerName ?? "Procurement",
+    prev.procurementOwnerEmail ?? "",
+    email,
+    at,
+  )
+  const reason = revisionReasonLabel(args.reasonCategory, locale)
+  return appendAudit(
+    notified,
+    actor,
+    "Returned for revision",
+    `Reason: ${reason}. ${instructions}`,
+    "revision_required",
+    at,
+  )
+}
+
+export function resubmitAwardApproval(
+  prev: AwardApprovalRecord,
+  args: {
+    snapshot: AwardApprovalSnapshot
+    actionTaken: string
+    explanation: string
+    attachments: AwardSupportingDocument[]
+  },
+  actor: AwardActor,
+  at = new Date().toISOString(),
+  locale: DisplayLocale = "en",
+): AwardApprovalRecord {
+  if (prev.status !== "revision_required") return prev
+  const original = prev.originalSnapshot ?? prev.snapshot
+  if (!original) return prev
+  const unchanged = recommendationUnchanged(original, args.snapshot)
+  const explanation = args.explanation.trim()
+  if (unchanged && !explanation) return prev
+
+  const actionTaken = args.actionTaken.trim()
+  const revision: AwardRevision = {
+    ...(prev.revision ?? {
+      reasonCategory: "other" as RevisionReasonCategory,
+      instructions: "",
+      supportingReference: "",
+      dueDate: null,
+      requestedByName: "",
+      requestedByRole: "",
+      requestedAt: at,
+      actionTaken: "",
+      explanation: "",
+      attachments: [],
+    }),
+    actionTaken,
+    explanation,
+    attachments: args.attachments,
+  }
+  const withSnap: AwardApprovalRecord = {
+    ...prev,
+    snapshot: args.snapshot,
+    revision,
+    assignedToName: args.snapshot.requiredApproverName,
+    assignedToRole: args.snapshot.requiredApproverRole,
+  }
+  const comparison = buildResubmitComparison(original, args.snapshot, locale)
+  const email = buildResubmitEmail(prev, args.snapshot, comparison, locale)
+  const notified = appendNotification(
+    withSnap,
+    "resubmit",
+    args.snapshot.requiredApproverName,
+    args.snapshot.requiredApproverEmail,
+    email,
+    at,
+  )
+  const comments = [
+    actionTaken ? `Action taken: ${actionTaken}.` : "",
+    explanation ? `What changed: ${explanation}.` : "",
+    comparison.map((row) => `${row.field}: ${row.original} → ${row.revised}${row.change !== "—" ? ` (${row.change})` : ""}`).join("; "),
+  ]
+    .filter(Boolean)
+    .join(" ")
+  return appendAudit(notified, actor, "Approval resubmitted", comments, "awaiting_approver", at)
 }
 
 export function confirmSupplierAward(
@@ -390,158 +826,325 @@ export function awardGovTone(status: AwardGovernanceStatus): AwardGovTone {
     case "approved_for_award":
     case "awarded":
       return "positive"
-    case "rejected":
-      return "critical"
-    case "approval_required":
     case "awaiting_approver":
     case "clarification_requested":
+    case "revision_required":
       return "warning"
     default:
       return "neutral"
   }
 }
 
+export function formatBudgetVariance(varianceUsd: number, locale: DisplayLocale = "en"): string {
+  const abs = formatUsdAsEur(Math.abs(varianceUsd), locale)
+  if (varianceUsd < 0) return locale === "fr" ? `${abs} en dessous du budget` : `${abs} under`
+  if (varianceUsd > 0) return locale === "fr" ? `${abs} au-dessus du budget` : `${abs} over`
+  return locale === "fr" ? "égal au budget" : "equals budget"
+}
+
+export function formatScoreAndRank(
+  rank: number | null,
+  score: number | null,
+  locale: DisplayLocale = "en",
+): string {
+  const rankPart =
+    rank != null
+      ? locale === "fr"
+        ? `Rang n°${rank}`
+        : `Rank #${rank}`
+      : locale === "fr"
+        ? "Sans rang"
+        : "Unranked"
+  const scorePart =
+    score != null
+      ? locale === "fr"
+        ? `score composite ${score.toFixed(1)} sur 100`
+        : `composite ${score.toFixed(1)}`
+      : locale === "fr"
+        ? "score non calculé"
+        : "score not calculated"
+  return `${rankPart} · ${scorePart}`
+}
+
+export function recommendationUnchanged(
+  original: AwardApprovalSnapshot,
+  revised: AwardApprovalSnapshot,
+): boolean {
+  return (
+    original.recommendedSupplier === revised.recommendedSupplier &&
+    original.proposedAwardUsd === revised.proposedAwardUsd &&
+    original.varianceUsd === revised.varianceUsd &&
+    original.compositeScore === revised.compositeScore
+  )
+}
+
+export function buildResubmitComparison(
+  original: AwardApprovalSnapshot,
+  revised: AwardApprovalSnapshot,
+  locale: DisplayLocale = "en",
+): AwardComparisonField[] {
+  const copy = awardGovCopy(locale)
+  const priceDelta = revised.proposedAwardUsd - original.proposedAwardUsd
+  let change = "—"
+  if (original.recommendedSupplier !== revised.recommendedSupplier && priceDelta !== 0) {
+    change =
+      locale === "fr"
+        ? `Fournisseur ${original.recommendedSupplier} → ${revised.recommendedSupplier}; prix ${priceDelta < 0 ? "réduit" : "augmenté"} de ${formatUsdAsEur(Math.abs(priceDelta), locale)}`
+        : `Supplier ${original.recommendedSupplier} → ${revised.recommendedSupplier}; price ${priceDelta < 0 ? "reduced" : "increased"} by ${formatUsdAsEur(Math.abs(priceDelta), locale)}`
+  } else if (original.recommendedSupplier !== revised.recommendedSupplier) {
+    change =
+      locale === "fr"
+        ? `Fournisseur ${original.recommendedSupplier} → ${revised.recommendedSupplier}`
+        : `Supplier ${original.recommendedSupplier} → ${revised.recommendedSupplier}`
+  } else if (priceDelta < 0) {
+    change =
+      locale === "fr"
+        ? `Prix réduit de ${formatUsdAsEur(Math.abs(priceDelta), locale)}`
+        : `Price reduced by ${formatUsdAsEur(Math.abs(priceDelta), locale)}`
+  } else if (priceDelta > 0) {
+    change =
+      locale === "fr"
+        ? `Prix augmenté de ${formatUsdAsEur(priceDelta, locale)}`
+        : `Price increased by ${formatUsdAsEur(priceDelta, locale)}`
+  } else if (original.compositeScore !== revised.compositeScore) {
+    const from = original.compositeScore?.toFixed(1) ?? "—"
+    const to = revised.compositeScore?.toFixed(1) ?? "—"
+    change = locale === "fr" ? `Score ${from} → ${to}` : `Score ${from} → ${to}`
+  }
+
+  return [
+    {
+      field: copy.recommendedSupplier,
+      original: original.recommendedSupplier,
+      revised: revised.recommendedSupplier,
+      change: original.recommendedSupplier === revised.recommendedSupplier ? "—" : change,
+    },
+    {
+      field: copy.proposedAwardValue,
+      original: formatUsdAsEur(original.proposedAwardUsd, locale),
+      revised: formatUsdAsEur(revised.proposedAwardUsd, locale),
+      change: priceDelta === 0 ? "—" : change,
+    },
+    {
+      field: copy.budgetVariance,
+      original: formatBudgetVariance(original.varianceUsd, locale),
+      revised: formatBudgetVariance(revised.varianceUsd, locale),
+      change: original.varianceUsd === revised.varianceUsd ? "—" : "—",
+    },
+    {
+      field: copy.compositeScore,
+      original: original.compositeScore != null ? original.compositeScore.toFixed(1) : "—",
+      revised: revised.compositeScore != null ? revised.compositeScore.toFixed(1) : "—",
+      change: original.compositeScore === revised.compositeScore ? "—" : change,
+    },
+  ]
+}
+
+export function formatDisplayDate(iso: string | null | undefined, locale: DisplayLocale = "en"): string {
+  if (!iso) return ""
+  const d = new Date(iso.includes("T") ? iso : `${iso}T00:00:00`)
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toLocaleDateString(locale === "fr" ? "fr-FR" : "en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
+}
+
 export const AWARD_GOV_COPY = {
   en: {
     status: {
       procurement_review: "Procurement review",
-      approval_required: "Approval required",
       awaiting_approver: "Awaiting approver",
       clarification_requested: "Clarification requested",
+      revision_required: "Revision required",
       approved_for_award: "Approval for award",
-      rejected: "Rejected",
       awarded: "Awarded",
     } satisfies Record<AwardGovernanceStatus, string>,
     definition: {
       procurement_review: "Evaluation is still being completed.",
-      approval_required: "Award exceeds €200k.",
       awaiting_approver: "Request has been assigned.",
       clarification_requested: "Approver requires additional information.",
+      revision_required: "Approver returned this recommendation for revision.",
       approved_for_award: "Required authority has approved.",
-      rejected: "Recommendation cannot proceed.",
       awarded: "Supplier award has been completed.",
     } satisfies Record<AwardGovernanceStatus, string>,
-    requestApproval: "Request approval",
-    reviewApproval: "Review approval",
-    respondClarification: "Respond to clarification",
-    confirmAward: "Confirm award",
-    evaluateBids: "Evaluate bids",
+    revisionReasons: {
+      price_negotiation: "Further price negotiation required",
+      supplier_reconsider: "Supplier recommendation should be reconsidered",
+      technical_deviation: "Technical deviation unresolved",
+      qa_hseq: "QA/HSEQ issue unresolved",
+      legal_warranty: "Legal or warranty issue unresolved",
+      budget_funding: "Budget or funding issue",
+      evaluation_incomplete: "Evaluation evidence incomplete",
+      approval_route: "Approval route incorrect",
+      other: "Other",
+    } satisfies Record<RevisionReasonCategory, string>,
     recommendForAward: "Recommend for award",
     recommended: "Recommended",
-    withinAuthority:
-      "Proposed award is €200,000 or less, so it remains within procurement authority.",
-    exceedsThreshold: "Proposed award is above €200,000, so Compass has opened an approval request on this action.",
-    gateBlocked:
-      "This bid package cannot move to Approved for Award until the required approval is recorded.",
-    selectSupplierFirst: "Select a recommended supplier in Bid Evaluation before requesting approval.",
-    openBidEvaluation: "Open Bid Evaluation",
+    submitForApproval: "Submit for approval",
+    confirmRecommendation: "Confirm recommendation",
+    reviewApproval: "Review approval",
+    confirmAward: "Confirm award",
+    evaluateBids: "Evaluate bids",
+    withinAuthority: "Proposed award is €200,000 or less, so it remains within procurement authority.",
+    exceedsThreshold: "Proposed award is above €200,000, so director approval is required.",
+    gateBlocked: "This bid package cannot move to Approved for Award until the required approval is recorded.",
+    thresholdTriggered: "Approval threshold triggered",
+    thresholdYes: "Yes — above €200,000",
+    thresholdNo: "No — within procurement authority",
+    optionalNote: "Note to the approver",
+    optionalNoteHint: "Optional. Recorded on the approval and included in the notification.",
     title: "Award approval",
-    emailTitle: "Award approval request",
+    recommendTitle: "Award recommendation",
     projectBidRef: "Project and bid reference",
     recommendedSupplier: "Recommended supplier",
     proposedAwardValue: "Proposed award value",
-    budgetVariance: "Budget and variance",
-    rankingScore: "Evaluation ranking and composite score",
-    procurementRecommendation: "Procurement recommendation",
-    otherBids: "Other compliant bids and price differences",
-    gatesRisks: "Failed gates, deviations and risk flags",
-    requiredApprover: "Required approver",
-    supportingDocs: "Supporting documents and source references",
+    budgetVariance: "Budget variance",
+    rankingScore: "Score and rank",
+    compositeScore: "Composite score",
+    requiredApprover: "Approver",
+    supportingDocs: "Supporting documents",
+    sourceReferences: "Source references",
     approve: "Approve",
-    reject: "Reject",
     requestClarification: "Request clarification",
+    returnForRevision: "Return for revision",
+    clarificationQuestion: "Clarification question",
+    clarificationQuestionHint: "The procurement owner will see this question on the Action Centre card.",
+    clarificationFrom: "Clarification from",
+    clarificationResponse: "Response",
+    submitClarificationResponse: "Submit clarification response",
+    attachDocuments: "Supporting documents",
+    addAttachment: "Add",
+    attachmentHint: "Add a document label (prototype — no file upload).",
+    returnToProcurement: "Return to procurement",
+    reasonCategory: "Reason category",
+    revisionInstructions: "Revision instructions",
+    revisionInstructionsHint: "What must be changed or resolved before this award recommendation can be resubmitted?",
+    supportingReference: "Supporting reference",
+    requiredCompletionDate: "Required completion date",
+    actionTaken: "Action taken",
+    explainWhatChanged: "What changed",
+    explainRequired: "Nothing in the recommendation changed. Explain why before resubmitting.",
+    resubmitForApproval: "Resubmit for approval",
+    resubmitSummary: "Resubmission summary",
+    field: "Field",
+    original: "Original",
+    revised: "Revised",
+    change: "Change",
+    notificationSent: "Notification sent to",
     comments: "Comments",
-    commentsHint: "Recorded with the decision, supporting comparison and timestamp.",
-    sendRequest: "Send approval request",
-    sending: "Sending…",
-    sent: "Sent",
-    from: "From",
-    to: "To",
-    subject: "Subject",
-    noOtherCompliant: "No other gate-passing bids on this ITT.",
-    noFailedGates: "Recommended supplier: no failed hard gates.",
-    noDeviations: "No recorded deviations against the 24-month warranty or 30-day FAT notice standards.",
-    noRiskFlags: "No warranty-cut or gate-fail flags on the recommended return.",
-    none: "None recorded.",
+    instructionsFrom: "Instructions from",
+    reason: "Reason",
+    due: "Due",
     auditField: "Award governance",
     ruleNote:
       "Awards of €200,000 or less remain within procurement authority. Awards above €200,000 generate an approval request inside this procurement action.",
     notifyHeld: "Award notification is held until the required approval is recorded.",
+    none: "None recorded.",
   },
   fr: {
     status: {
       procurement_review: "Revue achats",
-      approval_required: "Approbation requise",
       awaiting_approver: "En attente de l’approbateur",
       clarification_requested: "Clarification demandée",
+      revision_required: "Révision requise",
       approved_for_award: "Approbation d’attribution",
-      rejected: "Rejeté",
       awarded: "Attribué",
     } satisfies Record<AwardGovernanceStatus, string>,
     definition: {
       procurement_review: "L’évaluation est encore en cours.",
-      approval_required: "L’attribution dépasse 200 k€.",
       awaiting_approver: "La demande a été assignée.",
       clarification_requested: "L’approbateur a besoin d’informations supplémentaires.",
+      revision_required: "L’approbateur a renvoyé cette recommandation pour révision.",
       approved_for_award: "L’autorité requise a approuvé.",
-      rejected: "La recommandation ne peut pas aboutir.",
       awarded: "L’attribution fournisseur est close.",
     } satisfies Record<AwardGovernanceStatus, string>,
-    requestApproval: "Demander l’approbation",
-    reviewApproval: "Examiner l’approbation",
-    respondClarification: "Répondre à la clarification",
-    confirmAward: "Confirmer l’attribution",
-    evaluateBids: "Évaluer les offres",
+    revisionReasons: {
+      price_negotiation: "Négociation de prix supplémentaire requise",
+      supplier_reconsider: "La recommandation de fournisseur doit être reconsidérée",
+      technical_deviation: "Écart technique non résolu",
+      qa_hseq: "Point QA/HSEQ non résolu",
+      legal_warranty: "Point juridique ou de garantie non résolu",
+      budget_funding: "Point de budget ou de financement",
+      evaluation_incomplete: "Preuves d’évaluation incomplètes",
+      approval_route: "Circuit d’approbation incorrect",
+      other: "Autre",
+    } satisfies Record<RevisionReasonCategory, string>,
     recommendForAward: "Recommander pour attribution",
     recommended: "Recommandé",
+    submitForApproval: "Soumettre pour approbation",
+    confirmRecommendation: "Confirmer la recommandation",
+    reviewApproval: "Examiner l’approbation",
+    confirmAward: "Confirmer l’attribution",
+    evaluateBids: "Évaluer les offres",
     withinAuthority:
       "La proposition d’attribution est de 200 000 € ou moins, elle reste donc dans l’autorité des achats.",
-    exceedsThreshold:
-      "La proposition d’attribution dépasse 200 000 € : Compass a ouvert une demande d’approbation sur cette action.",
+    exceedsThreshold: "La proposition d’attribution dépasse 200 000 € : l’approbation du directeur est requise.",
     gateBlocked:
       "Ce dossier ne peut pas passer à « Approuvé pour attribution » tant que l’approbation requise n’est pas enregistrée.",
-    selectSupplierFirst:
-      "Sélectionnez un fournisseur recommandé dans l’évaluation des offres avant de demander l’approbation.",
-    openBidEvaluation: "Ouvrir l’évaluation des offres",
+    thresholdTriggered: "Seuil d’approbation déclenché",
+    thresholdYes: "Oui — au-dessus de 200 000 €",
+    thresholdNo: "Non — dans l’autorité des achats",
+    optionalNote: "Note à l’approbateur",
+    optionalNoteHint: "Facultatif. Enregistrée sur l’approbation et jointe à la notification.",
     title: "Approbation d’attribution",
-    emailTitle: "Demande d’approbation d’attribution",
+    recommendTitle: "Recommandation d’attribution",
     projectBidRef: "Projet et référence d’offre",
     recommendedSupplier: "Fournisseur recommandé",
     proposedAwardValue: "Valeur d’attribution proposée",
-    budgetVariance: "Budget et écart",
-    rankingScore: "Classement et score composite",
-    procurementRecommendation: "Recommandation achats",
-    otherBids: "Autres offres conformes et écarts de prix",
-    gatesRisks: "Portes en échec, écarts et alertes",
-    requiredApprover: "Approbateur requis",
-    supportingDocs: "Pièces jointes et références sources",
+    budgetVariance: "Écart budgétaire",
+    rankingScore: "Score et rang",
+    compositeScore: "Score composite",
+    requiredApprover: "Approbateur",
+    supportingDocs: "Pièces jointes",
+    sourceReferences: "Références sources",
     approve: "Approuver",
-    reject: "Rejeter",
     requestClarification: "Demander une clarification",
+    returnForRevision: "Renvoyer pour révision",
+    clarificationQuestion: "Question de clarification",
+    clarificationQuestionHint: "Le responsable achats verra cette question sur la carte du Centre d’actions.",
+    clarificationFrom: "Clarification de",
+    clarificationResponse: "Réponse",
+    submitClarificationResponse: "Envoyer la réponse à la clarification",
+    attachDocuments: "Pièces jointes",
+    addAttachment: "Ajouter",
+    attachmentHint: "Ajoutez un libellé de document (prototype — pas de téléversement).",
+    returnToProcurement: "Renvoyer aux achats",
+    reasonCategory: "Catégorie de motif",
+    revisionInstructions: "Instructions de révision",
+    revisionInstructionsHint:
+      "Que faut-il modifier ou résoudre avant de pouvoir resoumettre cette recommandation d’attribution ?",
+    supportingReference: "Référence d’appui",
+    requiredCompletionDate: "Date de réalisation demandée",
+    actionTaken: "Action menée",
+    explainWhatChanged: "Ce qui a changé",
+    explainRequired: "Rien n’a changé dans la recommandation. Expliquez pourquoi avant de resoumettre.",
+    resubmitForApproval: "Resoumettre pour approbation",
+    resubmitSummary: "Synthèse de resoumission",
+    field: "Champ",
+    original: "Origine",
+    revised: "Révisé",
+    change: "Changement",
+    notificationSent: "Notification envoyée à",
     comments: "Commentaires",
-    commentsHint: "Enregistrés avec la décision, la comparaison et l’horodatage.",
-    sendRequest: "Envoyer la demande d’approbation",
-    sending: "Envoi…",
-    sent: "Envoyé",
-    from: "De",
-    to: "À",
-    subject: "Objet",
-    noOtherCompliant: "Aucune autre offre ayant franchi les portes sur cet AO.",
-    noFailedGates: "Fournisseur recommandé : aucune porte dure en échec.",
-    noDeviations:
-      "Aucun écart enregistré par rapport à la garantie de 24 mois ou au préavis FAT de 30 jours.",
-    noRiskFlags: "Aucune alerte de réduction de garantie ni d’échec de porte sur la réponse recommandée.",
-    none: "Aucun élément enregistré.",
+    instructionsFrom: "Instructions de",
+    reason: "Motif",
+    due: "Échéance",
     auditField: "Gouvernance d’attribution",
     ruleNote:
       "Les attributions de 200 000 € ou moins restent dans l’autorité des achats. Au-dessus de 200 000 €, une demande d’approbation est créée dans cette action d’achat.",
-    notifyHeld:
-      "La notification d’attribution est retenue jusqu’à l’enregistrement de l’approbation requise.",
+    notifyHeld: "La notification d’attribution est retenue jusqu’à l’enregistrement de l’approbation requise.",
+    none: "Aucun élément enregistré.",
   },
 } as const
 
 export function awardGovCopy(locale: DisplayLocale = "en") {
   return AWARD_GOV_COPY[locale]
+}
+
+export function revisionReasonLabel(category: RevisionReasonCategory, locale: DisplayLocale = "en"): string {
+  return AWARD_GOV_COPY[locale].revisionReasons[category]
 }
 
 function signedDelta(usd: number, locale: DisplayLocale): string {
@@ -551,31 +1154,20 @@ function signedDelta(usd: number, locale: DisplayLocale): string {
   return locale === "fr" ? "même prix que l’offre recommandée" : "same price as the recommended bid"
 }
 
-export function buildAwardApprovalEmail(
-  snapshot: AwardApprovalSnapshot,
-  locale: DisplayLocale = "en",
-): AwardEmailCopy {
+function awardAndVarianceSentences(snapshot: AwardApprovalSnapshot, locale: DisplayLocale) {
   const awardEur = formatUsdAsEur(snapshot.proposedAwardUsd, locale)
   const budgetEur = formatUsdAsEur(snapshot.budgetUsd, locale)
   const varianceAbs = formatUsdAsEur(Math.abs(snapshot.varianceUsd), locale)
   const threshold = formatEurFigure(AWARD_APPROVAL_THRESHOLD_EUR, locale)
   const overBy = formatEurFigure(Math.max(0, usdToEur(snapshot.proposedAwardUsd) - AWARD_APPROVAL_THRESHOLD_EUR), locale)
-  const rank =
-    snapshot.rank != null
-      ? locale === "fr"
-        ? `Rang n°${snapshot.rank}`
-        : `Rank #${snapshot.rank}`
-      : locale === "fr"
-        ? "Sans rang (porte en échec)"
-        : "Unranked (hard-gate fail)"
-  const score =
-    snapshot.compositeScore != null
-      ? locale === "fr"
-        ? `score composite ${snapshot.compositeScore.toFixed(1)} sur 100`
-        : `composite score ${snapshot.compositeScore.toFixed(1)} of 100`
-      : locale === "fr"
-        ? "score composite non calculé"
-        : "composite score not calculated"
+
+  const awardSentence = snapshot.requiresDirectorApproval
+    ? locale === "fr"
+      ? `L’attribution proposée est de ${awardEur} (montant source ${snapshot.proposedAwardUsd.toLocaleString("fr-FR")} USD × ${USD_TO_EUR}, ${FX_RATE_DATE}). Elle dépasse le seuil d’approbation de ${threshold} de ${overBy}.`
+      : `Proposed award value is ${awardEur} (USD seed ${snapshot.proposedAwardUsd.toLocaleString("en-GB")} × ${USD_TO_EUR}, ${FX_RATE_DATE}). This exceeds the ${threshold} approval threshold by ${overBy}.`
+    : locale === "fr"
+      ? `L’attribution proposée est de ${awardEur} (montant source ${snapshot.proposedAwardUsd.toLocaleString("fr-FR")} USD × ${USD_TO_EUR}, ${FX_RATE_DATE}). Elle est inférieure ou égale au seuil de ${threshold} et reste dans l’autorité des achats.`
+      : `Proposed award value is ${awardEur} (USD seed ${snapshot.proposedAwardUsd.toLocaleString("en-GB")} × ${USD_TO_EUR}, ${FX_RATE_DATE}). This is at or below the ${threshold} threshold and remains within procurement authority.`
 
   const varianceSentence =
     snapshot.varianceUsd < 0
@@ -590,13 +1182,19 @@ export function buildAwardApprovalEmail(
           ? `Le budget du lot est de ${budgetEur}. L’attribution proposée est égale au budget.`
           : `Package budget is ${budgetEur}. Proposed award equals the budget.`
 
-  const awardSentence = snapshot.requiresDirectorApproval
-    ? locale === "fr"
-      ? `L’attribution proposée est de ${awardEur} (montant source ${snapshot.proposedAwardUsd.toLocaleString("fr-FR")} USD × ${USD_TO_EUR}, ${FX_RATE_DATE}). Elle dépasse le seuil d’approbation de ${threshold} de ${overBy}.`
-      : `Proposed award value is ${awardEur} (USD seed ${snapshot.proposedAwardUsd.toLocaleString("en-GB")} × ${USD_TO_EUR}, ${FX_RATE_DATE}). This exceeds the ${threshold} approval threshold by ${overBy}.`
-    : locale === "fr"
-      ? `L’attribution proposée est de ${awardEur} (montant source ${snapshot.proposedAwardUsd.toLocaleString("fr-FR")} USD × ${USD_TO_EUR}, ${FX_RATE_DATE}). Elle est inférieure ou égale au seuil de ${threshold} et reste dans l’autorité des achats.`
-      : `Proposed award value is ${awardEur} (USD seed ${snapshot.proposedAwardUsd.toLocaleString("en-GB")} × ${USD_TO_EUR}, ${FX_RATE_DATE}). This is at or below the ${threshold} threshold and remains within procurement authority.`
+  return { awardSentence, varianceSentence }
+}
+
+export function buildAwardApprovalEmail(
+  snapshot: AwardApprovalSnapshot,
+  locale: DisplayLocale = "en",
+  extras?: { approvalId?: string | null; note?: string },
+): AwardEmailCopy {
+  const { awardSentence, varianceSentence } = awardAndVarianceSentences(snapshot, locale)
+  const rankScore = formatScoreAndRank(snapshot.rank, snapshot.compositeScore, locale)
+  const approvalId = extras?.approvalId
+  const link = compassLinkForPackage(snapshot, approvalId ?? null)
+  const note = extras?.note?.trim()
 
   const otherBids =
     snapshot.otherCompliantBids.length === 0
@@ -618,36 +1216,17 @@ export function buildAwardApprovalEmail(
           })
           .join("\n")
 
-  const gates: string[] = []
-  if (snapshot.failedGates.length === 0) {
-    gates.push(locale === "fr" ? "Fournisseur recommandé : aucune porte dure en échec." : "Recommended supplier: no failed hard gates.")
-  } else {
-    gates.push(
-      locale === "fr"
-        ? `Fournisseur recommandé — portes en échec : ${snapshot.failedGates.join("; ")}.`
-        : `Recommended supplier — failed gates: ${snapshot.failedGates.join("; ")}.`,
-    )
-  }
-  gates.push(...snapshot.deviations)
-  gates.push(...snapshot.riskFlags)
-  for (const failed of snapshot.otherFailedBids) {
-    gates.push(
-      locale === "fr"
-        ? `${failed.supplier} a échoué aux portes : ${failed.failedGates.join("; ") || "non précisé"}.`
-        : `${failed.supplier} failed gates: ${failed.failedGates.join("; ") || "not specified"}.`,
-    )
-  }
-
-  const docs = [
-    ...snapshot.supportingDocuments.map((d) => d.label),
-    ...snapshot.sourceReferences,
-  ]
-  const docsBlock = docs.length > 0 ? docs.map((d) => `• ${d}`).join("\n") : locale === "fr" ? "Aucune pièce jointe enregistrée." : "No supporting documents on file."
-
+  const idBit = approvalId ? `${approvalId} — ` : ""
   const subject =
     locale === "fr"
-      ? `Approbation d’attribution requise — ${snapshot.packageRef} / ${snapshot.ittRef}`
-      : `Award approval required — ${snapshot.packageRef} / ${snapshot.ittRef}`
+      ? `Approbation d’attribution requise — ${idBit}${snapshot.packageRef} / ${snapshot.ittRef}`
+      : `Award approval required — ${idBit}${snapshot.packageRef} / ${snapshot.ittRef}`
+
+  const noteBlock = note
+    ? locale === "fr"
+      ? `\nNote à l’approbateur\n${note}\n`
+      : `\nNote to the approver\n${note}\n`
+    : ""
 
   const body =
     locale === "fr"
@@ -664,24 +1243,17 @@ Budget et écart
 ${varianceSentence}
 
 Classement et score composite
-${rank} · ${score}.
-
-Recommandation achats
-${snapshot.recommendation}
-
-Autres offres conformes et écarts de prix
+${rankScore}.
+${noteBlock}
+Autres offres conformes
 ${otherBids}
-
-Portes en échec, écarts et alertes
-${gates.join("\n")}
 
 Approbateur requis
 ${snapshot.requiredApproverName}, ${snapshot.requiredApproverRole} (${snapshot.requiredApproverEmail})
 
-Pièces jointes et références sources
-${docsBlock}
+${link}
 
-Actions : Approuver · Rejeter · Demander une clarification`
+Actions : Approuver · Demander une clarification · Renvoyer pour révision`
       : `Project and bid reference
 ${snapshot.projectName} · ${snapshot.packageRef} · ${snapshot.ittRef} — ${snapshot.packageTitle}
 
@@ -695,31 +1267,153 @@ Budget and variance
 ${varianceSentence}
 
 Evaluation ranking and composite score
-${rank} · ${score}.
-
-Procurement recommendation
-${snapshot.recommendation}
-
-Other compliant bids and price differences
+${rankScore}.
+${noteBlock}
+Other compliant bids
 ${otherBids}
-
-Failed gates, deviations and risk flags
-${gates.join("\n")}
 
 Required approver
 ${snapshot.requiredApproverName}, ${snapshot.requiredApproverRole} (${snapshot.requiredApproverEmail})
 
-Supporting documents and source references
-${docsBlock}
+${link}
 
-Actions: Approve · Reject · Request clarification`
+Actions: Approve · Request clarification · Return for revision`
 
   return { subject, body }
 }
 
+function buildClarificationEmail(
+  record: AwardApprovalRecord,
+  question: string,
+  locale: DisplayLocale,
+): AwardEmailCopy {
+  const snapshot = record.snapshot!
+  const id = record.approvalId ?? snapshot.packageRef
+  const link = compassLinkForPackage(snapshot, record.approvalId)
+  const subject =
+    locale === "fr"
+      ? `Clarification demandée — ${id} / ${snapshot.packageRef}`
+      : `Clarification requested — ${id} / ${snapshot.packageRef}`
+  const body =
+    locale === "fr"
+      ? `L’approbateur ${snapshot.requiredApproverName} demande une clarification sur ${snapshot.packageRef}.
+
+Question
+${question}
+
+${link}`
+      : `Approver ${snapshot.requiredApproverName} requested clarification on ${snapshot.packageRef}.
+
+Question
+${question}
+
+${link}`
+  return { subject, body }
+}
+
+function buildClarificationResponseEmail(
+  record: AwardApprovalRecord,
+  clarification: AwardClarification,
+  locale: DisplayLocale,
+): AwardEmailCopy {
+  const snapshot = record.snapshot!
+  const id = record.approvalId ?? snapshot.packageRef
+  const link = compassLinkForPackage(snapshot, record.approvalId)
+  const docs =
+    clarification.attachments.length > 0
+      ? clarification.attachments.map((d) => `• ${d.label}`).join("\n")
+      : locale === "fr"
+        ? "Aucune pièce jointe."
+        : "No attachments."
+  const subject =
+    locale === "fr" ? `Réponse à la clarification — ${id}` : `Clarification response — ${id}`
+  const body =
+    locale === "fr"
+      ? `Question
+${clarification.question}
+
+Réponse
+${clarification.response}
+
+Pièces jointes
+${docs}
+
+Statut : approbation resoumise.
+
+${link}`
+      : `Question
+${clarification.question}
+
+Response
+${clarification.response}
+
+Attachments
+${docs}
+
+Status: approval resubmitted.
+
+${link}`
+  return { subject, body }
+}
+
+function buildRevisionEmail(
+  record: AwardApprovalRecord,
+  revision: AwardRevision,
+  locale: DisplayLocale,
+): AwardEmailCopy {
+  const snapshot = record.snapshot!
+  const id = record.approvalId ?? snapshot.packageRef
+  const link = compassLinkForPackage(snapshot, record.approvalId)
+  const reason = revisionReasonLabel(revision.reasonCategory, locale)
+  const due = revision.dueDate ? formatDisplayDate(revision.dueDate, locale) : ""
+  const subject = locale === "fr" ? `Révision requise — ${id}` : `Revision required — ${id}`
+  const body =
+    locale === "fr"
+      ? `Révision requise — ${id}
+Motif : ${reason}
+Instructions de ${revision.requestedByName} : ${revision.instructions}
+${due ? `Échéance : ${due}` : ""}
+
+${link}`
+      : `Revision required — ${id}
+Reason: ${reason}
+Instructions from ${revision.requestedByName}: ${revision.instructions}
+${due ? `Due: ${due}` : ""}
+
+${link}`
+  return { subject, body }
+}
+
+function buildResubmitEmail(
+  record: AwardApprovalRecord,
+  snapshot: AwardApprovalSnapshot,
+  comparison: AwardComparisonField[],
+  locale: DisplayLocale,
+): AwardEmailCopy {
+  const id = record.approvalId ?? snapshot.packageRef
+  const link = compassLinkForPackage(snapshot, record.approvalId)
+  const table = comparison
+    .map((row) => `${row.field}: ${row.original} → ${row.revised}${row.change !== "—" ? ` (${row.change})` : ""}`)
+    .join("\n")
+  const subject =
+    locale === "fr" ? `Recommandation d’attribution resoumise — ${id}` : `Award recommendation resubmitted — ${id}`
+  const body =
+    locale === "fr"
+      ? `La recommandation pour ${snapshot.packageRef} a été resoumise.
+
+${table}
+
+${link}`
+      : `The recommendation for ${snapshot.packageRef} has been resubmitted.
+
+${table}
+
+${link}`
+  return { subject, body }
+}
+
 export function awardSnapshotLines(snapshot: AwardApprovalSnapshot, locale: DisplayLocale = "en") {
-  const email = buildAwardApprovalEmail(snapshot, locale)
-  return email
+  return buildAwardApprovalEmail(snapshot, locale)
 }
 
 export function formatAwardAuditLine(entry: AwardAuditEntry, locale: DisplayLocale = "en"): string {
@@ -735,4 +1429,9 @@ export function formatAwardAuditLine(entry: AwardAuditEntry, locale: DisplayLoca
   })
   const comments = entry.comments ? ` ${entry.comments}` : ""
   return `${when} — ${entry.actorName} (${entry.actorRole}): ${entry.action}. ${from} → ${to}.${comments}`
+}
+
+export function latestNotification(record: AwardApprovalRecord | undefined): AwardNotification | null {
+  if (!record || record.notifications.length === 0) return null
+  return record.notifications[record.notifications.length - 1] ?? null
 }

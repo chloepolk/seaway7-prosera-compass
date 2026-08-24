@@ -454,6 +454,7 @@ const en = {
     whyValue: "Why this value",
     show: "Show BluePilot reasoning",
     hide: "Hide BluePilot reasoning",
+    collapse: "Collapse",
     title: "BluePilot reasoning",
     showMore: "Show more",
     showLess: "Show less",

@@ -110,7 +110,7 @@ function FleetSpendChart({ data, spikeMonth }: { data: CombinedFuelMonth[]; spik
             </span>
             <span className="flex items-center gap-1.5">
               <span className="inline-block h-0.5 w-6 bg-red-500" />
-              Unleaded £/L
+              Unleaded €/L
             </span>
           </div>
         </div>
@@ -152,7 +152,7 @@ function FleetSpendChart({ data, spikeMonth }: { data: CombinedFuelMonth[]; spik
                       <span className="font-mono font-medium">{fmtUsdExact(d?.totalSpend ?? 0)}</span>
                     </div>
                     <div className="flex items-center justify-between gap-4">
-                      <span className="text-muted-foreground">{localizeActiveCopy("Unleaded £/L")}</span>
+                      <span className="text-muted-foreground">{localizeActiveCopy("Unleaded €/L")}</span>
                       <span className="font-mono font-medium">${(d?.unleadedPPG ?? 0).toFixed(2)}</span>
                     </div>
                     {(d?.spikeImpact ?? 0) !== 0 && (
@@ -267,7 +267,7 @@ function DivisionCard({ div }: { div: DivisionFuelSummary }) {
             <p className="font-mono text-xs font-medium">{formatActiveFuelVolume(div.totalAnnualGallons)}</p>
           </div>
           <div>
-            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">{localizeActiveCopy("Unleaded £/L trend")}</p>
+            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">{localizeActiveCopy("Unleaded €/L trend")}</p>
             <p className="font-mono text-xs font-medium">
               ${div.baselineAvgPricePerGal.toFixed(2)} → <span className={div.priceDeltaPct > 0 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}>
                 ${div.currentAvgPricePerGal.toFixed(2)}

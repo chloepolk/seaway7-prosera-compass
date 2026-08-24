@@ -453,6 +453,7 @@ const fr: EnMessages = {
     whyValue: "Pourquoi cette valeur",
     show: "Afficher le raisonnement BluePilot",
     hide: "Masquer le raisonnement BluePilot",
+    collapse: "Réduire",
     title: "Raisonnement BluePilot",
     showMore: "Afficher plus",
     showLess: "Afficher moins",
