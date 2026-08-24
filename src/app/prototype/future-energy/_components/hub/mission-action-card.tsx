@@ -83,6 +83,63 @@ const STATUS_CLS = {
 
 const COMPLETED_STATUS_CLS = "border border-[var(--color-accent-positive-text)] bg-[var(--color-bg-surface)] text-[var(--color-accent-positive-text)]"
 
+const NARRATIVE_PREVIEW_LINES = 3
+
+function useExceedsLineCount(
+  ref: React.RefObject<HTMLElement | null>,
+  text: string,
+  maxLines: number,
+) {
+  const [exceeds, setExceeds] = React.useState(false)
+
+  React.useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) {
+      setExceeds(false)
+      return
+    }
+
+    const measure = () => {
+      const width = el.clientWidth
+      if (width <= 0) {
+        setExceeds(false)
+        return
+      }
+
+      const cs = window.getComputedStyle(el)
+      const fontSize = parseFloat(cs.fontSize) || 13
+      const parsedLh = parseFloat(cs.lineHeight)
+      const lineHeight = Number.isFinite(parsedLh) ? parsedLh : fontSize * 1.625
+
+      const probe = document.createElement("div")
+      probe.textContent = text
+      probe.style.cssText = [
+        "position:absolute",
+        "left:-9999px",
+        "top:0",
+        "visibility:hidden",
+        "pointer-events:none",
+        "white-space:normal",
+        `width:${width}px`,
+        `font:${cs.font}`,
+        `letter-spacing:${cs.letterSpacing}`,
+        `line-height:${cs.lineHeight}`,
+      ].join(";")
+      document.body.appendChild(probe)
+      const next = probe.scrollHeight > lineHeight * maxLines + 1
+      probe.remove()
+      setExceeds(next)
+    }
+
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    measure()
+    return () => ro.disconnect()
+  }, [text, maxLines])
+
+  return exceeds
+}
+
 export function MissionActionCard({
   rank,
   title,
@@ -132,8 +189,9 @@ export function MissionActionCard({
   const [reasoningOpen, setReasoningOpen] = React.useState(false)
   const [narrativeOpen, setNarrativeOpen] = React.useState(false)
   const hasReasoning = !isReasoningEmpty(reasoning)
-  // Long summaries collapse to a single line with a "Show details" toggle.
-  const narrativeIsLong = narrative.trim().length > 90
+  const narrativeRef = React.useRef<HTMLParagraphElement>(null)
+  // Show the full summary unless it wraps past three lines.
+  const narrativeIsLong = useExceedsLineCount(narrativeRef, narrative, NARRATIVE_PREVIEW_LINES)
 
   const assignOwnerRole = React.useMemo(() => {
     const current = timelineEntries.find((e) => e.status === "current")
@@ -253,9 +311,10 @@ export function MissionActionCard({
 
       <div className={cn("mt-3 pl-9", isReconciling && "opacity-60")}>
         <p
+          ref={narrativeRef}
           className={cn(
             "text-[13px] leading-relaxed text-[var(--color-text-muted)]",
-            narrativeIsLong && !narrativeOpen && "line-clamp-1",
+            narrativeIsLong && !narrativeOpen && "line-clamp-3",
           )}
         >
           {narrative}
