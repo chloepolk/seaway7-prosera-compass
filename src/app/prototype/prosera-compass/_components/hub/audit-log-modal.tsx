@@ -1,17 +1,12 @@
 "use client"
 
+import { formatDateTimeDMY } from "@/lib/compass/locale-display"
 import * as React from "react"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import type { AuditEntry } from "./hub-types"
 
 function formatTimestamp(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  })
+  return formatDateTimeDMY(iso)
 }
 
 export function AuditLogModal({

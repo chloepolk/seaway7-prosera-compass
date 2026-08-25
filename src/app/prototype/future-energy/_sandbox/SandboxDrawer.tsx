@@ -14,7 +14,7 @@ import { useT } from "../_i18n/use-t"
 import { localeTag } from "../_i18n"
 import { formatFixed, formatMultiple } from "../_i18n/currency"
 import { activeLocaleTag, formatActiveUsd, formatActiveFuelUnit } from "../_i18n/legacy"
-import { fuelPriceDisplay } from "@/lib/compass/locale-display"
+import { fuelPriceDisplay, formatDateDMY } from "@/lib/compass/locale-display"
 import type { Locale } from "../_i18n/types"
 
 const usd = (n: number) => `${n >= 0 ? "+" : ""}${formatActiveUsd(n, false)}`
@@ -92,7 +92,7 @@ export function SandboxDrawer() {
     fetch("/api/acme/sandbox", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ scenarioPrompt, locale }),
+      body: JSON.stringify({ scenarioPrompt, locale, tenant: "future-energy" }),
       signal: controller.signal,
     })
       .then(async (res) => {
@@ -168,7 +168,7 @@ export function SandboxDrawer() {
     const lines = [
       "═══ BluePilot What-If Scenario Export ═══",
       "",
-      `${locale === "fr" ? "Date" : "Date"}: ${new Date().toLocaleDateString(localeTag(locale))}`,
+      `${locale === "fr" ? "Date" : "Date"}: ${formatDateDMY(new Date())}`,
       "",
       "── Scenario Parameters ──",
       `Customer Mix: Exit ${scenario.customerMix.exitDogs} Dogs, Add ${scenario.customerMix.addStars} Stars`,
@@ -253,7 +253,7 @@ export function SandboxDrawer() {
                     <div key={s.id} className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 hover:bg-muted/40 group">
                       <button type="button" className="flex-1 text-left text-xs truncate" onClick={() => loadScenario(s)}>
                         <span className="font-medium">{s.name}</span>
-                        <span className="text-muted-foreground ml-2">{new Date(s.timestamp).toLocaleDateString(localeTag(locale))}</span>
+                        <span className="text-muted-foreground ml-2">{formatDateDMY(s.timestamp)}</span>
                       </button>
                       <button
                         type="button"

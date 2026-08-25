@@ -14,6 +14,7 @@ import { personForRole } from "./org"
 import { agentFor, type MissionTheme } from "./agents"
 import { TENDER_PACKAGES, CLOSED_PACKAGES, TODAY, PROJECT, type TenderPackage } from "../data/seaway7/_tenders"
 import { componentById } from "../data/seaway7/_documents"
+import { formatDateDMY } from "@/lib/compass/locale-display"
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -479,7 +480,7 @@ export function buildPortfolioRoi(missions: DiamondMission[], closed: ClosedReco
   let running = 0
   const cumulative = ledger.map(e => {
     running += e.realizedValue
-    return { label: e.completionDate, total: running }
+    return { label: formatDateDMY(e.completionDate), total: running }
   })
 
   return {

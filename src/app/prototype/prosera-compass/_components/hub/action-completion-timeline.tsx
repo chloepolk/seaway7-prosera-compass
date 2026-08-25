@@ -1,5 +1,6 @@
 "use client"
 
+import { formatDateDMY } from "@/lib/compass/locale-display"
 import * as React from "react"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/prosera/avatar"
@@ -14,7 +15,7 @@ import { avatarColor, avatarSrcFor } from "./avatar-color"
 function formatDate(iso: string): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return iso
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+  return formatDateDMY(d)
 }
 
 /** Illustrated (or coloured-initial fallback) avatar for every human on the timeline. */

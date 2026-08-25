@@ -1,5 +1,6 @@
 'use client'
 
+import { formatDateDMY } from "@/lib/compass/locale-display"
 import { useState } from 'react'
 
 import { SafeIcon } from '@/components/prosera-lib/safe-icon'
@@ -22,7 +23,7 @@ const DatePickerRangeDemo = () => {
         <PopoverTrigger asChild>
           <Button variant='outline' id='dates' className='w-full justify-between font-normal'>
             {range?.from && range?.to
-              ? `${range.from.toLocaleDateString()} - ${range.to.toLocaleDateString()}`
+              ? `${formatDateDMY(range.from)} - ${formatDateDMY(range.to)}`
               : 'Pick a date'}
             <SafeIcon name="ChevronDown" />
           </Button>

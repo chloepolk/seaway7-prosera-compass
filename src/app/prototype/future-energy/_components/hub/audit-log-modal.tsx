@@ -1,5 +1,6 @@
 "use client"
 
+import { formatDateTimeDMY } from "@/lib/compass/locale-display"
 import * as React from "react"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import type { AuditEntry } from "./hub-types"
@@ -7,14 +8,8 @@ import { useT } from "../../_i18n/use-t"
 import { useStore } from "../../_store"
 import { localeTag, type Locale } from "../../_i18n"
 
-function formatTimestamp(iso: string, locale: Locale): string {
-  return new Date(iso).toLocaleString(localeTag(locale), {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  })
+function formatTimestamp(iso: string, _locale: Locale): string {
+  return formatDateTimeDMY(iso)
 }
 
 export function AuditLogModal({

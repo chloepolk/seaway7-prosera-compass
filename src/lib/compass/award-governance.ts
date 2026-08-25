@@ -13,11 +13,22 @@ import {
   FX_RATE_DATE,
   USD_TO_EUR,
   type DisplayLocale,
+  formatDateDMY,
+  formatDateTimeDMY,
   formatEurFigure,
   formatFixed,
   formatUsdAsEur,
   usdToEur,
 } from "./locale-display"
+import {
+  type AwardNoteImpact,
+  type AwardTeamNote,
+  computeAwardNoteImpact,
+  hasCompletedAwardRoundTrip,
+  unconfirmedTeamNotes,
+} from "./award-notes"
+
+export type { AwardNoteImpact, AwardNoteKind, AwardTeamNote } from "./award-notes"
 
 export const AWARD_APPROVAL_THRESHOLD_EUR = 200_000
 export const AWARD_APPROVAL_FX_DATE = FX_RATE_DATE
@@ -192,6 +203,10 @@ export type AwardApprovalRecord = {
   procurementOwnerName: string | null
   procurementOwnerRole: string | null
   procurementOwnerEmail: string | null
+  teamNotes: AwardTeamNote[]
+  noteImpact: AwardNoteImpact | null
+  notesConfirmedAt: string | null
+  notesConfirmedByName: string | null
 }
 
 export type AwardEmailCopy = {
@@ -230,6 +245,10 @@ export function emptyAwardRecord(packageId: string): AwardApprovalRecord {
     procurementOwnerName: null,
     procurementOwnerRole: null,
     procurementOwnerEmail: null,
+    teamNotes: [],
+    noteImpact: null,
+    notesConfirmedAt: null,
+    notesConfirmedByName: null,
   }
 }
 
@@ -256,9 +275,42 @@ export function awardNotificationHeld(record: AwardApprovalRecord | undefined, s
   return record?.status !== "approved_for_award"
 }
 
+function teamNotesOf(record: AwardApprovalRecord): AwardTeamNote[] {
+  return record.teamNotes ?? []
+}
+
 function newId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID()
   return `awd-${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
+function appendTeamNote(
+  record: AwardApprovalRecord,
+  actor: AwardActor,
+  kind: AwardTeamNote["kind"],
+  body: string,
+  at: string,
+): AwardApprovalRecord {
+  const text = body.trim()
+  if (!text) return record
+  return {
+    ...record,
+    teamNotes: [
+      ...teamNotesOf(record),
+      {
+        id: newId(),
+        at,
+        actorName: actor.name,
+        actorRole: actor.role,
+        kind,
+        body: text,
+        confirmedAt: null,
+        confirmedByName: null,
+      },
+    ],
+    notesConfirmedAt: null,
+    notesConfirmedByName: null,
+  }
 }
 
 let approvalSeq = 147
@@ -517,13 +569,18 @@ export function submitAwardRecommendation(
     procurementOwnerName: actor.name,
     procurementOwnerRole: actor.role,
     procurementOwnerEmail: actor.email ?? null,
+    teamNotes: base.teamNotes ?? [],
+    noteImpact: base.noteImpact ?? null,
+    notesConfirmedAt: null,
+    notesConfirmedByName: null,
   }
+  const withNote = note ? appendTeamNote(seeded, actor, "instruction", note, at) : seeded
 
   if (!snapshot.requiresDirectorApproval) {
     return {
       ...appendAudit(
         {
-          ...seeded,
+          ...withNote,
           requestedAt: at,
           decidedAt: at,
           assignedToName: actor.name,
@@ -538,9 +595,9 @@ export function submitAwardRecommendation(
     }
   }
 
-  const approvalId = seeded.approvalId ?? mintApprovalId(at)
+  const approvalId = withNote.approvalId ?? mintApprovalId(at)
   const withId: AwardApprovalRecord = {
-    ...seeded,
+    ...withNote,
     approvalId,
     requestedAt: at,
     decidedAt: null,
@@ -577,9 +634,11 @@ export function approveAwardRecommendation(
   at = new Date().toISOString(),
 ): AwardApprovalRecord {
   if (prev.status !== "awaiting_approver") return prev
+  if (needsNoteConfirmation(prev, actor.name)) return prev
   const text = comments.trim()
+  const noted = text ? appendTeamNote(prev, actor, "approver_comment", text, at) : prev
   return {
-    ...appendAudit(prev, actor, "Award recommendation approved", text, "approved_for_award", at),
+    ...appendAudit(noted, actor, "Award recommendation approved", text, "approved_for_award", at),
     decidedAt: at,
     comments: text,
     assignedToName: prev.procurementOwnerName,
@@ -611,14 +670,20 @@ export function requestAwardClarification(
     status: "open",
     respondedAt: null,
   }
-  const withQ: AwardApprovalRecord = {
-    ...prev,
-    clarification,
-    decidedAt: null,
-    comments: text,
-    assignedToName: prev.procurementOwnerName,
-    assignedToRole: prev.procurementOwnerRole,
-  }
+  const withQ: AwardApprovalRecord = appendTeamNote(
+    {
+      ...prev,
+      clarification,
+      decidedAt: null,
+      comments: text,
+      assignedToName: prev.procurementOwnerName,
+      assignedToRole: prev.procurementOwnerRole,
+    },
+    actor,
+    "instruction",
+    text,
+    at,
+  )
   const toName = prev.procurementOwnerName ?? "Procurement"
   const toEmail = prev.procurementOwnerEmail ?? ""
   const email = buildClarificationEmail(prev, text, locale)
@@ -639,17 +704,25 @@ export function submitClarificationResponse(
     response: string
     attachments: AwardSupportingDocument[]
     sourceReferences: string[]
+    snapshot?: AwardApprovalSnapshot
   },
   actor: AwardActor,
   at = new Date().toISOString(),
   locale: DisplayLocale = "en",
 ): AwardApprovalRecord {
   if (prev.status !== "clarification_requested") return prev
-  const snapshot = prev.snapshot
+  const snapshot = args.snapshot ?? prev.snapshot
   const open = prev.clarification
   if (!snapshot || !open || open.status !== "open") return prev
   const response = args.response.trim()
   if (!response) return prev
+
+  const original = prev.originalSnapshot ?? snapshot
+  const combinedNotes = [...teamNotesOf(prev).map((n) => n.body), response]
+  const noteImpact = computeAwardNoteImpact(original, combinedNotes, locale)
+  const nextSnapshot =
+    args.snapshot ??
+    (noteImpact.foundNumericChange ? withProposedAwardUsd(snapshot, noteImpact.revisedAwardUsd) : snapshot)
 
   const closed: AwardClarification = {
     ...open,
@@ -659,18 +732,26 @@ export function submitClarificationResponse(
     status: "closed",
     respondedAt: at,
   }
-  const withResponse: AwardApprovalRecord = {
-    ...prev,
-    clarification: closed,
-    assignedToName: snapshot.requiredApproverName,
-    assignedToRole: snapshot.requiredApproverRole,
-  }
+  const withResponse: AwardApprovalRecord = appendTeamNote(
+    {
+      ...prev,
+      snapshot: nextSnapshot,
+      clarification: closed,
+      noteImpact,
+      assignedToName: nextSnapshot.requiredApproverName,
+      assignedToRole: nextSnapshot.requiredApproverRole,
+    },
+    actor,
+    "response",
+    response,
+    at,
+  )
   const email = buildClarificationResponseEmail(prev, closed, locale)
   const notified = appendNotification(
     withResponse,
     "clarification_response",
-    snapshot.requiredApproverName,
-    snapshot.requiredApproverEmail,
+    nextSnapshot.requiredApproverName,
+    nextSnapshot.requiredApproverEmail,
     email,
     at,
   )
@@ -708,14 +789,20 @@ export function returnAwardForRevision(
     explanation: "",
     attachments: [],
   }
-  const withRev: AwardApprovalRecord = {
-    ...prev,
-    revision,
-    decidedAt: null,
-    comments: instructions,
-    assignedToName: prev.procurementOwnerName,
-    assignedToRole: prev.procurementOwnerRole,
-  }
+  const withRev: AwardApprovalRecord = appendTeamNote(
+    {
+      ...prev,
+      revision,
+      decidedAt: null,
+      comments: instructions,
+      assignedToName: prev.procurementOwnerName,
+      assignedToRole: prev.procurementOwnerRole,
+    },
+    actor,
+    "instruction",
+    instructions,
+    at,
+  )
   const email = buildRevisionEmail(prev, revision, locale)
   const notified = appendNotification(
     withRev,
@@ -751,11 +838,16 @@ export function resubmitAwardApproval(
   if (prev.status !== "revision_required") return prev
   const original = prev.originalSnapshot ?? prev.snapshot
   if (!original) return prev
-  const unchanged = recommendationUnchanged(original, args.snapshot)
-  const explanation = args.explanation.trim()
-  if (unchanged && !explanation) return prev
-
   const actionTaken = args.actionTaken.trim()
+  const explanation = args.explanation.trim()
+  const combinedNotes = [...teamNotesOf(prev).map((n) => n.body), actionTaken, explanation]
+  const noteImpact = computeAwardNoteImpact(original, combinedNotes, locale)
+  let nextSnapshot = args.snapshot
+  if (recommendationUnchanged(original, nextSnapshot) && noteImpact.foundNumericChange) {
+    nextSnapshot = withProposedAwardUsd(nextSnapshot, noteImpact.revisedAwardUsd)
+  }
+  const unchanged = recommendationUnchanged(original, nextSnapshot)
+  if (unchanged && !explanation) return prev
   const revision: AwardRevision = {
     ...(prev.revision ?? {
       reasonCategory: "other" as RevisionReasonCategory,
@@ -773,20 +865,27 @@ export function resubmitAwardApproval(
     explanation,
     attachments: args.attachments,
   }
-  const withSnap: AwardApprovalRecord = {
-    ...prev,
-    snapshot: args.snapshot,
-    revision,
-    assignedToName: args.snapshot.requiredApproverName,
-    assignedToRole: args.snapshot.requiredApproverRole,
-  }
-  const comparison = buildResubmitComparison(original, args.snapshot, locale)
-  const email = buildResubmitEmail(prev, args.snapshot, comparison, locale)
+  const withSnap: AwardApprovalRecord = appendTeamNote(
+    {
+      ...prev,
+      snapshot: nextSnapshot,
+      revision,
+      noteImpact,
+      assignedToName: nextSnapshot.requiredApproverName,
+      assignedToRole: nextSnapshot.requiredApproverRole,
+    },
+    actor,
+    "response",
+    [actionTaken, explanation].filter(Boolean).join(" "),
+    at,
+  )
+  const comparison = buildResubmitComparison(original, nextSnapshot, locale)
+  const email = buildResubmitEmail(prev, nextSnapshot, comparison, locale)
   const notified = appendNotification(
     withSnap,
     "resubmit",
-    args.snapshot.requiredApproverName,
-    args.snapshot.requiredApproverEmail,
+    nextSnapshot.requiredApproverName,
+    nextSnapshot.requiredApproverEmail,
     email,
     at,
   )
@@ -818,6 +917,39 @@ export function confirmSupplierAward(
     ),
     decidedAt: prev.decidedAt ?? at,
   }
+}
+
+export function needsNoteConfirmation(record: AwardApprovalRecord, viewerName: string): boolean {
+  if (record.status !== "awaiting_approver") return false
+  if (!hasCompletedAwardRoundTrip(record.audit.map((e) => e.action))) return false
+  return unconfirmedTeamNotes(record.teamNotes, viewerName).length > 0
+}
+
+export function confirmAwardNotes(
+  prev: AwardApprovalRecord,
+  actor: AwardActor,
+  at = new Date().toISOString(),
+): AwardApprovalRecord {
+  if (prev.status !== "awaiting_approver") return prev
+  const pending = unconfirmedTeamNotes(prev.teamNotes, actor.name)
+  if (pending.length === 0) return prev
+  const pendingIds = new Set(pending.map((n) => n.id))
+  const teamNotes = teamNotesOf(prev).map((n) =>
+    pendingIds.has(n.id) ? { ...n, confirmedAt: at, confirmedByName: actor.name } : n,
+  )
+  return appendAudit(
+    {
+      ...prev,
+      teamNotes,
+      notesConfirmedAt: at,
+      notesConfirmedByName: actor.name,
+    },
+    actor,
+    "Team notes confirmed",
+    `Confirmed ${pending.length} note${pending.length === 1 ? "" : "s"} from other team members.`,
+    "awaiting_approver",
+    at,
+  )
 }
 
 export type AwardGovTone = "neutral" | "warning" | "positive" | "critical"
@@ -930,7 +1062,12 @@ export function buildResubmitComparison(
       field: copy.budgetVariance,
       original: formatBudgetVariance(original.varianceUsd, locale),
       revised: formatBudgetVariance(revised.varianceUsd, locale),
-      change: original.varianceUsd === revised.varianceUsd ? "—" : "—",
+      change:
+        original.varianceUsd === revised.varianceUsd
+          ? "—"
+          : locale === "fr"
+            ? `Écart ${formatBudgetVariance(original.varianceUsd, locale)} → ${formatBudgetVariance(revised.varianceUsd, locale)}`
+            : `Variance ${formatBudgetVariance(original.varianceUsd, locale)} → ${formatBudgetVariance(revised.varianceUsd, locale)}`,
     },
     {
       field: copy.compositeScore,
@@ -941,15 +1078,10 @@ export function buildResubmitComparison(
   ]
 }
 
-export function formatDisplayDate(iso: string | null | undefined, locale: DisplayLocale = "en"): string {
+export function formatDisplayDate(iso: string | null | undefined, _locale: DisplayLocale = "en"): string {
   if (!iso) return ""
-  const d = new Date(iso.includes("T") ? iso : `${iso}T00:00:00`)
-  if (Number.isNaN(d.getTime())) return iso
-  return d.toLocaleDateString(locale === "fr" ? "fr-FR" : "en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  })
+  const formatted = formatDateDMY(iso)
+  return formatted || iso
 }
 
 export const AWARD_GOV_COPY = {
@@ -1039,6 +1171,17 @@ export const AWARD_GOV_COPY = {
     reason: "Reason",
     due: "Due",
     auditField: "Award governance",
+    teamNotes: "Team notes",
+    confirmNotes: "Confirm notes",
+    notesConfirmed: "Notes confirmed",
+    confirmNotesHint: "Confirm the notes from the other team members before approving.",
+    bluePilotImpact: "BluePilot impact",
+    teamNotesExpand: "Team notes & comments",
+    impactActionOverview: "Action overview",
+    applyToProposal: "Apply to proposal",
+    originalProposal: "Original proposal",
+    currentProposal: "Current proposal",
+    approveDisabledUntilConfirm: "Confirm team notes before approving.",
     ruleNote:
       "Awards of €200,000 or less remain within procurement authority. Awards above €200,000 generate an approval request inside this procurement action.",
     notifyHeld: "Award notification is held until the required approval is recorded.",
@@ -1133,6 +1276,17 @@ export const AWARD_GOV_COPY = {
     reason: "Motif",
     due: "Échéance",
     auditField: "Gouvernance d’attribution",
+    teamNotes: "Notes de l’équipe",
+    confirmNotes: "Confirmer les notes",
+    notesConfirmed: "Notes confirmées",
+    confirmNotesHint: "Confirmez les notes des autres membres de l’équipe avant d’approuver.",
+    bluePilotImpact: "Impact BluePilot",
+    teamNotesExpand: "Notes et commentaires",
+    impactActionOverview: "Aperçu de l’action",
+    applyToProposal: "Appliquer à la proposition",
+    originalProposal: "Proposition d’origine",
+    currentProposal: "Proposition actuelle",
+    approveDisabledUntilConfirm: "Confirmez les notes de l’équipe avant d’approuver.",
     ruleNote:
       "Les attributions de 200 000 € ou moins restent dans l’autorité des achats. Au-dessus de 200 000 €, une demande d’approbation est créée dans cette action d’achat.",
     notifyHeld: "La notification d’attribution est retenue jusqu’à l’enregistrement de l’approbation requise.",
@@ -1421,13 +1575,7 @@ export function formatAwardAuditLine(entry: AwardAuditEntry, locale: DisplayLoca
   const copy = awardGovCopy(locale)
   const from = copy.status[entry.statusFrom]
   const to = copy.status[entry.statusTo]
-  const when = new Date(entry.at).toLocaleString(locale === "fr" ? "fr-FR" : "en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  })
+  const when = formatDateTimeDMY(entry.at)
   const comments = entry.comments ? ` ${entry.comments}` : ""
   return `${when} — ${entry.actorName} (${entry.actorRole}): ${entry.action}. ${from} → ${to}.${comments}`
 }

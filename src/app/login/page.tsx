@@ -13,9 +13,16 @@ const PROSERA_LOGO = "/full%20dark%20logo.svg"
 export default function LoginPage() {
   const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    router.push(COMPASS_ROUTE)
+    const formData = new FormData(e.currentTarget)
+    const password = String(formData.get("password") ?? "")
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    })
+    if (res.ok) router.push(COMPASS_ROUTE)
   }
 
   return (

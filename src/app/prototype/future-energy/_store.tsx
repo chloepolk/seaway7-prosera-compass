@@ -27,6 +27,7 @@ import {
   type AwardSupportingDocument,
   type RevisionReasonCategory,
   approveAwardRecommendation,
+  confirmAwardNotes,
   confirmSupplierAward,
   requestAwardClarification,
   resubmitAwardApproval,
@@ -201,7 +202,12 @@ export interface AcmeDemoStore {
   requestAwardClarification: (packageId: string, question: string, actor: AwardActor) => void
   respondToAwardClarification: (
     packageId: string,
-    args: { response: string; attachments: AwardSupportingDocument[]; sourceReferences: string[] },
+    args: {
+      response: string
+      attachments: AwardSupportingDocument[]
+      sourceReferences: string[]
+      snapshot?: AwardApprovalSnapshot
+    },
     actor: AwardActor,
   ) => void
   returnAwardForRevision: (
@@ -215,6 +221,7 @@ export interface AcmeDemoStore {
     actor: AwardActor,
   ) => void
   confirmAward: (packageId: string, actor: AwardActor) => void
+  confirmAwardNotes: (packageId: string, actor: AwardActor) => void
 
   /** Catalogue of completed ITT drafts (persisted across navigation and reloads). */
   draftedTenders: DraftedTender[]
@@ -448,7 +455,7 @@ async function executeAgentPipeline(
         const res = await fetch(`/api/acme/specialist/${id}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ context: contextMap[id], drillState: drill, locale }),
+          body: JSON.stringify({ context: contextMap[id], drillState: drill, locale, tenant: "future-energy" }),
           signal,
         })
         const json: AgentApiResponse<SpecialistOutput> = await res.json()
@@ -492,6 +499,7 @@ async function executeAgentPipeline(
         pageContext: getPageContext(cockpitState.activePage, locale),
         orchestratorContext,
         locale,
+        tenant: "future-energy",
       }),
       signal,
     })
@@ -531,6 +539,7 @@ async function executeAgentPipeline(
         drillState: drill,
         verifiableBenchmarks: verifierContext.verifiableBenchmarks,
         locale,
+        tenant: "future-energy",
       }),
       signal,
     })
@@ -1015,7 +1024,7 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
       const res = await fetch("/api/acme/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: allMessages, dataContext, chatBriefing, locale }),
+        body: JSON.stringify({ messages: allMessages, dataContext, chatBriefing, locale, tenant: "future-energy" }),
         signal: controller.signal,
       })
 
@@ -1141,7 +1150,12 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
 
   const respondToAwardClarification = React.useCallback((
     packageId: string,
-    args: { response: string; attachments: AwardSupportingDocument[]; sourceReferences: string[] },
+    args: {
+      response: string
+      attachments: AwardSupportingDocument[]
+      sourceReferences: string[]
+      snapshot?: AwardApprovalSnapshot
+    },
     actor: AwardActor,
   ) => {
     setAwardApprovals(prev => {
@@ -1183,6 +1197,14 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
     })
     advanceTenderStage(packageId, "outcome_roi")
   }, [advanceTenderStage])
+
+  const confirmAwardNotesFn = React.useCallback((packageId: string, actor: AwardActor) => {
+    setAwardApprovals(prev => {
+      const current = prev[packageId]
+      if (!current) return prev
+      return { ...prev, [packageId]: confirmAwardNotes(current, actor) }
+    })
+  }, [])
 
   const openTenderStudio = React.useCallback((packageId: string | null) => {
     setFocusTenderId(packageId)
@@ -1440,6 +1462,7 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
       returnAwardForRevision: returnAwardForRevisionFn,
       resubmitAwardApproval: resubmitAwardApprovalFn,
       confirmAward,
+      confirmAwardNotes: confirmAwardNotesFn,
       draftedTenders,
       saveDraftedTender,
       deleteDraftedTender,
@@ -1462,7 +1485,7 @@ export function AcmeDemoStoreProvider({ children }: { children: React.ReactNode 
       deletedCustomApps,
       restoreCustomApp,
     }),
-    [state, actions, derived, authenticated, login, locale, setLocale, agentState, chatMessages, chatLoading, sendChatMessage, clearChat, sandboxOpen, biOpen, intelPanelOpen, savedScenarios, saveScenario, deleteScenario, missionPriority, setMissionPriority, focusMissionId, setFocusMission, tenderStages, advanceTenderStage, focusTenderId, openTenderStudio, focusEvalPackageId, openBidEvaluation, awardApprovals, submitAwardRecommendation, approveAward, requestAwardClarificationFn, respondToAwardClarification, returnAwardForRevisionFn, resubmitAwardApprovalFn, confirmAward, draftedTenders, saveDraftedTender, deleteDraftedTender, taskActions, markTaskComplete, overrideTask, postponeTask, sendTaskAlert, boards, getBoard, setBoardOrder, setModuleHidden, setBoardHero, openModuleId, openModule, closeModule, customApps, saveCustomApp, deleteCustomApp, deletedCustomApps, restoreCustomApp]
+    [state, actions, derived, authenticated, login, locale, setLocale, agentState, chatMessages, chatLoading, sendChatMessage, clearChat, sandboxOpen, biOpen, intelPanelOpen, savedScenarios, saveScenario, deleteScenario, missionPriority, setMissionPriority, focusMissionId, setFocusMission, tenderStages, advanceTenderStage, focusTenderId, openTenderStudio, focusEvalPackageId, openBidEvaluation, awardApprovals, submitAwardRecommendation, approveAward, requestAwardClarificationFn, respondToAwardClarification, returnAwardForRevisionFn, resubmitAwardApprovalFn, confirmAward, confirmAwardNotesFn, draftedTenders, saveDraftedTender, deleteDraftedTender, taskActions, markTaskComplete, overrideTask, postponeTask, sendTaskAlert, boards, getBoard, setBoardOrder, setModuleHidden, setBoardHero, openModuleId, openModule, closeModule, customApps, saveCustomApp, deleteCustomApp, deletedCustomApps, restoreCustomApp]
   )
 
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>

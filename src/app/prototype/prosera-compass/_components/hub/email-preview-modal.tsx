@@ -1,5 +1,6 @@
 "use client"
 
+import { formatDateDMY } from "@/lib/compass/locale-display"
 import * as React from "react"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { cn } from "@/lib/utils"
@@ -17,7 +18,7 @@ I am writing about ${mission.name}, currently active on the Action Centre.
 
 ${narrative}
 
-The target is ${formatCurrency(mission.projectedValue)}, due by ${new Date(mission.targetCompletionAt).toLocaleDateString("en-GB")}.
+The target is ${formatCurrency(mission.projectedValue)}, due by ${formatDateDMY(mission.targetCompletionAt)}.
 
 Please review this and confirm the next steps. You can contact me if you need more information.
 

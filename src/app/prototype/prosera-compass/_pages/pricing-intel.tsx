@@ -1,5 +1,6 @@
 "use client"
 
+import { formatDateDMY } from "@/lib/compass/locale-display"
 import * as React from "react"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/prosera/card"
@@ -578,7 +579,7 @@ function ScenarioDetail({ scenario, onOpenSandbox }: { scenario: SavedScenario; 
         </div>
       )}
       <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-        <span>{p.affectedJobs} jobs · {p.affectedCustomers.length} customers affected · saved {new Date(scenario.timestamp).toLocaleDateString()}</span>
+        <span>{p.affectedJobs} jobs · {p.affectedCustomers.length} customers affected · saved {formatDateDMY(scenario.timestamp)}</span>
         <button
           type="button"
           onClick={onOpenSandbox}

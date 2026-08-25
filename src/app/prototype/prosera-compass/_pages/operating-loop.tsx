@@ -108,6 +108,7 @@ export function OperatingLoopPage() {
     returnAwardForRevision,
     resubmitAwardApproval,
     confirmAward,
+    confirmAwardNotes,
   } = useStore()
 
   const [horizonFilter, setHorizonFilter] = React.useState<HorizonKey | null>(null)
@@ -402,6 +403,7 @@ export function OperatingLoopPage() {
                   ping(awardRecord.snapshot?.requiredApproverName)
                 }}
                 onConfirmAward={() => confirmAward(mission.id, procurementActor)}
+                onConfirmNotes={() => confirmAwardNotes(mission.id, approverActor)}
               />
             ) : undefined
           }

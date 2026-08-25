@@ -10,6 +10,7 @@ import {
   type AwardGovernanceStatus,
   type AwardRevision,
   type AwardSupportingDocument,
+  type AwardTeamNote,
   type RevisionReasonCategory,
   applyRecommendedRow,
   awardGovCopy,
@@ -20,11 +21,15 @@ import {
   formatBudgetVariance,
   formatDisplayDate,
   formatScoreAndRank,
+  needsNoteConfirmation,
   recommendationUnchanged,
   revisionReasonLabel,
   withProposedAwardUsd,
 } from "./award-governance"
-import { USD_TO_EUR, formatUsdAsEur, usdToEur, type DisplayLocale } from "./locale-display"
+import { computeAwardNoteImpact, hasCompletedAwardRoundTrip, type AwardNoteImpact } from "./award-notes"
+import { USD_TO_EUR, formatDateTimeDMY, formatUsdAsEur, usdToEur, type DisplayLocale } from "./locale-display"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/prosera/collapsible"
+import { DateInputDMY } from "./date-input-dmy"
 
 type SendPhase = "idle" | "sending" | "sent"
 
@@ -34,6 +39,177 @@ const TONE_CLS = {
   positive: "border border-[var(--color-accent-positive-text)] bg-[var(--color-bg-surface)] text-[var(--color-accent-positive-text)]",
   critical: "border border-[var(--color-accent-critical-text)] bg-[var(--color-bg-surface)] text-[var(--color-accent-critical-text)]",
 } as const
+
+const NOTE_FIELD_CLS =
+  "w-full resize-none rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-3 py-2 text-[13px] text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-brand-primary)]"
+const INPUT_FIELD_CLS =
+  "w-full rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-3 py-2 text-[13px] text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-brand-primary)]"
+const BTN_SECONDARY =
+  "rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-canvas)]"
+const BTN_CANCEL =
+  "rounded-md border border-[var(--color-border-default)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-text-muted)] hover:bg-[var(--color-bg-canvas)]"
+const BTN_PRIMARY =
+  "rounded-md bg-[var(--color-brand-primary)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-brand-onPrimary)] hover:opacity-90 disabled:opacity-50"
+const BTN_INVERSE =
+  "rounded-md bg-[var(--color-bg-inverse)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-text-inverse)] disabled:opacity-50"
+
+function useAwardNoteImpact(
+  snapshot: AwardApprovalSnapshot | null | undefined,
+  notes: string,
+  locale: DisplayLocale,
+): AwardNoteImpact | null {
+  const local = React.useMemo(
+    () => (snapshot ? computeAwardNoteImpact(snapshot, notes, locale) : null),
+    [snapshot, notes, locale],
+  )
+  const [remote, setRemote] = React.useState<AwardNoteImpact | null>(null)
+  React.useEffect(() => {
+    if (!snapshot || !notes.trim()) {
+      setRemote(null)
+      return
+    }
+    const t = window.setTimeout(() => {
+      fetch("/api/acme/award-notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ snapshot, notes, locale }),
+      })
+        .then((r) => r.json())
+        .then((j) => {
+          if (j?.data) setRemote(j.data as AwardNoteImpact)
+        })
+        .catch(() => {})
+    }, 450)
+    return () => window.clearTimeout(t)
+  }, [snapshot, notes, locale])
+  return remote ?? local
+}
+
+function visibleTeamNotes(notes: AwardTeamNote[] | undefined): AwardTeamNote[] {
+  return (notes ?? []).filter((n) => n.kind !== "confirmation" && n.body.trim().length > 0)
+}
+
+function buildImpactOverview(record: AwardApprovalRecord | undefined, locale: DisplayLocale): string {
+  if (!record) return ""
+  const notes = visibleTeamNotes(record.teamNotes)
+  const latest = notes[notes.length - 1]
+  const revision = record.revision
+  const clarification = record.clarification
+
+  if (revision?.instructions) {
+    const reason = revisionReasonLabel(revision.reasonCategory, locale)
+    const head =
+      locale === "fr"
+        ? `Révision demandée (${reason}) : ${revision.instructions}`
+        : `Revision requested (${reason}): ${revision.instructions}`
+    if (latest && latest.body !== revision.instructions) {
+      return locale === "fr"
+        ? `${head} Dernière note — ${latest.actorName}: ${latest.body}`
+        : `${head} Latest note — ${latest.actorName}: ${latest.body}`
+    }
+    return head
+  }
+
+  if (clarification?.question) {
+    const head =
+      locale === "fr"
+        ? `Clarification : ${clarification.question}`
+        : `Clarification: ${clarification.question}`
+    if (clarification.response) {
+      return locale === "fr"
+        ? `${head} Réponse — ${clarification.response}`
+        : `${head} Response — ${clarification.response}`
+    }
+    if (latest && latest.body !== clarification.question) {
+      return locale === "fr"
+        ? `${head} Dernière note — ${latest.actorName}: ${latest.body}`
+        : `${head} Latest note — ${latest.actorName}: ${latest.body}`
+    }
+    return head
+  }
+
+  if (latest) {
+    return locale === "fr"
+      ? `${latest.actorName} (${latest.actorRole}) : ${latest.body}`
+      : `${latest.actorName} (${latest.actorRole}): ${latest.body}`
+  }
+  return ""
+}
+
+function TeamNotesList({ notes, locale }: { notes: AwardTeamNote[]; locale: DisplayLocale }) {
+  const copy = awardGovCopy(locale)
+  return (
+    <ol className="space-y-2">
+      {notes.map((note) => (
+        <li key={note.id} className="border-b border-[var(--color-border-default)] pb-2 last:border-b-0 last:pb-0">
+          <p className="text-[11px] text-[var(--color-text-muted)]">
+            {formatDateTimeDMY(note.at)} · {note.actorName}, {note.actorRole}
+          </p>
+          <p className="mt-0.5 text-[13px] text-[var(--color-text-primary)]">{note.body}</p>
+          {note.confirmedAt ? (
+            <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-[var(--color-accent-positive-text)]">
+              <SafeIcon name="CheckCircle2" className="size-3.5 shrink-0" />
+              <span>
+                {copy.notesConfirmed}
+                {note.confirmedByName ? ` — ${note.confirmedByName}` : ""}
+                {` · ${formatDateTimeDMY(note.confirmedAt)}`}
+              </span>
+            </p>
+          ) : null}
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+function BluePilotImpactCard({
+  record,
+  impact,
+  locale,
+  defaultNotesOpen = false,
+}: {
+  record?: AwardApprovalRecord
+  impact?: AwardNoteImpact | null
+  locale: DisplayLocale
+  defaultNotesOpen?: boolean
+}) {
+  const copy = awardGovCopy(locale)
+  const notes = visibleTeamNotes(record?.teamNotes)
+  const overview = buildImpactOverview(record, locale)
+  const result = impact?.summary?.trim() || record?.noteImpact?.summary?.trim() || ""
+  const [notesOpen, setNotesOpen] = React.useState(defaultNotesOpen)
+
+  if (!overview && !result && notes.length === 0) return null
+
+  return (
+    <div className="space-y-2 rounded-[10px] border border-[var(--color-brand-strong)]/40 bg-[var(--color-bg-surface)] px-3 py-2.5">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">{copy.bluePilotImpact}</p>
+      {overview ? (
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+            {copy.impactActionOverview}
+          </p>
+          <p className="mt-0.5 text-[12px] leading-relaxed text-[var(--color-text-primary)]">{overview}</p>
+        </div>
+      ) : null}
+      {result ? <p className="text-[12px] leading-relaxed text-[var(--color-text-primary)]">{result}</p> : null}
+      {notes.length > 0 ? (
+        <Collapsible open={notesOpen} onOpenChange={setNotesOpen}>
+          <CollapsibleTrigger className="flex w-full items-center justify-between gap-2 rounded-md border border-[var(--color-border-default)] px-2.5 py-1.5 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-subtle)]">
+            <span>
+              {copy.teamNotesExpand}
+              <span className="ml-1 tabular-nums text-[var(--color-text-muted)]">({notes.length})</span>
+            </span>
+            <SafeIcon name={notesOpen ? "ChevronUp" : "ChevronDown"} className="size-3.5 shrink-0" />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-2">
+            <TeamNotesList notes={notes} locale={locale} />
+          </CollapsibleContent>
+        </Collapsible>
+      ) : null}
+    </div>
+  )
+}
 
 function StatusChip({ status, locale }: { status: AwardGovernanceStatus; locale: DisplayLocale }) {
   const copy = awardGovCopy(locale)
@@ -163,12 +339,12 @@ function AttachmentEditor({
             }
           }}
           placeholder={copy.attachmentHint}
-          className="min-w-0 flex-1 rounded-lg border border-[var(--color-border-default)] bg-background px-3 py-1.5 text-[12px] outline-none focus:border-[var(--color-brand-primary)]"
+          className={INPUT_FIELD_CLS}
         />
         <button
           type="button"
           onClick={add}
-          className="rounded-md border border-[var(--color-border-default)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-subtle)]"
+          className={BTN_SECONDARY}
         >
           {copy.addAttachment}
         </button>
@@ -213,7 +389,7 @@ export function AwardRecommendPanel({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border border-[var(--color-border-default)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-text-muted)] hover:bg-[var(--color-bg-subtle)]"
+            className={BTN_CANCEL}
           >
             {locale === "fr" ? "Fermer" : "Close"}
           </button>
@@ -221,7 +397,7 @@ export function AwardRecommendPanel({
             type="button"
             onClick={handleSubmit}
             disabled={phase !== "idle"}
-            className="inline-flex items-center gap-1.5 rounded-md bg-[var(--color-brand-primary)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-brand-onPrimary)] hover:opacity-90 disabled:opacity-70"
+            className={cn(BTN_PRIMARY, "inline-flex items-center gap-1.5 disabled:opacity-70")}
           >
             {phase === "sending" && <SafeIcon name="Loader" className="h-3.5 w-3.5 animate-spin" />}
             {phase === "sent" && <SafeIcon name="Check" className="h-3.5 w-3.5" />}
@@ -245,7 +421,7 @@ export function AwardRecommendPanel({
           onChange={(e) => setNote(e.target.value)}
           rows={3}
           placeholder={copy.optionalNoteHint}
-          className="w-full resize-none rounded-lg border border-[var(--color-border-default)] bg-background px-3 py-2 text-[13px] outline-none focus:border-[var(--color-brand-primary)]"
+          className={NOTE_FIELD_CLS}
         />
       </div>
     </ModalShell>
@@ -282,7 +458,7 @@ function ReturnForRevisionForm({
         <select
           value={reason}
           onChange={(e) => setReason(e.target.value as RevisionReasonCategory)}
-          className="w-full rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-3 py-2 text-[13px] outline-none focus:border-[var(--color-brand-primary)]"
+          className={INPUT_FIELD_CLS}
         >
           {REVISION_REASON_ORDER.map((id) => (
             <option key={id} value={id}>
@@ -300,7 +476,7 @@ function ReturnForRevisionForm({
           onChange={(e) => setInstructions(e.target.value)}
           rows={4}
           placeholder={copy.revisionInstructionsHint}
-          className="w-full resize-none rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-3 py-2 text-[13px] outline-none focus:border-[var(--color-brand-primary)]"
+          className={NOTE_FIELD_CLS}
         />
       </div>
       <div>
@@ -311,25 +487,24 @@ function ReturnForRevisionForm({
           type="text"
           value={reference}
           onChange={(e) => setReference(e.target.value)}
-          className="w-full rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-3 py-2 text-[13px] outline-none focus:border-[var(--color-brand-primary)]"
+          className={INPUT_FIELD_CLS}
         />
       </div>
       <div>
         <label className="mb-1 block text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-muted)]">
           {copy.requiredCompletionDate}
         </label>
-        <input
-          type="date"
+        <DateInputDMY
           value={due}
-          onChange={(e) => setDue(e.target.value)}
-          className="w-full rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-3 py-2 text-[13px] outline-none focus:border-[var(--color-brand-primary)]"
+          onChange={setDue}
+          className={INPUT_FIELD_CLS}
         />
       </div>
       <div className="flex justify-end gap-2">
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-md border border-[var(--color-border-default)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-text-muted)] hover:bg-[var(--color-bg-surface)]"
+          className={BTN_CANCEL}
         >
           {locale === "fr" ? "Annuler" : "Cancel"}
         </button>
@@ -344,7 +519,7 @@ function ReturnForRevisionForm({
               dueDate: due || null,
             })
           }
-          className="rounded-md bg-[var(--color-bg-inverse)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-text-inverse)] disabled:opacity-50"
+          className={BTN_INVERSE}
         >
           {copy.returnToProcurement}
         </button>
@@ -416,6 +591,8 @@ function RevisionCard({
     snapshot ? String(Math.round(usdToEur(snapshot.proposedAwardUsd))) : "",
   )
   const [confirming, setConfirming] = React.useState(false)
+  const noteText = [actionTaken, explanation].filter(Boolean).join("\n")
+  const impact = useAwardNoteImpact(original, noteText, locale)
 
   if (!snapshot || !original) return null
   const rows = eligibleSupplierRows(snapshot)
@@ -427,27 +604,30 @@ function RevisionCard({
       ? withProposedAwardUsd(applyRecommendedRow(snapshot, selectedRow), proposedUsd)
       : withProposedAwardUsd(snapshot, proposedUsd)
   const unchanged = recommendationUnchanged(original, draft)
-  const canResubmit = !unchanged || explanation.trim().length > 0
+  const canResubmit = !unchanged || explanation.trim().length > 0 || Boolean(impact?.foundNumericChange)
 
   if (confirming) {
     return (
       <div className="space-y-3">
-        <p className="text-[12px] font-semibold text-[var(--color-text-primary)]">{copy.resubmitSummary}</p>
-        <ResubmitComparison original={original} revised={draft} locale={locale} />
-        {unchanged ? <p className="text-[12px] text-[var(--color-accent-warning-text)]">{copy.explainRequired}</p> : null}
+        <BluePilotImpactCard record={record} impact={impact} locale={locale} />
+        {unchanged && !impact?.foundNumericChange ? (
+          <p className="text-[12px] text-[var(--color-accent-warning-text)]">{copy.explainRequired}</p>
+        ) : null}
         <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => setConfirming(false)}
-            className="rounded-md border border-[var(--color-border-default)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-text-muted)]"
-          >
+          <button type="button" onClick={() => setConfirming(false)} className={BTN_CANCEL}>
             {locale === "fr" ? "Retour" : "Back"}
           </button>
           <button
             type="button"
             disabled={!canResubmit}
-            onClick={() => onResubmit({ snapshot: draft, actionTaken, explanation, attachments })}
-            className="rounded-md bg-[var(--color-brand-primary)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-brand-onPrimary)] disabled:opacity-50"
+            onClick={() => {
+              const next =
+                impact?.foundNumericChange && recommendationUnchanged(original, draft)
+                  ? withProposedAwardUsd(draft, impact.revisedAwardUsd)
+                  : draft
+              onResubmit({ snapshot: next, actionTaken, explanation, attachments })
+            }}
+            className={BTN_PRIMARY}
           >
             {copy.resubmitForApproval}
           </button>
@@ -458,7 +638,7 @@ function RevisionCard({
 
   return (
     <div className="space-y-3">
-      <div className="rounded-[10px] border border-[var(--color-accent-warning-text)]/40 bg-[var(--color-bg-surface)] px-3 py-2.5 text-[12px] leading-relaxed text-[var(--color-text-secondary)]">
+      <div className="rounded-[10px] border border-[var(--color-accent-warning-text)]/40 bg-[var(--color-bg-subtle)] px-3 py-2.5 text-[12px] leading-relaxed text-[var(--color-text-secondary)]">
         <p className="font-semibold text-[var(--color-text-primary)]">
           {copy.status.revision_required}
           {record.approvalId ? ` — ${record.approvalId}` : ""}
@@ -486,7 +666,7 @@ function RevisionCard({
             setBidId(e.target.value)
             if (next) setAwardEur(String(Math.round(usdToEur(next.totalPriceUsd))))
           }}
-          className="w-full rounded-lg border border-[var(--color-border-default)] bg-background px-3 py-2 text-[13px] outline-none"
+          className={INPUT_FIELD_CLS}
         >
           {rows.map((row) => (
             <option key={row.bidId} value={row.bidId}>
@@ -505,7 +685,7 @@ function RevisionCard({
           min={0}
           value={awardEur}
           onChange={(e) => setAwardEur(e.target.value)}
-          className="w-full rounded-lg border border-[var(--color-border-default)] bg-background px-3 py-2 text-[13px] outline-none"
+          className={INPUT_FIELD_CLS}
         />
       </div>
       <div>
@@ -516,7 +696,7 @@ function RevisionCard({
           value={actionTaken}
           onChange={(e) => setActionTaken(e.target.value)}
           rows={2}
-          className="w-full resize-none rounded-lg border border-[var(--color-border-default)] bg-background px-3 py-2 text-[13px] outline-none"
+          className={NOTE_FIELD_CLS}
         />
       </div>
       <div>
@@ -527,17 +707,31 @@ function RevisionCard({
           value={explanation}
           onChange={(e) => setExplanation(e.target.value)}
           rows={2}
-          className="w-full resize-none rounded-lg border border-[var(--color-border-default)] bg-background px-3 py-2 text-[13px] outline-none"
+          className={NOTE_FIELD_CLS}
         />
-        {unchanged ? <p className="mt-1 text-[11px] text-[var(--color-accent-warning-text)]">{copy.explainRequired}</p> : null}
+        {unchanged && !impact?.foundNumericChange ? (
+          <p className="mt-1 text-[11px] text-[var(--color-accent-warning-text)]">{copy.explainRequired}</p>
+        ) : null}
       </div>
+      <BluePilotImpactCard record={record} impact={impact} locale={locale} />
+      {impact?.foundNumericChange ? (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => setAwardEur(String(Math.round(usdToEur(impact.revisedAwardUsd))))}
+            className={BTN_SECONDARY}
+          >
+            {copy.applyToProposal}
+          </button>
+        </div>
+      ) : null}
       <AttachmentEditor attachments={attachments} onChange={setAttachments} locale={locale} />
       <div className="flex justify-end">
         <button
           type="button"
           disabled={!canResubmit}
           onClick={() => setConfirming(true)}
-          className="rounded-md bg-[var(--color-brand-primary)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-brand-onPrimary)] disabled:opacity-50"
+          className={BTN_PRIMARY}
         >
           {copy.resubmitForApproval}
         </button>
@@ -555,6 +749,7 @@ export function AwardGovernanceCardBlock({
   onSubmitClarification,
   onResubmit,
   onConfirmAward,
+  onConfirmNotes,
 }: {
   record: AwardApprovalRecord
   locale?: DisplayLocale
@@ -570,6 +765,7 @@ export function AwardGovernanceCardBlock({
     response: string
     attachments: AwardSupportingDocument[]
     sourceReferences: string[]
+    snapshot?: AwardApprovalSnapshot
   }) => void
   onResubmit: (args: {
     snapshot: AwardApprovalSnapshot
@@ -578,9 +774,11 @@ export function AwardGovernanceCardBlock({
     attachments: AwardSupportingDocument[]
   }) => void
   onConfirmAward: () => void
+  onConfirmNotes?: () => void
 }) {
   const copy = awardGovCopy(locale)
   const snapshot = record.snapshot
+  const original = record.originalSnapshot ?? snapshot
   const status = record.status
   const [comments, setComments] = React.useState("")
   const [showClarify, setShowClarify] = React.useState(false)
@@ -589,13 +787,38 @@ export function AwardGovernanceCardBlock({
   const [response, setResponse] = React.useState("")
   const [attachments, setAttachments] = React.useState<AwardSupportingDocument[]>([])
   const [sources, setSources] = React.useState<string[]>([])
+  const clarificationImpact = useAwardNoteImpact(original, response, locale)
+  const viewerName = snapshot?.requiredApproverName ?? ""
+  const mustConfirmNotes = needsNoteConfirmation(record, viewerName)
+  const proposalChanged = Boolean(original && snapshot && !recommendationUnchanged(original, snapshot))
+  const roundTripComplete = hasCompletedAwardRoundTrip(record.audit.map((e) => e.action))
+  /** Field comparison only after the next approver has confirmed team notes. */
+  const showComparisonTable =
+    proposalChanged &&
+    Boolean(original) &&
+    !mustConfirmNotes &&
+    (!roundTripComplete || Boolean(record.notesConfirmedAt))
+
+  // After clarification/revision round-trips, drop secondary forms so the
+  // approver lands on Approve / Request clarification / Return for revision.
+  React.useEffect(() => {
+    setShowClarify(false)
+    setShowRevision(false)
+    setQuestion("")
+    setComments("")
+  }, [status, record.audit.length, record.notesConfirmedAt])
 
   if (!snapshot) return null
 
   if (status === "clarification_requested" && record.clarification?.status === "open") {
     const q = record.clarification
+    const appliedSnapshot =
+      clarificationImpact?.foundNumericChange
+        ? withProposedAwardUsd(snapshot, clarificationImpact.revisedAwardUsd)
+        : snapshot
     return (
-      <div className="mt-3 space-y-3 rounded-[10px] border border-[var(--color-accent-warning-text)]/40 bg-[var(--color-bg-surface)] p-3">
+      <div className="mt-3 space-y-3 rounded-[10px] border border-[var(--color-accent-warning-text)]/40 bg-[var(--color-bg-subtle)] p-3">
+        <BluePilotImpactCard record={record} impact={clarificationImpact} locale={locale} />
         <p className="text-[12px] leading-relaxed text-[var(--color-text-primary)]">
           <span className="font-semibold">
             {copy.clarificationFrom} {q.askedByName}:
@@ -610,9 +833,15 @@ export function AwardGovernanceCardBlock({
             value={response}
             onChange={(e) => setResponse(e.target.value)}
             rows={3}
-            className="w-full resize-none rounded-lg border border-[var(--color-border-default)] bg-background px-3 py-2 text-[13px] outline-none"
+            className={NOTE_FIELD_CLS}
           />
         </div>
+        {clarificationImpact?.foundNumericChange ? (
+          <p className="text-[12px] text-[var(--color-text-secondary)]">
+            {copy.applyToProposal}: {formatUsdAsEur(snapshot.proposedAwardUsd, locale)} →{" "}
+            {formatUsdAsEur(clarificationImpact.revisedAwardUsd, locale)}
+          </p>
+        ) : null}
         <AttachmentEditor attachments={attachments} onChange={setAttachments} locale={locale} />
         {snapshot.sourceReferences.length > 0 ? (
           <div>
@@ -641,8 +870,15 @@ export function AwardGovernanceCardBlock({
           <button
             type="button"
             disabled={!response.trim()}
-            onClick={() => onSubmitClarification({ response, attachments, sourceReferences: sources })}
-            className="rounded-md bg-[var(--color-brand-primary)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-brand-onPrimary)] disabled:opacity-50"
+            onClick={() =>
+              onSubmitClarification({
+                response,
+                attachments,
+                sourceReferences: sources,
+                snapshot: appliedSnapshot,
+              })
+            }
+            className={BTN_PRIMARY}
           >
             {copy.submitClarificationResponse}
           </button>
@@ -668,13 +904,22 @@ export function AwardGovernanceCardBlock({
           </p>
         ) : null}
         <SnapshotFields snapshot={snapshot} locale={locale} note={record.noteToApprover} />
-        {record.clarification?.status === "closed" ? (
-          <p className="px-1 text-[12px] text-[var(--color-text-secondary)]">
-            <span className="font-medium">{copy.clarificationFrom} {record.clarification.askedByName}:</span>{" "}
-            {record.clarification.question}
-            <br />
-            <span className="font-medium">{copy.clarificationResponse}:</span> {record.clarification.response}
-          </p>
+        <BluePilotImpactCard record={record} impact={record.noteImpact} locale={locale} />
+        {mustConfirmNotes ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-[10px] border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-3 py-2.5">
+            <p className="text-[12px] text-[var(--color-text-primary)]">{copy.confirmNotesHint}</p>
+            <button type="button" onClick={() => onConfirmNotes?.()} className={BTN_INVERSE}>
+              {copy.confirmNotes}
+            </button>
+          </div>
+        ) : null}
+        {showComparisonTable && original ? (
+          <div className="space-y-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+              {copy.resubmitSummary}
+            </p>
+            <ResubmitComparison original={original} revised={snapshot} locale={locale} />
+          </div>
         ) : null}
         {showClarify ? (
           <div className="space-y-2">
@@ -686,21 +931,17 @@ export function AwardGovernanceCardBlock({
               onChange={(e) => setQuestion(e.target.value)}
               rows={3}
               placeholder={copy.clarificationQuestionHint}
-              className="w-full resize-none rounded-lg border border-[var(--color-border-default)] bg-background px-3 py-2 text-[13px] outline-none"
+              className={NOTE_FIELD_CLS}
             />
             <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setShowClarify(false)}
-                className="rounded-md border border-[var(--color-border-default)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-text-muted)]"
-              >
+              <button type="button" onClick={() => setShowClarify(false)} className={BTN_CANCEL}>
                 {locale === "fr" ? "Annuler" : "Cancel"}
               </button>
               <button
                 type="button"
                 disabled={!question.trim()}
                 onClick={() => onRequestClarification(question)}
-                className="rounded-md bg-[var(--color-bg-inverse)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-text-inverse)] disabled:opacity-50"
+                className={BTN_INVERSE}
               >
                 {copy.requestClarification}
               </button>
@@ -715,27 +956,21 @@ export function AwardGovernanceCardBlock({
               onChange={(e) => setComments(e.target.value)}
               rows={2}
               placeholder={copy.comments}
-              className="w-full resize-none rounded-lg border border-[var(--color-border-default)] bg-background px-3 py-2 text-[13px] outline-none"
+              className={NOTE_FIELD_CLS}
             />
             <div className="flex flex-wrap justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setShowClarify(true)}
-                className="rounded-md border border-[var(--color-border-default)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-surface)]"
-              >
+              <button type="button" onClick={() => setShowClarify(true)} className={BTN_SECONDARY}>
                 {copy.requestClarification}
               </button>
-              <button
-                type="button"
-                onClick={() => setShowRevision(true)}
-                className="rounded-md border border-[var(--color-border-default)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-surface)]"
-              >
+              <button type="button" onClick={() => setShowRevision(true)} className={BTN_SECONDARY}>
                 {copy.returnForRevision}
               </button>
               <button
                 type="button"
+                disabled={mustConfirmNotes}
+                title={mustConfirmNotes ? copy.approveDisabledUntilConfirm : undefined}
                 onClick={() => onApprove(comments || (locale === "fr" ? "Attribution approuvée." : "Award approved."))}
-                className="inline-flex items-center gap-1.5 rounded-md bg-[var(--color-accent-positive-text)] px-3 py-1.5 text-[12px] font-semibold text-white hover:opacity-90"
+                className="inline-flex items-center gap-1.5 rounded-md bg-[var(--color-accent-positive-text)] px-3 py-1.5 text-[12px] font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <SafeIcon name="Check" className="h-3.5 w-3.5" />
                 {copy.approve}

@@ -1,5 +1,6 @@
 "use client"
 
+import { formatDateDMY } from "@/lib/compass/locale-display"
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
@@ -291,7 +292,7 @@ export function BiDashboardDrawer() {
     abortRef.current = controller
     setLoading(true)
     setNarrative("")
-    setGeneratedAt(new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }))
+    setGeneratedAt(formatDateDMY(new Date()))
 
     const dataContext = buildPortfolioContext(data, {
       page: "customer-intel",

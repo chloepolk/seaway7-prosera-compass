@@ -1,6 +1,8 @@
 import { getClient, getGeminiClient, callWithRetry, extractJson, MODELS, fallbackResponse, errorResponse } from "@/lib/compass/engine"
-import { ORCHESTRATOR_SCHEMA } from "@/app/prototype/prosera-compass/agents/_types"
-import { ORCHESTRATOR_PROMPT } from "@/app/prototype/prosera-compass/agents/_prompts"
+import { ORCHESTRATOR_SCHEMA as ORCHESTRATOR_SCHEMA_COMPASS } from "@/app/prototype/prosera-compass/agents/_types"
+import { ORCHESTRATOR_SCHEMA as ORCHESTRATOR_SCHEMA_FE } from "@/app/prototype/future-energy/agents/_types"
+import { ORCHESTRATOR_PROMPT as ORCHESTRATOR_COMPASS } from "@/app/prototype/prosera-compass/agents/_prompts"
+import { ORCHESTRATOR_PROMPT as ORCHESTRATOR_FE } from "@/app/prototype/future-energy/agents/_prompts"
 import { outputLanguageInstruction, sanitizeOrchestratorOutput } from "@/lib/compass/data-grounded-language"
 
 export const runtime = "nodejs"
@@ -17,7 +19,9 @@ export async function POST(req: Request) {
   const model = gemini ? MODELS.geminiFlash : MODELS.openai
 
   try {
-    const { specialistOutputs, drillState, pageContext, orchestratorContext, locale } = await req.json()
+    const { specialistOutputs, drillState, pageContext, orchestratorContext, locale, tenant } = await req.json()
+    const ORCHESTRATOR_SCHEMA = tenant === "future-energy" ? ORCHESTRATOR_SCHEMA_FE : ORCHESTRATOR_SCHEMA_COMPASS
+    const ORCHESTRATOR_PROMPT = tenant === "future-energy" ? ORCHESTRATOR_FE : ORCHESTRATOR_COMPASS
     const languageInstruction = `\n${outputLanguageInstruction(locale)}\n`
 
     const availableSpecialists = (specialistOutputs || []).filter(Boolean)
@@ -37,7 +41,7 @@ export async function POST(req: Request) {
       ? `\n═══ ROOT CAUSE ANALYSIS FOR CURRENT ENTITY ═══
 INSTRUCTIONS: The data below contains RAW NUMBERS (decimals for percentages, integers for USD seed amounts). Field names such as dollarImpact stay as written.
 - "currentMarginPct": 0.557 means 55.7% margin
-- "dollarImpact": 6200 means €5,704 at USD 1 = EUR 0.92 (prototype rate, 21 August 2026)
+- "dollarImpact": 6200 means €5,704 at USD 1 = EUR 0.92 (prototype rate, 21/08/2026)
 - "estimatedRecoveryDollars": 12000 means €11,040
 
 For each driver below, you MUST write a prescription that:
@@ -61,7 +65,7 @@ ${JSON.stringify(orchestratorContext.regionExternalData, null, 1)}`
       ? `\n═══ MARGIN DRAGS REQUIRING PRESCRIPTIVE ACTION ═══
 INSTRUCTIONS: Each object below is a customer dragging portfolio margin. ALL values are RAW NUMBERS. Field names such as dollarImpact stay as written.
 - "currentMarginPct": 0.25 → 25% margin; "gapToPortfolioPct": -0.30 → 30 points below portfolio
-- "dollarImpact": 3500 → €3,220 at USD 1 = EUR 0.92 (prototype rate, 21 August 2026)
+- "dollarImpact": 3500 → €3,220 at USD 1 = EUR 0.92 (prototype rate, 21/08/2026)
 - "estimatedRecoveryDollars": 8000 → €7,360 total recoverable
 
 For EACH drag below you MUST produce a separate bullet that:

@@ -1,6 +1,8 @@
 import { hasAnyProvider, callWithFallback, extractJson, MODELS, fallbackResponse, errorResponse } from "@/lib/compass/engine"
-import { VERIFIER_SCHEMA } from "@/app/prototype/prosera-compass/agents/_types"
-import { VERIFIER_PROMPT } from "@/app/prototype/prosera-compass/agents/_prompts"
+import { VERIFIER_SCHEMA as VERIFIER_SCHEMA_COMPASS } from "@/app/prototype/prosera-compass/agents/_types"
+import { VERIFIER_SCHEMA as VERIFIER_SCHEMA_FE } from "@/app/prototype/future-energy/agents/_types"
+import { VERIFIER_PROMPT as VERIFIER_COMPASS } from "@/app/prototype/prosera-compass/agents/_prompts"
+import { VERIFIER_PROMPT as VERIFIER_FE } from "@/app/prototype/future-energy/agents/_prompts"
 import { outputLanguageInstruction } from "@/lib/compass/data-grounded-language"
 
 export const runtime = "nodejs"
@@ -10,7 +12,9 @@ export async function POST(req: Request) {
   if (!hasAnyProvider()) return fallbackResponse()
 
   try {
-    const { orchestratorOutput, sourceData, drillState, verifiableBenchmarks, locale } = await req.json()
+    const { orchestratorOutput, sourceData, drillState, verifiableBenchmarks, locale, tenant } = await req.json()
+    const VERIFIER_SCHEMA = tenant === "future-energy" ? VERIFIER_SCHEMA_FE : VERIFIER_SCHEMA_COMPASS
+    const VERIFIER_PROMPT = tenant === "future-energy" ? VERIFIER_FE : VERIFIER_COMPASS
     const language = `${outputLanguageInstruction(locale)}\n\n`
 
     if (!orchestratorOutput?.findings?.length) {

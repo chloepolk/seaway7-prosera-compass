@@ -7,6 +7,7 @@
 /*  deadlines and savings targets.                                     */
 /* ------------------------------------------------------------------ */
 
+import { formatDateDMY } from "@/lib/compass/locale-display"
 import type { MissionStage } from "./stages"
 import { STAGE_META, STAGE_ORDER, stageIndex, statusForStage } from "./stages"
 import type { ClosedRecord, DiamondMission, MissionHealth, MissionHorizon, MissionReasoningMeta, GateTask, GateTaskStatus } from "./types"
@@ -383,7 +384,7 @@ function missionFromPackage(pkg: TenderPackage, locale: Locale, stageOverride?: 
 
   const pct = (value: number) => value.toLocaleString(localeTag(locale), { minimumFractionDigits: 1, maximumFractionDigits: 1 })
   const money = (value: number) => formatEur(value, locale)
-  const date = (value: string) => new Date(value).toLocaleDateString(localeTag(locale))
+  const date = (value: string) => formatDateDMY(value)
   const reasoningMeta: MissionReasoningMeta = {
     theme,
     steps: fr
@@ -583,7 +584,7 @@ export function buildPortfolioRoi(missions: DiamondMission[], closed: ClosedReco
   let running = 0
   const cumulative = ledger.map(e => {
     running += e.realizedValue
-    return { label: e.completionDate, total: running }
+    return { label: formatDateDMY(e.completionDate), total: running }
   })
 
   return {

@@ -110,7 +110,7 @@ export function CreateAppModal({ onClose, onCreated }: { onClose: () => void; on
       const res = await fetch("/api/acme/app-architect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ intent, locale }),
+        body: JSON.stringify({ intent, locale, tenant: "future-energy" }),
         signal: ctrl.signal,
       })
       const json = await res.json()
@@ -151,7 +151,7 @@ export function CreateAppModal({ onClose, onCreated }: { onClose: () => void; on
       const res = await fetch("/api/acme/app-compose", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idea: selected, features: features ?? selected.features, locale }),
+        body: JSON.stringify({ idea: selected, features: features ?? selected.features, locale, tenant: "future-energy" }),
         signal: ctrl.signal,
       })
       const json = await res.json()

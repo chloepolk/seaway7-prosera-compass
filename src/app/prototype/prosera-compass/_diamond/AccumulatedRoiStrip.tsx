@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { formatCurrency } from "./stages"
 import { formatGbp } from "../_format"
 import type { PortfolioRoi } from "./adapter"
+import { formatDateDMY } from "@/lib/compass/locale-display"
 
 function compactUsd(n: number): string {
   return formatGbp(n)
@@ -115,7 +116,7 @@ export function AccumulatedRoiStrip({ roi }: { roi: PortfolioRoi }) {
                 <span className="text-right tabular-nums text-muted-foreground">{compactUsd(e.cost)}</span>
                 <span className="text-right font-medium tabular-nums text-[var(--color-accent-positive-text)]">{formatCurrency(e.realizedValue)}</span>
                 <span className="text-right font-semibold tabular-nums text-[var(--color-accent-positive-text)]">{e.roiMultiple.toFixed(1)}x</span>
-                <span className="text-right tabular-nums text-muted-foreground">{e.completionDate}</span>
+                <span className="text-right tabular-nums text-muted-foreground">{formatDateDMY(e.completionDate)}</span>
               </div>
             ))}
           </div>

@@ -1398,9 +1398,6 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
           </div>
         </div>
         <form onSubmit={handleSubmit} className="rounded-2xl border border-white/10 bg-white/[0.06] p-8 shadow-2xl backdrop-blur-xl">
-          <div className="mb-5 flex justify-end">
-            <LanguageToggle />
-          </div>
           <div className="space-y-5">
             <div className="space-y-2">
               <label htmlFor="email" className="block text-xs font-medium uppercase tracking-wider text-white/60">{t("common.email")}</label>

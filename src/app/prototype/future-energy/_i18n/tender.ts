@@ -1,3 +1,4 @@
+import { formatDateDMY } from "@/lib/compass/locale-display"
 import {
   BASELINE_STANDARDS,
   COMPONENT_SPECS,
@@ -247,7 +248,7 @@ export function localizedDocuments(locale: Locale): S7Document[] {
       ...document,
       title: spec ? localizeComponentSpec(spec, locale).name : FR_DOCUMENT_TITLES[document.id] ?? document.title,
       revision: document.revision.startsWith("Executed ")
-        ? `Signé le ${new Date(`${document.revision.slice("Executed ".length)}T00:00:00`).toLocaleDateString("fr-FR")}`
+        ? `Signé le ${formatDateDMY(`${document.revision.slice("Executed ".length)}T00:00:00`)}`
         : document.revision,
     }
   })

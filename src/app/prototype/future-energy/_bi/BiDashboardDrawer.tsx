@@ -1,5 +1,6 @@
 "use client"
 
+import { formatDateDMY, formatDateTimeDMY } from "@/lib/compass/locale-display"
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
@@ -296,7 +297,7 @@ export function BiDashboardDrawer() {
     abortRef.current = controller
     setLoading(true)
     setNarrative("")
-    setGeneratedAt(new Date().toLocaleDateString(localeTag(locale), { year: "numeric", month: "long", day: "numeric" }))
+    setGeneratedAt(formatDateDMY(new Date()))
 
     const dataContext = buildPortfolioContext(data, {
       page: "customer-intel",
@@ -335,6 +336,7 @@ export function BiDashboardDrawer() {
         dataContext,
         chatBriefing: briefing,
         locale,
+        tenant: "future-energy",
       }),
       signal: controller.signal,
     })
@@ -373,7 +375,7 @@ export function BiDashboardDrawer() {
     return [
       locale === "fr" ? "═══ Synthèse BI de direction BluePilot — Future Energy ═══" : "═══ BluePilot Executive BI Summary — Future Energy ═══",
       "",
-      `${locale === "fr" ? "Date" : "Date"}: ${new Date().toLocaleString(localeTag(locale))}`,
+      `${locale === "fr" ? "Date" : "Date"}: ${formatDateTimeDMY(new Date())}`,
       "",
       locale === "fr" ? "── KPI du portefeuille ──" : "── Portfolio KPIs ──",
       `${locale === "fr" ? "Chiffre d’affaires validé" : "Revenue (validated)"}: ${fmtUsd(v.totalRevenue)}`,

@@ -1,5 +1,6 @@
 "use client"
 
+import { formatDateDMY } from "@/lib/compass/locale-display"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { cn } from "@/lib/utils"
 import type { DiamondMission } from "./types"
@@ -72,7 +73,7 @@ export function StageTimeline({ mission }: { mission: DiamondMission }) {
                   {t(`stages.${s}.title`)}
                 </div>
                 <div className="text-[9px] leading-tight text-muted-foreground">
-                  {entered ? new Date(entered).toLocaleDateString(localeTag(locale)) : t("diamond.pending")}
+                  {entered ? formatDateDMY(entered) : t("diamond.pending")}
                 </div>
                 {gap !== null ? (
                   <div className="text-[9px] font-medium leading-tight text-muted-foreground">+{gap}d</div>

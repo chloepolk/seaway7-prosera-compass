@@ -113,6 +113,7 @@ export function OperatingLoopPage() {
     returnAwardForRevision,
     resubmitAwardApproval,
     confirmAward,
+    confirmAwardNotes,
   } = useStore()
   const flightPathSteps = translatedFlightPathSteps(t)
 
@@ -409,6 +410,7 @@ export function OperatingLoopPage() {
                   ping(awardRecord.snapshot?.requiredApproverName)
                 }}
                 onConfirmAward={() => confirmAward(mission.id, procurementActor)}
+                onConfirmNotes={() => confirmAwardNotes(mission.id, approverActor)}
               />
             ) : undefined
           }

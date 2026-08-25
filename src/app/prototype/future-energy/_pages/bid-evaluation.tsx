@@ -1,5 +1,6 @@
 "use client"
 
+import { formatDateDMY } from "@/lib/compass/locale-display"
 import * as React from "react"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { cn } from "@/lib/utils"
@@ -525,7 +526,7 @@ export function BidEvaluationPage() {
                 )}
                 <p className="mt-1 max-w-2xl text-[12px] text-[var(--color-text-secondary)]">
                   {pkg.quantity} · {t("bidEval.budget")} {formatCurrency(pkg.budget, locale)} · {t("bidEval.closes")}{" "}
-                  {new Date(pkg.submissionDeadline).toLocaleDateString(localeTag(locale), { day: "numeric", month: "long", year: "numeric" })}
+                  {formatDateDMY(pkg.submissionDeadline)}
                 </p>
               </div>
               <div className="flex flex-wrap gap-1.5">

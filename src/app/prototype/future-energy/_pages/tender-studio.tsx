@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils"
 import { useStore, type DraftedTender } from "../_store"
 import { useT } from "../_i18n/use-t"
 import { createT, localeTag, type Locale } from "../_i18n"
+import { formatDateDMY } from "@/lib/compass/locale-display"
 import { localizeRole } from "../_i18n/domain"
 import {
   TENDER_SUGGESTIONS,
@@ -243,8 +244,8 @@ function addDaysIso(iso: string, days: number): string {
   return d.toISOString().slice(0, 10)
 }
 
-function formatDate(iso: string, locale: Locale): string {
-  return new Date(iso + "T00:00:00").toLocaleDateString(localeTag(locale), { day: "numeric", month: "long", year: "numeric" })
+function formatDate(iso: string, _locale: Locale): string {
+  return formatDateDMY(iso + "T00:00:00")
 }
 
 function composeItt(
@@ -857,7 +858,7 @@ export function TenderStudioPage() {
                           {localizeComponentSpec(COMPONENT_SPECS.find(candidate => candidate.id === d.componentId) ?? COMPONENT_SPECS[0], locale).name}
                         </span>
                         <span className="block truncate text-[10px] text-[var(--color-text-muted)]">
-                          {d.id} · {localizeQuantity(d.quantity, locale)} · {new Date(d.createdAt).toLocaleDateString(localeTag(locale), { day: "numeric", month: "short" })}
+                          {d.id} · {localizeQuantity(d.quantity, locale)} · {formatDateDMY(d.createdAt)}
                         </span>
                       </button>
                       {d.submitted ? (

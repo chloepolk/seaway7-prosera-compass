@@ -1,6 +1,8 @@
 import { getClient, getGeminiClient, callWithRetry, extractJson, MODELS, fallbackResponse, errorResponse } from "@/lib/compass/engine"
-import { APP_COMPOSER_PROMPT } from "@/app/prototype/prosera-compass/agents/_prompts"
-import { buildCatalogPromptContext } from "@/app/prototype/prosera-compass/_modules/catalog"
+import { APP_COMPOSER_PROMPT as COMPOSER_COMPASS } from "@/app/prototype/prosera-compass/agents/_prompts"
+import { APP_COMPOSER_PROMPT as COMPOSER_FE } from "@/app/prototype/future-energy/agents/_prompts"
+import { buildCatalogPromptContext as catalogCompass } from "@/app/prototype/prosera-compass/_modules/catalog"
+import { buildCatalogPromptContext as catalogFE } from "@/app/prototype/future-energy/_modules/catalog"
 import { outputLanguageInstruction } from "@/lib/compass/data-grounded-language"
 
 export const runtime = "nodejs"
@@ -15,7 +17,9 @@ export async function POST(req: Request) {
   const model = gemini ? MODELS.gemini : MODELS.openai
 
   try {
-    const { idea, features, locale } = await req.json()
+    const { idea, features, locale, tenant } = await req.json()
+    const APP_COMPOSER_PROMPT = tenant === "future-energy" ? COMPOSER_FE : COMPOSER_COMPASS
+    const buildCatalogPromptContext = tenant === "future-energy" ? catalogFE : catalogCompass
     if (!idea) return errorResponse(new Error("No idea provided to composer"))
 
     const userContent = [

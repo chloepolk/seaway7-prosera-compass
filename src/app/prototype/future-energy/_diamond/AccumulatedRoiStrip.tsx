@@ -1,5 +1,6 @@
 "use client"
 
+import { formatDateDMY } from "@/lib/compass/locale-display"
 import * as React from "react"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { cn } from "@/lib/utils"
@@ -117,7 +118,7 @@ export function AccumulatedRoiStrip({ roi }: { roi: PortfolioRoi }) {
                 <span className="text-right tabular-nums text-muted-foreground">{formatCurrency(e.cost, locale)}</span>
                 <span className="text-right font-medium tabular-nums text-[var(--color-accent-positive-text)]">{formatCurrency(e.realizedValue, locale)}</span>
                 <span className="text-right font-semibold tabular-nums text-[var(--color-accent-positive-text)]">{formatMultiple(e.roiMultiple, locale)}</span>
-                <span className="text-right tabular-nums text-muted-foreground">{new Date(e.completionDate).toLocaleDateString(localeTag(locale))}</span>
+                <span className="text-right tabular-nums text-muted-foreground">{formatDateDMY(e.completionDate)}</span>
               </div>
             ))}
           </div>

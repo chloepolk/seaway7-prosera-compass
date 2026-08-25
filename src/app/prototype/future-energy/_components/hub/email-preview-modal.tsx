@@ -1,5 +1,6 @@
 "use client"
 
+import { formatDateDMY } from "@/lib/compass/locale-display"
 import * as React from "react"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { cn } from "@/lib/utils"
@@ -18,7 +19,7 @@ function buildDefaultBody(mission: DiamondMission, narrative: string, locale: Lo
     name: mission.name,
     narrative,
     target: formatCurrency(mission.projectedValue, locale),
-    date: new Date(mission.targetCompletionAt).toLocaleDateString(localeTag(locale)),
+    date: formatDateDMY(mission.targetCompletionAt),
   })
 }
 

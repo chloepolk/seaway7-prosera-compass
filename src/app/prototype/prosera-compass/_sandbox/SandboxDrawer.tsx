@@ -1,5 +1,6 @@
 "use client"
 
+import { formatDateDMY } from "@/lib/compass/locale-display"
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
@@ -161,7 +162,7 @@ export function SandboxDrawer() {
     const lines = [
       "═══ BluePilot What-If Scenario Export ═══",
       "",
-      `Date: ${new Date().toLocaleDateString()}`,
+      `Date: ${formatDateDMY(new Date())}`,
       "",
       "── Scenario Parameters ──",
       `Customer Mix: Exit ${scenario.customerMix.exitDogs} Dogs, Add ${scenario.customerMix.addStars} Stars`,
@@ -246,7 +247,7 @@ export function SandboxDrawer() {
                     <div key={s.id} className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 hover:bg-muted/40 group">
                       <button type="button" className="flex-1 text-left text-xs truncate" onClick={() => loadScenario(s)}>
                         <span className="font-medium">{s.name}</span>
-                        <span className="text-muted-foreground ml-2">{new Date(s.timestamp).toLocaleDateString()}</span>
+                        <span className="text-muted-foreground ml-2">{formatDateDMY(s.timestamp)}</span>
                       </button>
                       <button
                         type="button"

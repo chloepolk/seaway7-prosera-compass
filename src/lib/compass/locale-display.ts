@@ -8,8 +8,8 @@
 
 export type DisplayLocale = "en" | "fr"
 
-/** Prototype FX, 21 August 2026. USD seed × rate = display currency. */
-export const FX_RATE_DATE = "21 August 2026"
+/** Prototype FX, 21/08/2026. USD seed × rate = display currency. */
+export const FX_RATE_DATE = "21/08/2026"
 export const USD_TO_EUR = 0.92
 
 export const US_GAL_TO_LITRE = 3.785411784
@@ -20,6 +20,68 @@ export const USD_PER_GAL_SENSITIVITY = 0.1
 
 export function localeTag(locale: DisplayLocale = "en"): "en-GB" | "fr-FR" {
   return locale === "fr" ? "fr-FR" : "en-GB"
+}
+
+function parseDisplayDate(input: string | number | Date): Date | null {
+  if (input instanceof Date) return Number.isNaN(input.getTime()) ? null : input
+  if (typeof input === "number") {
+    const d = new Date(input)
+    return Number.isNaN(d.getTime()) ? null : d
+  }
+  const raw = input.trim()
+  if (!raw) return null
+  const isoDay = raw.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (isoDay) {
+    const d = new Date(`${isoDay[1]}-${isoDay[2]}-${isoDay[3]}T00:00:00`)
+    return Number.isNaN(d.getTime()) ? null : d
+  }
+  const dmy = raw.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/)
+  if (dmy) {
+    const d = new Date(Number(dmy[3]), Number(dmy[2]) - 1, Number(dmy[1]))
+    return Number.isNaN(d.getTime()) ? null : d
+  }
+  const d = new Date(raw.includes("T") || raw.includes(" ") ? raw : `${raw}T00:00:00`)
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
+/** User-facing calendar date. Always DD/MM/YYYY (25/08/2026). */
+export function formatDateDMY(input: string | number | Date | null | undefined): string {
+  if (input == null || input === "") return ""
+  const d = parseDisplayDate(input)
+  if (!d) return typeof input === "string" ? input : ""
+  const dd = String(d.getDate()).padStart(2, "0")
+  const mm = String(d.getMonth() + 1).padStart(2, "0")
+  return `${dd}/${mm}/${d.getFullYear()}`
+}
+
+/** YYYY-MM-DD for storage / native value attributes. Empty string if unparseable. */
+export function toIsoDate(input: string | number | Date | null | undefined): string {
+  if (input == null || input === "") return ""
+  const d = parseDisplayDate(input)
+  if (!d) return ""
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, "0")
+  const dd = String(d.getDate()).padStart(2, "0")
+  return `${yyyy}-${mm}-${dd}`
+}
+
+/** Parse a DD/MM/YYYY (or ISO) string to YYYY-MM-DD, or null if invalid. */
+export function parseToIsoDate(input: string | null | undefined): string | null {
+  if (input == null || !input.trim()) return null
+  const iso = toIsoDate(input.trim())
+  return iso || null
+}
+
+export const DATE_INPUT_PLACEHOLDER = "DD/MM/YYYY"
+
+/** User-facing date and 24-hour time. DD/MM/YYYY HH:mm */
+export function formatDateTimeDMY(input: string | number | Date | null | undefined): string {
+  if (input == null || input === "") return ""
+  const d = parseDisplayDate(input)
+  if (!d) return typeof input === "string" ? input : ""
+  const hh = String(d.getHours()).padStart(2, "0")
+  const min = String(d.getMinutes()).padStart(2, "0")
+  return `${formatDateDMY(d)} ${hh}:${min}`
 }
 
 /** Decimal with a fixed fraction length. EN: 20.1 · FR: 20,1 */

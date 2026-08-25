@@ -4,6 +4,7 @@ import * as React from "react"
 import { SafeIcon } from "@/components/prosera-lib/safe-icon"
 import { Button } from "@/components/ui/prosera/button"
 import { cn } from "@/lib/utils"
+import { formatDateDMY } from "@/lib/compass/locale-display"
 import { useStore, type DraftedTender } from "../_store"
 import { enterMotion, listItemMotion, pcmButton, pcmCard } from "../_components/motion"
 import { ACTIVE_USER } from "../_components/hub/active-user"
@@ -198,7 +199,7 @@ function addDaysIso(iso: string, days: number): string {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+  return formatDateDMY(iso + "T00:00:00")
 }
 
 function composeItt(
@@ -736,7 +737,7 @@ export function TenderStudioPage() {
                           {d.itt.title.replace("Invitation to Tender — ", "")}
                         </span>
                         <span className="block truncate text-[10px] text-[var(--color-text-muted)]">
-                          {d.id} · {d.quantity} · {new Date(d.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                          {d.id} · {d.quantity} · {formatDateDMY(d.createdAt)}
                         </span>
                       </button>
                       {d.submitted ? (

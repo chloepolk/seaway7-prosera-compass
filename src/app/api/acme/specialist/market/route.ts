@@ -1,6 +1,8 @@
 import { hasAnyProvider, callWithFallback, extractJson, MODELS, fallbackResponse, errorResponse } from "@/lib/compass/engine"
-import { SPECIALIST_SCHEMA } from "@/app/prototype/prosera-compass/agents/_types"
-import { MARKET_SPECIALIST_PROMPT } from "@/app/prototype/prosera-compass/agents/_prompts"
+import { SPECIALIST_SCHEMA as SPECIALIST_SCHEMA_COMPASS } from "@/app/prototype/prosera-compass/agents/_types"
+import { SPECIALIST_SCHEMA as SPECIALIST_SCHEMA_FE } from "@/app/prototype/future-energy/agents/_types"
+import { MARKET_SPECIALIST_PROMPT as MARKET_COMPASS } from "@/app/prototype/prosera-compass/agents/_prompts"
+import { MARKET_SPECIALIST_PROMPT as MARKET_FE } from "@/app/prototype/future-energy/agents/_prompts"
 import { outputLanguageInstruction, sanitizeSpecialistOutput } from "@/lib/compass/data-grounded-language"
 
 export const runtime = "nodejs"
@@ -10,7 +12,9 @@ export async function POST(req: Request) {
   if (!hasAnyProvider()) return fallbackResponse()
 
   try {
-    const { context, drillState, locale } = await req.json()
+    const { context, drillState, locale, tenant } = await req.json()
+    const SPECIALIST_SCHEMA = tenant === "future-energy" ? SPECIALIST_SCHEMA_FE : SPECIALIST_SCHEMA_COMPASS
+    const MARKET_SPECIALIST_PROMPT = tenant === "future-energy" ? MARKET_FE : MARKET_COMPASS
     const language = `${outputLanguageInstruction(locale)}\n\n`
 
     const response = await callWithFallback({
