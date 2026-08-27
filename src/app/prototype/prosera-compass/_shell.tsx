@@ -58,7 +58,7 @@ type TopNavTab = {
 
 const TOP_NAV_TABS: TopNavTab[] = [
   { id: "action-board", label: "Action Centre", pages: ["operating-loop"], defaultPage: "operating-loop" },
-  { id: "tender-studio", label: "Tender Studio", pages: ["tender-studio"], defaultPage: "tender-studio" },
+  { id: "tender-studio", label: "Tender Management", pages: ["tender-studio"], defaultPage: "tender-studio" },
   { id: "bid-evaluation", label: "Bid Evaluation", pages: ["bid-evaluation"], defaultPage: "bid-evaluation" },
 ]
 

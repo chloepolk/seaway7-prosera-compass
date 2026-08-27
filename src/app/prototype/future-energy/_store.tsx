@@ -163,11 +163,11 @@ export interface AcmeDemoStore {
   focusMissionId: string | null
   setFocusMission: (id: string | null) => void
 
-  /** Session progress on tender packages (e.g. an ITT drafted in Tender Studio
+  /** Session progress on tender packages (e.g. an ITT drafted in Tender Management
    *  advances its package to the approval gate on the Action Centre). */
   tenderStages: Record<string, MissionStage>
   advanceTenderStage: (packageId: string, stage: MissionStage) => void
-  /** Package to preload when Tender Studio opens (set by the board's Draft ITT action). */
+  /** Package to preload when Tender Management opens (set by the board's Draft ITT action). */
   focusTenderId: string | null
   openTenderStudio: (packageId: string | null) => void
   /** Package to focus when Bid Evaluation opens (set by the board's Evaluate bids action). */
@@ -306,16 +306,16 @@ function getPageContext(page: Page, locale: Locale): string {
   if (locale === "fr") {
     switch (page) {
       case "operating-loop": return "Centre dâ€™actions â€” pipeline actif des appels dâ€™offres du programme Ã©olien offshore Meridian, oÃ¹ les lots dâ€™achats progressent par 5 portes (CadrÃ© â†’ SpÃ©cifiÃ© â†’ ApprouvÃ© â†’ Ã‰mis â†’ AttribuÃ©), avec responsable, date limite de soumission, objectif dâ€™Ã©conomies et registre cumulÃ© des Ã©conomies"
-      case "tender-studio": return "Studio dâ€™appels dâ€™offres â€” espace de rÃ©daction des AO depuis les documents contrÃ´lÃ©s, avec pipeline multi-agents dâ€™assemblage, dâ€™audit et de rendu"
+      case "tender-studio": return "Gestion des appels d'offres â€” espace de rÃ©daction des AO depuis les documents contrÃ´lÃ©s, avec pipeline multi-agents dâ€™assemblage, dâ€™audit et de rendu"
       case "bid-evaluation": return "Ã‰valuation des offres â€” portefeuille de rÃ©ponses fournisseurs dÃ©pouillÃ©es avec portes Ã©liminatoires et notation composite sur 100, matrice et recommandations dâ€™attribution"
       default: return "Espace de gestion de la chaÃ®ne dâ€™approvisionnement du programme Ã©olien offshore Meridian"
     }
   }
   switch (page) {
     case "operating-loop": return "Action Centre â€” the live tender pipeline for the Meridian offshore wind programme, where procurement packages move through 5 gates (Scoped â†’ Specified â†’ Approved â†’ Issued â†’ Awarded), each with an accountable owner, submission deadline and savings target, plus an accumulated savings ledger of awarded packages"
-    case "tender-studio": return "Tender Studio â€” the ITT drafting workspace: a controlled document repository (engineering specifications, QA manual, procurement terms, charter party), a drafting prompt, and the multi-agent pipeline that assembles, audits and renders a complete Invitation to Tender"
+    case "tender-studio": return "Tender Management â€” the ITT drafting workspace: a controlled document repository (engineering specifications, QA manual, procurement terms, charter party), a drafting prompt, and the multi-agent pipeline that assembles, audits and renders a complete Invitation to Tender"
     case "bid-evaluation": return "Bid Evaluation â€” multi-ITT portfolio of tabulated supplier returns with hard gates (ISO 9001, knock-for-knock, DDP Rotterdam) and 100-point composite scoring (Price 35 / Tech 25 / QA 20 / Legal 20), including matrix, baseball cards and award recommendations"
-    default: return "Supply chain management workspace for the Meridian offshore wind programme covering Action Centre, Tender Studio and Bid Evaluation"
+    default: return "Supply chain management workspace for the Meridian offshore wind programme covering Action Centre, Tender Management and Bid Evaluation"
   }
 }
 

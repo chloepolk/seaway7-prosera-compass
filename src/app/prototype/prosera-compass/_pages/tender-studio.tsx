@@ -642,7 +642,7 @@ export function TenderStudioPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className={cn(heroMotion.className, "space-y-1")} style={heroMotion.style}>
-        <h1 className="text-[22px] font-bold text-[var(--color-text-primary)]">Tender Studio</h1>
+        <h1 className="text-[22px] font-bold text-[var(--color-text-primary)]">Tender Management</h1>
         <p className="text-[13px] text-[var(--color-text-secondary)]">
           Draft, audit and issue Invitations to Tender against the {PROJECT.shortName} controlled document register.
         </p>

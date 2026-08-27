@@ -284,7 +284,7 @@ export function OperatingLoopPage() {
     const motion = listItemMotion(i)
     const reconciling = reconcilingId === mission.id
     const assignedToYou = isMissionOwnedByActiveUser({ ...mission, owner: fields.ownerRole })
-    // Packages ahead of the approval gate can be drafted in Tender Studio.
+    // Packages ahead of the approval gate can be drafted in Tender Management.
     const canDraft = fields.stage === "mission_created" || fields.stage === "understand"
     const canEvaluate = fields.stage === "execute"
     const govCopy = awardGovCopy("en")

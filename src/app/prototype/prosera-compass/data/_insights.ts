@@ -43,7 +43,7 @@ function procurementFindings(): BPFinding[] {
         "Five pre-qualified suppliers confirmed capacity for Q1 2027 delivery.",
         "PKG-2105 (J-tube seals) is sequenced behind the cable award for OD confirmation.",
       ],
-      recommendation: "Draft and issue the PKG-2101 ITT via Tender Studio, then route to the SCM Director for approval.",
+      recommendation: "Draft and issue the PKG-2101 ITT via Tender Management, then route to the SCM Director for approval.",
       page: "operating-loop",
       drillLevel: "macro",
     },

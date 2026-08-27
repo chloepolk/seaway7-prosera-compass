@@ -28,7 +28,7 @@ const en = {
   },
   nav: {
     actionCentre: "Action Centre",
-    tenderStudio: "Tender Studio",
+    tenderStudio: "Tender Management",
     bidEvaluation: "Bid Evaluation",
     intelligencePanel: "Intelligence Panel",
     closeIntelPanel: "Close intelligence panel",
@@ -357,7 +357,7 @@ const en = {
     upstreamCopy: "Still at {stage}. Issue the ITT and collect returns before scoring.",
   },
   tenderStudio: {
-    title: "Tender Studio",
+    title: "Tender Management",
     subtitle: "Draft ITTs from controlled documents",
     draftTender: "Draft a tender",
     placeholder: "Describe the package to tender…",

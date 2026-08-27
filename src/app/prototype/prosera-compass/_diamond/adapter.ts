@@ -351,7 +351,7 @@ function missionFromPackage(pkg: TenderPackage, stageOverride?: MissionStage): D
     id: pkg.id,
     name: `${pkg.title} · ${pkg.quantity}`,
     objective: `Take ${pkg.packageRef} from scope to award for ${PROJECT.shortName} — ${pkg.quantity} against a $${(pkg.budget / 1_000_000).toFixed(1)}M budget, targeting $${Math.round(pkg.targetSavings / 1000)}k in negotiated savings.`,
-    source: { page: "tender-studio", label: "Open in Tender Studio" },
+    source: { page: "tender-studio", label: "Open in Tender Management" },
     stage,
     status: statusForStage[stage],
     health,
@@ -425,7 +425,7 @@ export interface DiamondData {
 /**
  * Build the Action Centre from the tender register.
  * `stageOverrides` carries session progress (e.g. an ITT drafted in
- * Tender Studio advances its package to the approval gate).
+ * Tender Management advances its package to the approval gate).
  */
 export function buildDiamondMissions(stageOverrides?: Record<string, MissionStage>): DiamondData {
   const missions = TENDER_PACKAGES.map(pkg => missionFromPackage(pkg, stageOverrides?.[pkg.id]))

@@ -153,11 +153,11 @@ export interface AcmeDemoStore {
   focusMissionId: string | null
   setFocusMission: (id: string | null) => void
 
-  /** Session progress on tender packages (e.g. an ITT drafted in Tender Studio
+  /** Session progress on tender packages (e.g. an ITT drafted in Tender Management
    *  advances its package to the approval gate on the Action Centre). */
   tenderStages: Record<string, MissionStage>
   advanceTenderStage: (packageId: string, stage: MissionStage) => void
-  /** Package to preload when Tender Studio opens (set by the board's Draft ITT action). */
+  /** Package to preload when Tender Management opens (set by the board's Draft ITT action). */
   focusTenderId: string | null
   openTenderStudio: (packageId: string | null) => void
   /** Package to focus when Bid Evaluation opens (set by the board's Evaluate bids action). */
@@ -295,9 +295,9 @@ function getSpecialistsForPage(page: Page): ("portfolio" | "pricing" | "market")
 function getPageContext(page: Page): string {
   switch (page) {
     case "operating-loop": return "Action Centre — the live tender pipeline for the Meridian offshore wind programme, where procurement packages move through 5 gates (Scoped → Specified → Approved → Issued → Awarded), each with an accountable owner, submission deadline and savings target, plus an accumulated savings ledger of awarded packages"
-    case "tender-studio": return "Tender Studio — the ITT drafting workspace: a controlled document repository (engineering specifications, QA manual, procurement terms, charter party), a drafting prompt, and the multi-agent pipeline that assembles, audits and renders a complete Invitation to Tender"
+    case "tender-studio": return "Tender Management — the ITT drafting workspace: a controlled document repository (engineering specifications, QA manual, procurement terms, charter party), a drafting prompt, and the multi-agent pipeline that assembles, audits and renders a complete Invitation to Tender"
     case "bid-evaluation": return "Bid Evaluation — multi-ITT portfolio of tabulated supplier returns with hard gates (ISO 9001, knock-for-knock, DDP Rotterdam) and 100-point composite scoring (Price 35 / Tech 25 / QA 20 / Legal 20), including matrix, baseball cards and award recommendations"
-    default: return "Supply chain management workspace for the Meridian offshore wind programme covering Action Centre, Tender Studio and Bid Evaluation"
+    default: return "Supply chain management workspace for the Meridian offshore wind programme covering Action Centre, Tender Management and Bid Evaluation"
   }
 }
 

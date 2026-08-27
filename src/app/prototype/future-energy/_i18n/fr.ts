@@ -26,7 +26,7 @@ const fr: EnMessages = {
   },
   nav: {
     actionCentre: "Centre d'actions",
-    tenderStudio: "Studio d'appels d'offres",
+    tenderStudio: "Gestion des appels d'offres",
     bidEvaluation: "Évaluation des offres",
     intelligencePanel: "Panneau d'intelligence",
     closeIntelPanel: "Fermer le panneau d'intelligence",
@@ -356,7 +356,7 @@ const fr: EnMessages = {
     upstreamCopy: "Toujours à l’étape {stage}. Émettez l’AO et recueillez les réponses avant la notation.",
   },
   tenderStudio: {
-    title: "Studio d'appels d'offres",
+    title: "Gestion des appels d'offres",
     subtitle: "Rédiger des AO à partir des documents contrôlés",
     draftTender: "Rédiger un appel d’offres",
     placeholder: "Décrivez le lot à mettre en appel d'offres…",
