@@ -2,12 +2,7 @@
 
 import * as React from "react"
 import { useStore } from "./_store"
-import { CustomerIntelPage } from "./_pages/customer-intel"
-import { PricingIntelPage } from "./_pages/pricing-intel"
-import { MarketPositionPage } from "./_pages/market-position"
-import { ProcessVelocityPage } from "./_pages/process-velocity"
 import { OperatingLoopPage } from "./_pages/operating-loop"
-import { CommercialCenterPage } from "./_pages/commercial-center"
 import { TenderStudioPage } from "./_pages/tender-studio"
 import { BidEvaluationPage } from "./_pages/bid-evaluation"
 
@@ -30,22 +25,11 @@ export default function CompassPage() {
   }
 
   switch (activePage) {
-    case "commercial-center":
-      return <CommercialCenterPage />
-    case "customer-intel":
-      return <CustomerIntelPage />
-    case "pricing-intel":
-      return <PricingIntelPage />
-    case "market-position":
-      return <MarketPositionPage />
-    case "process-velocity":
-      return <ProcessVelocityPage />
-    case "operating-loop":
-      return <OperatingLoopPage />
     case "tender-studio":
       return <TenderStudioPage />
     case "bid-evaluation":
       return <BidEvaluationPage />
+    default:
+      return <OperatingLoopPage />
   }
 }
-

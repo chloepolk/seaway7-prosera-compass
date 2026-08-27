@@ -154,8 +154,8 @@ export function IntelligenceDetailedPanel({ className }: { className?: string })
         {intelRailSection === "context" && (
           <p className="text-[12px] leading-relaxed text-[var(--color-text-secondary)]">
             {locale === "fr"
-              ? "Les signaux carburant, météo et marché sont intégrés à chaque action ci-dessus. Ouvrez le contexte d’un hub pour consulter le détail."
-              : "Fuel, weather, and market signals are woven into each action above. Open Context on any hub for full detail."}
+              ? "Les dossiers d’appel d’offres et le registre des documents contrôlés figurent sur chaque action. Ouvrez un dossier pour le détail."
+              : "Tender packages and the controlled document register sit on each action. Open a package for the detail."}
           </p>
         )}
 

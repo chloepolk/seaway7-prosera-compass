@@ -6,7 +6,6 @@
 /*  agent receives. Signatures are kept stable for the store.          */
 /* ------------------------------------------------------------------ */
 
-import type { ComputedData } from "../data/_transform"
 import type { DrillState, OrchestratorOutput, SpecialistOutput } from "./_types"
 import { formatEurFigure, usdToEur } from "@/lib/compass/locale-display"
 import { TENDER_PACKAGES, CLOSED_PACKAGES, PROJECT, TODAY, tenderById } from "../data/seaway7/_tenders"
@@ -269,7 +268,7 @@ ${pending}`
 /* ------------------------------------------------------------------ */
 
 /** Procurement portfolio specialist: the pipeline itself — stages, deadlines, owners. */
-export function buildPortfolioContext(_data: ComputedData, drill: DrillState): Record<string, unknown> {
+export function buildPortfolioContext(drill: DrillState): Record<string, unknown> {
   return {
     programme: PROJECT,
     asOf: TODAY,
@@ -292,7 +291,7 @@ export function buildPortfolioContext(_data: ComputedData, drill: DrillState): R
 }
 
 /** Commercial specialist: budgets, savings economics, terms exposure. */
-export function buildPricingContext(_data: ComputedData, drill: DrillState): Record<string, unknown> {
+export function buildPricingContext(drill: DrillState): Record<string, unknown> {
   return {
     programme: PROJECT.name,
     asOf: TODAY,
@@ -318,7 +317,7 @@ export function buildPricingContext(_data: ComputedData, drill: DrillState): Rec
 }
 
 /** Supply market specialist: documents, standards and supplier-facing obligations. */
-export function buildMarketContext(_data: ComputedData, drill: DrillState): Record<string, unknown> {
+export function buildMarketContext(drill: DrillState): Record<string, unknown> {
   return {
     programme: PROJECT.name,
     asOf: TODAY,
@@ -350,7 +349,6 @@ export function buildOrchestratorContext(
   _specialistOutputs: SpecialistOutput[],
   drill: DrillState,
   pageContext: string,
-  _data: ComputedData,
 ): Record<string, unknown> {
   return {
     programme: PROJECT,
@@ -379,7 +377,6 @@ export function buildOrchestratorContext(
 
 export function buildVerifierContext(
   _orchestratorOutput: OrchestratorOutput,
-  _data: ComputedData,
   drill: DrillState,
 ): { sourceData: Record<string, unknown>; verifiableBenchmarks: Record<string, unknown> } {
   return {
@@ -410,7 +407,7 @@ export function buildVerifierContext(
 /*  Chat briefing                                                      */
 /* ------------------------------------------------------------------ */
 
-export function buildChatBriefing(_data: ComputedData): string {
+export function buildChatBriefing(): string {
   const pipeline = TENDER_PACKAGES.map(p =>
     `- ${p.id} ${p.title} (${p.quantity}): stage ${p.stage}, budget ${formatEurFigure(eur(p.budget))}, savings target ${formatEurFigure(eur(p.targetSavings))}, ${p.bidders} bidders, submissions close ${p.submissionDeadline}, owner ${p.ownerRole}.`,
   ).join("\n")

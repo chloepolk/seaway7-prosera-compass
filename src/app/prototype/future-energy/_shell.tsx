@@ -30,8 +30,6 @@ import { localeTag, type Locale } from "./_i18n"
 import { localizedClosedPackages, localizedTenderPackages } from "./_i18n/domain"
 import { localizeLegacyCopy } from "./_i18n/legacy"
 import { formatCompactEur, formatEur } from "./_i18n/currency"
-import { SandboxDrawer } from "./_sandbox/SandboxDrawer"
-import { BiDashboardDrawer } from "./_bi/BiDashboardDrawer"
 import { DOCUMENTS, CATEGORY_LABELS, CHARTER, type DocumentCategory } from "./data/future-energy/_documents"
 import { TENDER_PACKAGES, CLOSED_PACKAGES, PROJECT, TODAY } from "./data/future-energy/_tenders"
 import type { BPFinding, Severity } from "./data/_insights"
@@ -256,32 +254,14 @@ function DataIntegrityBadge() {
 /* ------------------------------------------------------------------ */
 
 function DrillBreadcrumbBar() {
-  const { breadcrumbs, drillLevel, activePage, setPage } = useStore()
-  const t = useT()
-  const hubPages: Page[] = ["operating-loop", "commercial-center", "market-position", "process-velocity"]
-  const showIntelHubBack =
-    (activePage === "customer-intel" || activePage === "pricing-intel") && drillLevel === "macro"
-  const showBack =
-    (breadcrumbs.length > 0 || showIntelHubBack) &&
-    !(hubPages.includes(activePage) && drillLevel === "macro")
-
-  if (!showBack) return null
+  const { breadcrumbs } = useStore()
+  if (breadcrumbs.length === 0) return null
 
   return (
     <header
       className="border-b border-[var(--color-border-default)] bg-[var(--color-bg-surface)] text-sm"
     >
       <div className={cn(SHELL_CONTENT_CLASS, "flex h-11 items-center gap-2")}>
-      {(activePage === "customer-intel" || activePage === "pricing-intel") && drillLevel === "macro" && (
-        <button
-          type="button"
-          onClick={() => setPage("commercial-center")}
-          className="inline-flex items-center gap-1.5 font-sans text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
-        >
-          <SafeIcon name="ArrowLeft" className="h-4 w-4 shrink-0" />
-          {t("common.back")}
-        </button>
-      )}
       {breadcrumbs.map((c, i) => (
         <React.Fragment key={i}>
           {i > 0 && <SafeIcon name="ChevronRight" className="h-3.5 w-3.5 text-[var(--color-text-muted)]" />}
@@ -1467,8 +1447,6 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         activeSection={intelRailSection}
         onSectionChange={setIntelRailSection}
       />
-      <SandboxDrawer />
-      <BiDashboardDrawer />
     </div>
   )
 }

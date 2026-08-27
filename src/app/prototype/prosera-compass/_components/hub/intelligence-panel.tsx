@@ -150,7 +150,7 @@ export function IntelligenceDetailedPanel({ className }: { className?: string })
 
         {intelRailSection === "context" && (
           <p className="text-[12px] leading-relaxed text-[var(--color-text-secondary)]">
-            Fuel, weather, and market signals are woven into each action above. Open Context on any hub for full detail.
+            Tender packages and the controlled document register sit on each action. Open a package for the detail.
           </p>
         )}
 

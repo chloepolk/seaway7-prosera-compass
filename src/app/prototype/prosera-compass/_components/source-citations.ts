@@ -22,22 +22,10 @@ const EXTERNAL: Record<string, string> = {
 }
 
 const FILE_PAGE: Record<string, Page> = {
-  "_raw.ts": "customer-intel",
-  "_costs.ts": "customer-intel",
-  "_rootcause.ts": "customer-intel",
-  "_transform.ts": "customer-intel",
-  "_scorecard.ts": "customer-intel",
-  "_benchmarks.ts": "pricing-intel",
-  "_raw_quotes.ts": "pricing-intel",
-  "_dispatch.ts": "pricing-intel",
-  "_fuel.ts": "pricing-intel",
-  "_atob.ts": "pricing-intel",
-  "_eia.ts": "pricing-intel",
-  "_weather_demand.ts": "pricing-intel",
-  "_labor.ts": "market-position",
-  "_construction.ts": "market-position",
-  "_expansion.ts": "market-position",
-  "_weather.ts": "market-position",
+  "_tenders.ts": "tender-studio",
+  "_documents.ts": "tender-studio",
+  "_bids.ts": "bid-evaluation",
+  "_bid-scoring.ts": "bid-evaluation",
 }
 
 function fileFromLabel(label: string): string | undefined {
@@ -60,20 +48,14 @@ function detectPage(label: string, fallback?: Page): Page | undefined {
   if (file && FILE_PAGE[file]) return FILE_PAGE[file]
 
   const lower = label.toLowerCase()
-  if (lower.includes("customer intel") || lower.includes("margin remediation") || lower.includes("root cause")) {
-    return "customer-intel"
+  if (lower.includes("action centre") || lower.includes("operating loop")) {
+    return "operating-loop"
   }
-  if (lower.includes("pricing") || lower.includes("quote") || lower.includes("nte") || lower.includes("fuel")) {
-    return "pricing-intel"
+  if (lower.includes("tender") || lower.includes("itt") || lower.includes("controlled document")) {
+    return "tender-studio"
   }
-  if (lower.includes("market position") || lower.includes("expansion") || lower.includes("regional")) {
-    return "market-position"
-  }
-  if (lower.includes("invoice") || lower.includes("process velocity") || lower.includes("ci-05")) {
-    return "process-velocity"
-  }
-  if (lower.includes("commercial center") || lower.includes("portfolio hub")) {
-    return "commercial-center"
+  if (lower.includes("bid") || lower.includes("award") || lower.includes("evaluation")) {
+    return "bid-evaluation"
   }
   return fallback
 }

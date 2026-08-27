@@ -6,8 +6,6 @@
 /*  agent receives. Signatures are kept stable for the store.          */
 /* ------------------------------------------------------------------ */
 
-import type { ComputedData } from "../data/_transform"
-import { formatActiveUsd } from "../_i18n/legacy"
 import { formatEurFigure, usdToEur } from "@/lib/compass/locale-display"
 import type { DrillState, OrchestratorOutput, SpecialistOutput } from "./_types"
 import { TENDER_PACKAGES, CLOSED_PACKAGES, PROJECT, TODAY, tenderById } from "../data/future-energy/_tenders"
@@ -275,7 +273,7 @@ ${pending}`
 /* ------------------------------------------------------------------ */
 
 /** Procurement portfolio specialist: the pipeline itself — stages, deadlines, owners. */
-export function buildPortfolioContext(_data: ComputedData, drill: DrillState): Record<string, unknown> {
+export function buildPortfolioContext(drill: DrillState): Record<string, unknown> {
   return {
     programme: PROJECT,
     asOf: TODAY,
@@ -298,7 +296,7 @@ export function buildPortfolioContext(_data: ComputedData, drill: DrillState): R
 }
 
 /** Commercial specialist: budgets, savings economics, terms exposure. */
-export function buildPricingContext(_data: ComputedData, drill: DrillState): Record<string, unknown> {
+export function buildPricingContext(drill: DrillState): Record<string, unknown> {
   return {
     programme: PROJECT.name,
     asOf: TODAY,
@@ -324,7 +322,7 @@ export function buildPricingContext(_data: ComputedData, drill: DrillState): Rec
 }
 
 /** Supply market specialist: documents, standards and supplier-facing obligations. */
-export function buildMarketContext(_data: ComputedData, drill: DrillState): Record<string, unknown> {
+export function buildMarketContext(drill: DrillState): Record<string, unknown> {
   return {
     programme: PROJECT.name,
     asOf: TODAY,
@@ -356,7 +354,6 @@ export function buildOrchestratorContext(
   _specialistOutputs: SpecialistOutput[],
   drill: DrillState,
   pageContext: string,
-  _data: ComputedData,
 ): Record<string, unknown> {
   return {
     programme: PROJECT,
@@ -385,7 +382,6 @@ export function buildOrchestratorContext(
 
 export function buildVerifierContext(
   _orchestratorOutput: OrchestratorOutput,
-  _data: ComputedData,
   drill: DrillState,
 ): { sourceData: Record<string, unknown>; verifiableBenchmarks: Record<string, unknown> } {
   return {
@@ -416,9 +412,9 @@ export function buildVerifierContext(
 /*  Chat briefing                                                      */
 /* ------------------------------------------------------------------ */
 
-export function buildChatBriefing(_data: ComputedData): string {
+export function buildChatBriefing(): string {
   const pipeline = TENDER_PACKAGES.map(p =>
-    `- ${p.id} ${p.title} (${p.quantity}): stage ${p.stage}, budget ${formatActiveUsd(p.budget)}, savings target ${formatActiveUsd(p.targetSavings)}, ${p.bidders} bidders, submissions close ${p.submissionDeadline}, owner ${p.ownerRole}.`,
+    `- ${p.id} ${p.title} (${p.quantity}): stage ${p.stage}, budget ${formatEurFigure(eur(p.budget))}, savings target ${formatEurFigure(eur(p.targetSavings))}, ${p.bidders} bidders, submissions close ${p.submissionDeadline}, owner ${p.ownerRole}.`,
   ).join("\n")
 
   const docs = DOCUMENTS.map(d => `- ${d.docRef} — ${d.title} (${d.revision})`).join("\n")
@@ -445,7 +441,7 @@ STANDARDS MATRIX (QA-MAN-2026-EPCI §3): ${STANDARDS_MATRIX.map(s => `${s.ref} (
 
 GOVERNING TERMS (S7-SCM-TC-2026-v1.0): DDP Incoterms 2020 to the mobilisation port; knock-for-knock maritime indemnities; 24-month warranty from commissioning or 36 from delivery; fixed firm pricing; 60-day payment; English law with LCIA arbitration.
 
-CHARTER: ${CHARTER.vessel} (${CHARTER.vesselType}) on ${CHARTER.codeName} terms — ${CHARTER.charterPeriod} at ${formatActiveUsd(CHARTER.hireRate)}/day.
+CHARTER: ${CHARTER.vessel} (${CHARTER.vesselType}) on ${CHARTER.codeName} terms — ${CHARTER.charterPeriod} at ${formatEurFigure(eur(CHARTER.hireRate))}/day.
 
 ${bidEval}`
 }
